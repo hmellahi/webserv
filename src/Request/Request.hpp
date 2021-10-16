@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:43:29 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/15 22:46:22 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 17:39:03 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ public:
     Request(std::string buffer)
     {
         // parse(buffer);
-        _path = "tests/s_web/index.html";
+        _method = GET; // temp
     }
 
     std::string getPath() const
@@ -34,7 +34,7 @@ public:
 
     int getMethod() const
     {
-        return _method;   
+        return _method;
     }
     
     void parse(std::string &buffer)

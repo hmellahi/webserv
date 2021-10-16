@@ -6,12 +6,14 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 01:12:26 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 19:32:21 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include "Server.hpp"
+#include "MimeTypes.h"
+#include "str_utils.hpp"
 
 class Response
 {
@@ -20,16 +22,22 @@ private:
     int _client_fd;
     std::string _path;
     std::string _contentType;
-    
+    std::map<std::string, std::string> _headers;
 
 public:
 
     Response(Request request, int client_fd)
     {
-        _method = request.getMethod();
-        _path   = request.getPath();
         _client_fd = client_fd;
-        _contentType = "text/html";
+        // _headers = request.getHeaders(); todo
+        // headers :
+        // connection : close/keep-alive
+        // url 
+        // method 
+        // http version 
+        // std::cout << MimeTypes::getType("pdf") << std::endl;
+        _headers["url"] = "tests/s_web/index.html2"; // temp
+        _headers["Content-Type"] = MimeTypes::getType(GetFileExtension(_headers["url"]).c_str());
     }
     
     void    send( int status_code, std::string buffer, bool isErrorPage = false)
@@ -37,13 +45,13 @@ public:
         std::string responseText;
 
         if (isErrorPage)
-            res._contentType = "text/html";
-        responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _contentType + "\nContent-Length: ";
+            _headers["Content-Type"] = "text/html"; 
+        responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _headers["Content-Type"] + "\nContent-Length: ";
         responseText += buffer.size();
         responseText += "\n\n";
         responseText += buffer;
-        std::cout << "---------- response" << std::endl << responseText << std::endl;
-        write(_client_fd, responseText.c_str(), strlen(responseText.c_str()));
+        // std::cout << "---------- response" << std::endl << responseText << std::endl;
+        std::cout << write(_client_fd, responseText.c_str(), strlen(responseText.c_str())) << std::endl;
     }
     
     static std::string getResponseMsg(int status_code)
@@ -64,4 +72,9 @@ public:
         
         return (responseMessages[status_code]);
     }
+
+    // std::string getHeader(std::string &header_name) const
+    // {
+    //     return _headers[header_name];
+    // }
 };

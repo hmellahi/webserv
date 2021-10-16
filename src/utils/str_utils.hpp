@@ -1,24 +1,15 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   str_utils.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/12 22:11:00 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 19:30:49 by hamza            ###   ########.fr       */
+/*   Created: 2021/10/16 04:07:16 by hamza             #+#    #+#             */
+/*   Updated: 2021/10/16 04:07:32 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// Server side C program to demonstrate HTTP Server programming
 #include "Server.hpp"
 
-
-int main(int ac, char const *av[])
-{
-    (void)ac;
-    Server nginx(atoi(av[1]));
-    nginx.init();
-    nginx.start();
-    return 0;
-}
+std::string GetFileExtension(const std::string& fileName);

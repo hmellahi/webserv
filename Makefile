@@ -6,7 +6,7 @@
 #    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/16 00:17:01 by hamza            ###   ########.fr        #
+#    Updated: 2021/10/16 04:09:53 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,7 @@ REQUEST		=
 RESPONSE	= 
 CGI			= 
 SERVER		= #Server.hpp
-UTILS		= 
+UTILS		= MimeTypes/MimeTypes.cpp str_utils.cpp
 
 SRC	=	$(ROOT:%.cpp=./src/%.cpp)\
 		$(REQUEST:%.cpp=./src/Request/%.cpp)\
@@ -29,7 +29,7 @@ SRC	=	$(ROOT:%.cpp=./src/%.cpp)\
 		$(SERVER:%.cpp=./src/Server/%.cpp)\
 		$(CGI:%.cpp=./src/CGI/%.cpp)
 
-INCLUDE = -I src/Server -I src/Request -I src/Response -I src/Config
+INCLUDE = -I src/Server -I src/Request -I src/Response -I src/Config -I  src/utils/MimeTypes -I src/utils/
 
 all: $(NAME)
 

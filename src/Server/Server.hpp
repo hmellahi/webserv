@@ -6,15 +6,19 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 01:22:05 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 20:00:17 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include "Enums.hpp"
+#include "macros.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+
+class Server;
+
+typedef void  (Server::*methodType)(Request, Response);
 
 class Server
 {
@@ -79,6 +83,7 @@ public:
                         
             char buffer[30000] = {0};
             ret = read( client_fd , buffer, 30000);
+            std::cout << buffer << std::endl;
             Request req(buffer);
             Response res(req, client_fd);
             handleRequest(req, res);
@@ -96,27 +101,55 @@ public:
         // todo
         // check if the path is a directory
         // if so then check if there is any default pages (index.html index ect..)
-        // other wise show permission denied
-        int error = OK;
-        std::string buffer = readFile(req.getPath(), error);
-        if (error != OK)
-            return res.send(error, getErrorPageContent(error), true);
-        return res.send(OK, buffer);
+        // otherwise if autoindex is On list directory files
+        // otherwise show error page
+        (this->*getMethodHandler(req.getMethod()))(req, res);
     }
 
-    std::string     readFile(std::string filename, int &error)
+    methodType    getMethodHandler(int methodIndex)
+    {
+        std::map<int, methodType>methodsHandler;
+        
+        methodsHandler[GET] = &Server::getHandler;
+        methodsHandler[POST] = &Server::postHandler;
+        methodsHandler[DELETE] = &Server::deleteHandler;
+        
+        return (methodsHandler[methodIndex]);
+    }
+
+    void    getHandler(Request req, Response res)
+    {
+        int status = OK;
+        std::string buffer = readFile("tests/s_web/index.html", status);
+        // std::string buffer = readFile(res.getHeader("url"), status);
+        if (status != OK)
+            return res.send(status, getErrorPageContent(status), true);
+        return res.send(OK, buffer);
+    }
+    
+    void    postHandler(Request req, Response res)
+    {
+        
+    }
+ 
+    void    deleteHandler(Request req, Response res)
+    {
+        
+    }
+    
+    static std::string     readFile(std::string filename, int &status)
     {
         struct stat info;
         if ((stat(filename.c_str(), &info)) == -1)
         {
-            error = NOT_FOUND;
+            status = NOT_FOUND;
             return (NULL);
         }
         
         std::ifstream  file(filename);
         if (!file)
         {
-            error = PERMISSION_DENIED;
+            status = PERMISSION_DENIED;
             return (NULL);
         }
         
@@ -136,7 +169,7 @@ public:
         // check if there is a custom error page 
 		
 
-		// otherwise make one
+		// otherwise craft one
 		std::string html;
         std::string reponseMsg = Response::getResponseMsg(status_code);
 		html = "<html>"
@@ -146,6 +179,7 @@ public:
 				"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
 				"</body>"
 				"</html>";
+        std::cout << html <<std::endl;
 		return (html);
     }
 };

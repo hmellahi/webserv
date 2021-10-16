@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
+#    By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/16 04:09:53 by hamza            ###   ########.fr        #
+#    Updated: 2021/10/16 21:39:19 by hmellahi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,9 @@ REQUEST		=
 RESPONSE	= 
 CGI			= 
 SERVER		= #Server.hpp
-UTILS		= MimeTypes/MimeTypes.cpp str_utils.cpp
+UTILS		= MimeTypes/MimeTypes.cpp str_utils.cpp FileSystem/FileSystem.cpp
+
+DEBUG_FLAGS = -fsanitize=address -g
 
 SRC	=	$(ROOT:%.cpp=./src/%.cpp)\
 		$(REQUEST:%.cpp=./src/Request/%.cpp)\
@@ -37,7 +39,7 @@ $(NAME): $(SRC)
 	$(CC) ${FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)
 
 san : $(SRC)
-	$(CC) ${FLAGS}  $(SRC)  -o $(NAME)
+	$(CC) ${FLAGS} ${DEBUG_FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)
 
 clean:
 	@rm -rf ${OBJ}

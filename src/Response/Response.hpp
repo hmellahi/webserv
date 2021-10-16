@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 19:32:21 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 21:53:06 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,11 @@ public:
         // method 
         // http version 
         // std::cout << MimeTypes::getType("pdf") << std::endl;
-        _headers["url"] = "tests/s_web/index.html2"; // temp
-        _headers["Content-Type"] = MimeTypes::getType(GetFileExtension(_headers["url"]).c_str());
+        // _headers["url"] = "tests/s_web/index.html"; // temp
+        _headers["url"] = "tests/s_web/index.html"; // temp
+        _headers["Content-Type"] = MimeTypes::getType(GetFileExtension(_headers["url"]).c_str()); // todo fix seg
+        std::cout << "type: [" << _headers["Content-Type"] << std::endl;
+        // _headers["Content-Type"] = "text/html";
     }
     
     void    send( int status_code, std::string buffer, bool isErrorPage = false)
@@ -50,8 +53,17 @@ public:
         responseText += buffer.size();
         responseText += "\n\n";
         responseText += buffer;
-        // std::cout << "---------- response" << std::endl << responseText << std::endl;
+
         std::cout << write(_client_fd, responseText.c_str(), strlen(responseText.c_str())) << std::endl;
+        // char* responseText;
+
+        // if (isErrorPage)
+        //     _headers["Content-Type"] = "text/html"; 
+        // responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _headers["Content-Type"] + "\nContent-Length: ";
+        // responseText += buffer.size();
+        // responseText += "\n\n";
+        // responseText += buffer;
+        // write(_client_fd, responseText, strlen(responseText));
     }
     
     static std::string getResponseMsg(int status_code)
@@ -73,8 +85,8 @@ public:
         return (responseMessages[status_code]);
     }
 
-    // std::string getHeader(std::string &header_name) const
-    // {
-    //     return _headers[header_name];
-    // }
+    std::string getHeader(std::string header_name)
+    {
+        return _headers[header_name];
+    }
 };

@@ -1,15 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   str_utils.hpp                                      :+:      :+:    :+:   */
+/*   FileSystem.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/16 04:07:16 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 20:20:30 by hmellahi         ###   ########.fr       */
+/*   Created: 2021/10/16 20:11:46 by hmellahi          #+#    #+#             */
+/*   Updated: 2021/10/16 21:52:15 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#pragma once
+#include "macros.hpp"
+#include <vector>
 
-std::string GetFileExtension(const std::string& fileName);
+class FileSystem
+{
+public:
+    static std::string     readFile(std::string filename, int &status);
+};

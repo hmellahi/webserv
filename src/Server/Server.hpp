@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 20:00:17 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 21:51:34 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "macros.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "../utils/FileSystem/FileSystem.hpp"
 
 class Server;
 
@@ -37,7 +38,7 @@ public:
         _address.sin_addr.s_addr = INADDR_ANY;
         _address.sin_port = htons( _port );
         memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
-    }
+    } 
 
     ~Server()
     {
@@ -96,13 +97,6 @@ public:
 
     void    handleRequest(Request req, Response res)
     {
-        // todo
-        // check which method [GET, POST, DELETE]
-        // todo
-        // check if the path is a directory
-        // if so then check if there is any default pages (index.html index ect..)
-        // otherwise if autoindex is On list directory files
-        // otherwise show error page
         (this->*getMethodHandler(req.getMethod()))(req, res);
     }
 
@@ -114,14 +108,18 @@ public:
         methodsHandler[POST] = &Server::postHandler;
         methodsHandler[DELETE] = &Server::deleteHandler;
         
-        return (methodsHandler[methodIndex]);
+        return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler);
     }
 
     void    getHandler(Request req, Response res)
     {
+        // todo
+        // check if the path is a directory
+        // if so then check if there is any default pages (index.html index ect..)
+        // otherwise if autoindex is On list directory files
+        // otherwise show error page
         int status = OK;
-        std::string buffer = readFile("tests/s_web/index.html", status);
-        // std::string buffer = readFile(res.getHeader("url"), status);
+        std::string buffer = FileSystem::readFile(res.getHeader("url"), status);
         if (status != OK)
             return res.send(status, getErrorPageContent(status), true);
         return res.send(OK, buffer);
@@ -129,38 +127,17 @@ public:
     
     void    postHandler(Request req, Response res)
     {
-        
+         // todo
     }
  
     void    deleteHandler(Request req, Response res)
     {
-        
+         // todo
     }
-    
-    static std::string     readFile(std::string filename, int &status)
+
+    void    methodNotFoundHandler(Request req, Response res)
     {
-        struct stat info;
-        if ((stat(filename.c_str(), &info)) == -1)
-        {
-            status = NOT_FOUND;
-            return (NULL);
-        }
-        
-        std::ifstream  file(filename);
-        if (!file)
-        {
-            status = PERMISSION_DENIED;
-            return (NULL);
-        }
-        
-        std::string buffer, line;
-        while ( getline (file,line) )
-        {
-            buffer += line;
-            buffer += "\n";
-        }
-        file.close();
-        return (buffer);
+        // todo
     }
 
     std::string     getErrorPageContent(int status_code)

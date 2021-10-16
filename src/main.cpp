@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/12 22:11:00 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 19:30:49 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/16 21:32:13 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,5 +20,6 @@ int main(int ac, char const *av[])
     Server nginx(atoi(av[1]));
     nginx.init();
     nginx.start();
+    // std::cout << "type: " << GetFileExtension("tests/s_web/img.jpg").c_str() << std::endl;
     return 0;
 }

@@ -3,13 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   str_utils.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 04:07:16 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 20:20:30 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/17 04:45:16 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#include "macros.hpp"
 
 std::string GetFileExtension(const std::string& fileName);
+void        split (std::string str, char seperator, std::vector<std::string> &strings);

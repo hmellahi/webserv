@@ -6,13 +6,13 @@
 #    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/17 01:47:14 by hamza            ###   ########.fr        #
+#    Updated: 2021/10/17 06:59:03 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 FLAGS	=# -Wall -Wextra -Werror
 CC		= clang++
-NAME	= server
+NAME	= webserv
 
 
 ROOT		= main.cpp

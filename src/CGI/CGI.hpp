@@ -6,14 +6,15 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/17 01:37:33 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 01:58:35 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 04:33:13 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
 #include "macros.hpp"
 
 class CGI
 {
 public:
-   static std::string     exec_file(char* path);
+   static std::string     exec_file(const char* path);
 };

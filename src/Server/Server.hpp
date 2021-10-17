@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 01:32:08 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 06:45:23 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "macros.hpp"
 #include "Config.hpp"
 #include "Request.hpp"
+#include "CGI.hpp"
 #include "Response.hpp"
 #include "../utils/FileSystem/FileSystem.hpp"
 
@@ -85,20 +86,20 @@ public:
                         
             char buffer[30000] = {0};
             ret = read( client_fd , buffer, 30000);
-            std::cout << buffer << std::endl;
-            Request req(buffer);
-            Response res(req, client_fd);
-            handleRequest(req, res);
 
-            printf("------------------Hello message sent-------------------");
+            Request req(buffer);
+            handleRequest(req, client_fd);
+
+            printf("--------------------------------------------------");
             
             close(client_fd);
         }
     }
 
-    void    handleRequest(Request req, Response res)
+    void    handleRequest(Request req, int client_fd)
     {
-        (this->*getMethodHandler(req.getMethod()))(req, res);
+        Response res(req, client_fd);
+        (this->*getMethodHandler(getMethodIndex(req.getHeader("method"))))(req, res);
     }
 
     methodType    getMethodHandler(int methodIndex)
@@ -114,42 +115,49 @@ public:
 
     void    getHandler(Request req, Response res)
     {
+        // check if the requested file isnt a static file
+        // if so then pass it to CGI
+        // otherwise jst read it
+        std::string fileExtension = GetFileExtension(req.getHeader("url"));
+        if (fileExtension == "php")
+            return res.send(HttpStatus::OK, CGI::exec_file(req.getHeader("url").c_str()));
         // todo
         // check if the path is a directory
         // if so then check if there is any default pages (index.html index ect..)
         // otherwise if autoindex is On list directory files
         // otherwise show error page
-        int status = OK;
-        std::string buffer = FileSystem::readFile(res.getHeader("url"), status);
+        int status = HttpStatus::OK;
+        std::string buffer = FileSystem::readFile(req.getHeader("url"), status);
         
         if (status == IS_DIRECTORY)
         {
             // check if one of the index files exists
             std::string fileName;
-            std::string indexFileContent = FileSystem::getIndexFileContent(res.getHeader("url"), fileName);
+            std::string indexFileContent = FileSystem::getIndexFileContent(req.getHeader("url"), fileName);
             if (!indexFileContent.empty())
             {
-                res.setHeader("url", res.getHeader("url") + fileName);
-                return res.send(OK, indexFileContent);
+                res.setHeader("url", req.getHeader("url") + fileName);
+                return res.send(HttpStatus::OK, indexFileContent);
             }
             // otherwise
             // check if autoindex is on
             else
             {
                 // if so then list all files in the current directory [soon]
-                // if (Config::isAutoIndexOn)
-                if (false) // temp
+                // if (Config::isAutoIndexOn())
+                if (false)
                 {
                     // SOON
                 }
                 // otherwise show permission denied page
                 else
-                    return res.send(PERMISSION_DENIED, getErrorPageContent(PERMISSION_DENIED), true);
+                    return res.send(HttpStatus::Forbidden, getErrorPageContent(HttpStatus::Forbidden), true);
             }
         }
-        else if (status != OK)
+        else if (status != HttpStatus::OK)
             return res.send(status, getErrorPageContent(status), true);
-        return res.send(OK, buffer);
+        
+        return res.send(HttpStatus::OK, buffer);
     }
     
     void    postHandler(Request req, Response res)
@@ -169,13 +177,17 @@ public:
 
     std::string     getErrorPageContent(int status_code)
     {
-		// todo
-        // check if there is a custom error page 
-		
+        // check if there is a custom error page
+        Config conf; // todo remove this
+        int status;
+        std::map<int, std::string> errorPages = conf.getCustomErrorPages();
+        std::string filename = errorPages[status_code];
+        if (!filename.empty())
+            return (FileSystem::readFile(filename, status));
 
 		// otherwise craft one
 		std::string html;
-        std::string reponseMsg = Response::getResponseMsg(status_code);
+        std::string reponseMsg = std::to_string(status_code) + " " + HttpStatus::reasonPhrase(status_code);
 		html = "<html>"
 				"<head><title>" + reponseMsg +"</title></head>"
 				"<body>"
@@ -185,5 +197,16 @@ public:
 				"</html>";
         std::cout << html <<std::endl;
 		return (html);
+    }
+
+    int getMethodIndex(std::string method_name)
+    {
+        if (method_name == "GET")
+            return GET;    
+        else if (method_name == "POST")
+            return POST;
+        // else if (method_name == "DELETE")
+        return DELETE;
+        // todo handle unhandled methods ..
     }
 };

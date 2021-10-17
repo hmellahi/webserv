@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 06:02:32 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 14:15:09 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,8 @@ public:
         // url 
         // http version 
         _headers["url"] = req.getHeader("url");
-        _headers["http-version"] = req.getHeader("http-version");//"HTTP/1.1"
+        // _headers["http-version"] = req.getHeader("http-version");//"HTTP/1.1"
+        _headers["http-version"] = "HTTP/1.1";
         // std::cout << "type: [" << _headers["Content-Type"] << std::endl;
     }
     
@@ -58,45 +59,62 @@ public:
         // todo refactor this shitty code
         // instead of storing strings store ints[enums]
         // add Date 
-        responseText = _headers["http-version"] + " ";
-        responseText += HttpStatus::reasonPhrase(status_code);
-        responseText += "\nContent-Type: "+ _headers["Content-Type"];
-        responseText += "\nContent-Length: ";
-        responseText += buffer.size();
-        responseText += "\n\n";
-        responseText += buffer;
-    
-        std::cout << write(_client_fd, responseText.c_str(), strlen(responseText.c_str())) << std::endl;
-        // char* responseText;
-    
-        // if (isErrorPage)
-        //     _headers["Content-Type"] = "text/html"; 
-        // responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _headers["Content-Type"] + "\nContent-Length: ";
+        // responseText = _headers["http-version"] + " ";
+        // responseText += HttpStatus::reasonPhrase(status_code);
+        // responseText += "\nContent-Type: "+ _headers["Content-Type"];
+        // responseText += "\nContent-Length: ";
         // responseText += buffer.size();
         // responseText += "\n\n";
         // responseText += buffer;
-        // write(_client_fd, responseText, strlen(responseText));
-    }
     
-    // static std::string getResponseMsg(int status_code)
-    // {
-    //     std::cout << "statusCode: " << status_code << std::endl;
-    //     std::map<int, std::string> responseMessages;
+        struct stat info;
+        stat(buffer.c_str(), &info);
+        off_t fileLength = info.st_size;
+        std::ostringstream msg;
+        std::cout << "LENGHT: " <<fileLength << std::endl;
+        int fd = open(buffer.c_str(), O_RDONLY);
+        
+        msg << _headers["http-version"] << " " << status_code << " " 
+            << HttpStatus::reasonPhrase(status_code) << "\r\n"
+            << "Content-Type: " << _headers["Content-Type"] << "\r\n"
+            << "Content-Length: " << fileLength << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n";
+        
+        sendMessage(_client_fd, msg.str());
+        #define BUFSIZE 100
+        char buf[BUFSIZE];
+        int bytes_read, bytes_written;
+        while (fileLength > 0) {
+            bytes_read = read(fd, buf, BUFSIZE);//std::min((int)fileLength, BUFSIZE));
+            if (bytes_read <= 0) break;
+            if (sendRaw(_client_fd, buf, bytes_read) == -1) break;
+            fileLength -= bytes_read;  
+        }
+        close(fd);
+        // std::cout << write(_client_fd, msg.c_str(), msg.length()) << std::endl;
+    }
 
-    //     // Successful responses
-    //     responseMessages[HttpStatus::OK] = "200 HttpStatus::OK";
-    //     // responseMessages[202] = "";
-        
-    //     // CLient side error response
-    //     responseMessages[HttpStatus.] = "404 Not Found";
-    //     responseMessages[PERMISSION_DENIED] = "403 Forbidden";
-    //     responseMessages[METHOD_NOT_ALLOWED] = "405 Method Not Allowed";
-        
-    //     // Server Errors
-    //     responseMessages[BAD_GATEWAY] = "502 Bad Gateway";
-        
-    //     return (responseMessages[status_code]);
-    // }
+    int sendMessage(int fd, const std::string &s)
+    {
+        return sendRaw(fd, s.c_str(), s.length());
+    }
+
+    int sendRaw(int fd, const void *buf, int buflen)
+    {
+        const char *pbuf = static_cast<const char*>(buf);
+        int bytes_written;
+
+        while (buflen > 0) {
+            bytes_written = write(fd, pbuf, buflen);
+            // std::cout << pbuf << std::endl;
+            if (bytes_written == -1) return -1;
+            pbuf += bytes_written; 
+            buflen -= bytes_written;
+        }
+
+        return 0;
+    }
 
     std::string getHeader(std::string header_name)
     {

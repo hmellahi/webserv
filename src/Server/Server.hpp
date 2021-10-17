@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 06:45:23 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 13:49:02 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,8 +84,8 @@ public:
                 exit(EXIT_FAILURE);
             }
                         
-            char buffer[30000] = {0};
-            ret = read( client_fd , buffer, 30000);
+            char buffer[1000] = {0};
+            ret = read( client_fd , buffer, 1000);
 
             Request req(buffer);
             handleRequest(req, client_fd);

@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 21:38:31 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/17 06:34:12 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 14:08:53 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,32 +21,35 @@ std::string     FileSystem::readFile(std::string filename, int &status)
         status = HttpStatus::NotFound;
         return ("");
     }
+    off_t fileLength = info.st_size;
+    // std::cout << "LENGHT: " <<fileLength << std::endl;
     if ((int)((info.st_mode & S_IFDIR) == S_IFDIR))
     {
         status = IS_DIRECTORY;
         return ("");
     }
     // std::ifstream  file(filename);
-    int fd = open(filename.c_str(), O_RDONLY);
-    if (fd < 1)
-    {
-        status = HttpStatus::Forbidden;
-        return ("");
-    }
-    char buffer[30000] = {0};
-    int ret = read(fd, buffer, 30000);
-    // std::string buffer, line;
-    // while ( getline (file,line) )
+    // int fd = open(filename.c_str(), O_RDONLY);
+    // if (fd < 1)
     // {
-    //     buffer += line;
-    //     buffer += "\n";
-    //     std::cout << "line:[" << line << "]"  std::endl;
+    //     status = HttpStatus::Forbidden;
+    //     return ("");
     // }
-    
-    close(fd);
+    // char buffer[20000] = {0};
+    // int ret = read(fd, buffer, 30000);
+    // // std::string buffer, line;
+    // // while ( getline (file,line) )
+    // // {
+    // //     buffer += line;
+    // //     buffer += "\n";
+    // //     std::cout << "line:[" << line << "]"  std::endl;
+    // // }
+    // std::cout << "len: [" << strlen(buffer) << "]\n";
+    // close(fd);
     status = HttpStatus::OK;
     // std::cout << fd << "|buffer:"<< buffer << std::endl;
-    return (buffer);
+    // return (buffer);
+    return (filename);
 }
 
 std::string FileSystem::getIndexFileContent(std::string directory, std::string & filename)

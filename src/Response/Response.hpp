@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 21:53:06 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/17 01:30:32 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,30 +33,45 @@ public:
         // headers :
         // connection : close/keep-alive
         // url 
-        // method 
+        // status code
         // http version 
-        // std::cout << MimeTypes::getType("pdf") << std::endl;
-        // _headers["url"] = "tests/s_web/index.html"; // temp
-        _headers["url"] = "tests/s_web/index.html"; // temp
-        _headers["Content-Type"] = MimeTypes::getType(GetFileExtension(_headers["url"]).c_str()); // todo fix seg
-        std::cout << "type: [" << _headers["Content-Type"] << std::endl;
-        // _headers["Content-Type"] = "text/html";
+        // _headers["url"] = "tests/s_web/Axit-Screenshot.png"; // temp
+        _headers["url"] = "tests/s_web/"; // temp
+        // _headers["url"] = "tests/filewithoutpermissions"; // temp
+        _headers["http-version"] = "HTTP/1.1";
+        // std::cout << "type: [" << _headers["Content-Type"] << std::endl;
     }
     
     void    send( int status_code, std::string buffer, bool isErrorPage = false)
     {
         std::string responseText;
+        std::string extension;
 
+        std::cout << "header" << _headers["url"] << std::endl;
         if (isErrorPage)
-            _headers["Content-Type"] = "text/html"; 
-        responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _headers["Content-Type"] + "\nContent-Length: ";
+            _headers["Content-Type"] = "text/html";
+        else
+        {
+            extension = GetFileExtension(_headers["url"]);
+            if (!extension.empty())
+                _headers["Content-Type"] = MimeTypes::getType(extension.c_str());
+            else
+                _headers["Content-Type"] = "text/plain"; // todo fix seg
+        }
+        // todo refactor this shitty code
+        // instead of storing strings store ints[enums]
+        // add Date 
+        responseText = _headers["http-version"] + " ";
+        responseText += getResponseMsg(status_code);
+        responseText += "\nContent-Type: "+ _headers["Content-Type"];
+        responseText += "\nContent-Length: ";
         responseText += buffer.size();
         responseText += "\n\n";
         responseText += buffer;
-
+    
         std::cout << write(_client_fd, responseText.c_str(), strlen(responseText.c_str())) << std::endl;
         // char* responseText;
-
+    
         // if (isErrorPage)
         //     _headers["Content-Type"] = "text/html"; 
         // responseText = "HTTP/1.1 " + getResponseMsg(status_code) + "\nContent-Type: "+ _headers["Content-Type"] + "\nContent-Length: ";
@@ -68,6 +83,7 @@ public:
     
     static std::string getResponseMsg(int status_code)
     {
+        std::cout << "statusCode: " << status_code << std::endl;
         std::map<int, std::string> responseMessages;
 
         // Successful responses
@@ -76,8 +92,8 @@ public:
         
         // CLient side error response
         responseMessages[NOT_FOUND] = "404 Not Found";
-        responseMessages[402] = "402";
-        responseMessages[405] = "405 Method Not Allowed";
+        responseMessages[PERMISSION_DENIED] = "403 Forbidden";
+        responseMessages[METHOD_NOT_ALLOWED] = "405 Method Not Allowed";
         
         // Server Errors
         responseMessages[BAD_GATEWAY] = "502 Bad Gateway";
@@ -88,5 +104,10 @@ public:
     std::string getHeader(std::string header_name)
     {
         return _headers[header_name];
+    }
+
+    void setHeader(std::string header_name, std::string value)
+    {
+        _headers[header_name] = value;
     }
 };

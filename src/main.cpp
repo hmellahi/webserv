@@ -3,23 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/12 22:11:00 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 21:32:13 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/17 03:14:06 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 // Server side C program to demonstrate HTTP Server programming
 #include "Server.hpp"
+#include "CGI.hpp"
 
 
 int main(int ac, char const *av[])
 {
     (void)ac;
-    Server nginx(atoi(av[1]));
-    nginx.init();
+    // char path[] = "tests/index.php";
+    // std::cout << CGI::exec_file(path);
+    Server nginx;
+    nginx.listen(atoi(av[1]));
     nginx.start();
-    // std::cout << "type: " << GetFileExtension("tests/s_web/img.jpg").c_str() << std::endl;
     return 0;
 }

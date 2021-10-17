@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/16 21:51:34 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/17 01:32:08 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include "macros.hpp"
+#include "Config.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "../utils/FileSystem/FileSystem.hpp"
@@ -30,14 +31,8 @@ private:
     int _port;
 
 public:
-    Server(int port)
+    Server()
     {
-        _port = port;
-        addrlen = sizeof(_address);
-        _address.sin_family = AF_INET;
-        _address.sin_addr.s_addr = INADDR_ANY;
-        _address.sin_port = htons( _port );
-        memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
     } 
 
     ~Server()
@@ -45,8 +40,14 @@ public:
         close(_serverFd);
     }
     
-    int     init()
+    int     listen(int port)
     {
+        _port = port;
+        addrlen = sizeof(_address);
+        _address.sin_family = AF_INET;
+        _address.sin_addr.s_addr = INADDR_ANY;
+        _address.sin_port = htons( _port );
+        memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
         // Creating server socket file descriptor
         if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
         {
@@ -58,7 +59,7 @@ public:
             perror("In bind");
             return (4);
         }
-        if (listen(_serverFd, 10) < 0)
+        if (::listen(_serverFd, 10) < 0)
         {
             perror("In listen");
             return (5);
@@ -120,7 +121,33 @@ public:
         // otherwise show error page
         int status = OK;
         std::string buffer = FileSystem::readFile(res.getHeader("url"), status);
-        if (status != OK)
+        
+        if (status == IS_DIRECTORY)
+        {
+            // check if one of the index files exists
+            std::string fileName;
+            std::string indexFileContent = FileSystem::getIndexFileContent(res.getHeader("url"), fileName);
+            if (!indexFileContent.empty())
+            {
+                res.setHeader("url", res.getHeader("url") + fileName);
+                return res.send(OK, indexFileContent);
+            }
+            // otherwise
+            // check if autoindex is on
+            else
+            {
+                // if so then list all files in the current directory [soon]
+                // if (Config::isAutoIndexOn)
+                if (false) // temp
+                {
+                    // SOON
+                }
+                // otherwise show permission denied page
+                else
+                    return res.send(PERMISSION_DENIED, getErrorPageContent(PERMISSION_DENIED), true);
+            }
+        }
+        else if (status != OK)
             return res.send(status, getErrorPageContent(status), true);
         return res.send(OK, buffer);
     }

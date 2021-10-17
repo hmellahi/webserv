@@ -3,23 +3,23 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+         #
+#    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/16 21:39:19 by hmellahi         ###   ########.fr        #
+#    Updated: 2021/10/17 01:47:14 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 FLAGS	=# -Wall -Wextra -Werror
 CC		= clang++
-NAME = server
+NAME	= server
 
 
 ROOT		= main.cpp
-REQUEST		= 
-RESPONSE	= 
-CGI			= 
-SERVER		= #Server.hpp
+REQUEST		= Request.cpp
+RESPONSE	= Response.cpp
+CGI			= CGI.cpp
+SERVER		= Server.cpp
 UTILS		= MimeTypes/MimeTypes.cpp str_utils.cpp FileSystem/FileSystem.cpp
 
 DEBUG_FLAGS = -fsanitize=address -g
@@ -31,7 +31,7 @@ SRC	=	$(ROOT:%.cpp=./src/%.cpp)\
 		$(SERVER:%.cpp=./src/Server/%.cpp)\
 		$(CGI:%.cpp=./src/CGI/%.cpp)
 
-INCLUDE = -I src/Server -I src/Request -I src/Response -I src/Config -I  src/utils/MimeTypes -I src/utils/
+INCLUDE = -I src/Server -I src/Request -I src/Response -I src/Config -I  src/utils/MimeTypes -I src/utils/ -I src/CGI
 
 all: $(NAME)
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 20:11:46 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/16 21:52:15 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/17 01:30:47 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,5 +17,6 @@
 class FileSystem
 {
 public:
-    static std::string     readFile(std::string filename, int &status);
+    static std::string  readFile(std::string filename, int &status);
+    static std::string  getIndexFileContent(std::string directory, std::string & filename);
 };

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 13:49:02 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 20:32:01 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,10 +44,13 @@ public:
     int     listen(int port)
     {
         _port = port;
+        
+        // initialize adress
         addrlen = sizeof(_address);
         _address.sin_family = AF_INET;
         _address.sin_addr.s_addr = INADDR_ANY;
         _address.sin_port = htons( _port );
+        
         memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
         // Creating server socket file descriptor
         if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -74,7 +77,7 @@ public:
         int client_fd;
         int ret;
         
-        while(1)
+        while(true)
         {
             printf("\n+++++++ Waiting for new connection ++++++++\n\n");
             
@@ -84,13 +87,14 @@ public:
                 exit(EXIT_FAILURE);
             }
                         
+            printf("\n+++++++ Reading Request ++++++++\n\n");
+
             char buffer[1000] = {0};
             ret = read( client_fd , buffer, 1000);
 
             Request req(buffer);
             handleRequest(req, client_fd);
 
-            printf("--------------------------------------------------");
             
             close(client_fd);
         }

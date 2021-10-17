@@ -70,6 +70,7 @@
     "ratio": "cpp",
     "stack": "cpp",
     "__hash_table": "cpp",
-    "complex": "cpp"
+    "complex": "cpp",
+    "filesystem": "cpp"
   }
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 21:38:31 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/17 14:08:53 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 20:14:03 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,3 +70,25 @@ std::string FileSystem::getIndexFileContent(std::string directory, std::string &
     }
     return content;
 }
+
+// int     FileSystem::openFile(std::string filename, int &status, struct stat *state)
+// {
+//     struct stat info;
+//     if ((stat(filename.c_str(), &info)) == -1)
+//     {
+//         status = HttpStatus::NotFound;
+//         return ("");
+//     }
+//     off_t fileLength = info.st_size;
+//     if ((int)((info.st_mode & S_IFDIR) == S_IFDIR))
+//     {
+//         status = IS_DIRECTORY;
+//         return (-1);
+//     }
+//     int fd = open(filename.c_str(), O_RDONLY);
+//     if (fd < 1)
+//     {
+//         status = HttpStatus::Forbidden;
+//         return ("");
+//     }
+// }

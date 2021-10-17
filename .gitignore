@@ -1,6 +1,6 @@
 ## vscode settings
-.vscode
+.vscode/
 
-## random shit
+## executable shit
 server
-server.dSYM
+webserv.dSYM/

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 14:15:09 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/17 16:27:53 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,13 +59,6 @@ public:
         // todo refactor this shitty code
         // instead of storing strings store ints[enums]
         // add Date 
-        // responseText = _headers["http-version"] + " ";
-        // responseText += HttpStatus::reasonPhrase(status_code);
-        // responseText += "\nContent-Type: "+ _headers["Content-Type"];
-        // responseText += "\nContent-Length: ";
-        // responseText += buffer.size();
-        // responseText += "\n\n";
-        // responseText += buffer;
     
         struct stat info;
         stat(buffer.c_str(), &info);

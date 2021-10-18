@@ -96,7 +96,7 @@ int main(int argc , char *av[])
 	std::vector<int> apacheFds = apache.getSocketsFd();
 
 	_serversSocketsFd.insert(_serversSocketsFd.begin(), nginxFds.begin(), nginxFds.end());
-	// _serversSocketsFd.insert(_serversSocketsFd.begin(), apacheFds.begin(), apacheFds.end());
+	_serversSocketsFd.insert(_serversSocketsFd.begin(), apacheFds.begin(), apacheFds.end());
 
 	//accept the incoming connection
 	addrlen = sizeof(address);
@@ -143,38 +143,12 @@ int main(int argc , char *av[])
 			fd = _serversSocketsFd[i];
 			if (FD_ISSET(fd, &readfds))
 			{
-				if ((new_socket = accept(fd,
-						(struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-				{
-					perror("accept");
-					exit(EXIT_FAILURE);
-				}
+				new_socket = Socket::acceptConnection(fd, address, addrlen);
 				
 				//inform user of socket number - used in send and receive commands
-				printf("New connection , socket fd is %d , ip is : %s , port : %d\n" , new_socket , inet_ntoa(address.sin_addr) , ntohs
-					(address.sin_port));
-			
-				//send new connection greeting message
-				// if( send(new_socket, message, strlen(message), 0) != strlen(message) )
-					// perror("send");
-				// valread = read( sd , buffer, 1024);
-				// std::cout << "buffer" << buffer << std::endl;
-				// buffer[valread] = '\0';
-				// nginx.handleConnection(buffer, sd);
-				// puts("Welcome message sent successfully");
-				// close( sd );
-				//add new socket to array of sockets
-				// for (i = 0; i < max_clients; i++)
-				// {
-				// 	//if position is empty
-				// 	if( clients_socket[i] == 0 )
-				// 	{
-				// 		clients_socket[i] = new_socket;
-				// 		printf("Adding to list of sockets as %d\n" , i);
-							
-				// 		break;
-				// 	}
-				// }
+				// printf("New connection , socket fd is %d , ip is : %s , port : %d\n" , new_socket , inet_ntoa(address.sin_addr) , ntohs
+				// 	(address.sin_port));
+
 				// if position is empty
 				if (clients_socket.size() < max_clients)
 					clients_socket.push_back(new_socket);
@@ -212,9 +186,9 @@ int main(int argc , char *av[])
 					//of the data read
 					buffer[valread] = '\0';
 					nginx.handleConnection(buffer, sd);
-                    // buffer = "Weeeb";
-                    // char buffer2[] = "Weeeb";
-					// send(sd , buffer2 , strlen(buffer2), 0 );
+                    close( sd );
+					clients_socket.erase(clients_socket.begin() + i);
+					FD_CLR(sd, &readfds);
 				}
 			}
 		}

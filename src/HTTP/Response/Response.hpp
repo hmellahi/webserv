@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 04:15:31 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/18 18:30:11 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,8 @@ public:
         _headers["url"] = req.getHeader("url");
         _headers["http-version"] = req.getHeader("http-version");//
         _headers["Connection"] = "close";
+        // _headers["Connection"] = "keep-alive";
         _headers["Date"] = getCurrentDate(); 
-        // std::cout << "date: " << _headers["Date"] << std::endl;
     }
     
     void    send( int status_code, std::string buffer, bool isErrorPage = false)
@@ -46,7 +46,6 @@ public:
         std::string responseText;
         std::string extension;
 
-        // std::cout << "header" << _headers["url"] << std::endl;
         if (isErrorPage)
             _headers["Content-Type"] = "text/html";
         else
@@ -88,8 +87,6 @@ public:
             fileLength -= bytes_read;  
         }
         close(fd);
-        std::cout <<"yaaaaaaaaaaaay" << std::endl;
-        // std::cout << write(_client_fd, msg.c_str(), msg.length()) << std::endl;
     }
 
     int sendMessage(int fd, const std::string &s)

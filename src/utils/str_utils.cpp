@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   str_utils.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 04:02:41 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 00:51:43 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/18 21:40:42 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,17 +54,6 @@ void split (std::string str, char seperator, std::vector<std::string> &strings)
 std::string getCurrentDate()
 {
 	// current date/time based on current system
-	// std::ostringstream currentDate;
-	// time_t now = time(0);
-
-	// tm *ltm = localtime(&now);
-	// currentDate << << ltm->tm_mday << " "  // day
-	// currentDate << 1 + ltm->tm_mon << " " // month
-	// currentDate << 1900 + ltm->tm_year << " " // year
-	// currentDate << "Time: "<< 5+ltm->tm_hour << ":";
-	// currentDate << 30+ltm->tm_min << ":";
-	// currentDate << ltm->tm_sec << std::endl;
-
 	char outstr[200] = {0};
 	time_t t;
 	struct tm *tmp;

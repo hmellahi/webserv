@@ -2,6 +2,14 @@ Read about:
     Chunked transfer encoding
     Mandatory headers
     Authentification
+	Transfer-Encoding
+    
+headers:
+    Content-Encoding
+    Last-Modified
+	Server
+    Last-Modified
+	
 
 loop throught Servers
     run server

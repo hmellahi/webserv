@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 21:38:31 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/17 20:14:03 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/18 03:38:46 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ std::string FileSystem::getIndexFileContent(std::string directory, std::string &
 
     for (int i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
     {
-        std::cout << status << "|" << directory + indexFiles[i] << std::endl;
+        // std::cout << status << "|" << directory + indexFiles[i] << std::endl;
         content = readFile(directory + indexFiles[i], status);
         if (status == HttpStatus::OK)
             filename = indexFiles[i];

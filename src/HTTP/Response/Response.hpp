@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 16:27:53 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/18 04:15:31 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,10 @@ public:
         // url 
         // http version 
         _headers["url"] = req.getHeader("url");
-        // _headers["http-version"] = req.getHeader("http-version");//"HTTP/1.1"
-        _headers["http-version"] = "HTTP/1.1";
-        // std::cout << "type: [" << _headers["Content-Type"] << std::endl;
+        _headers["http-version"] = req.getHeader("http-version");//
+        _headers["Connection"] = "close";
+        _headers["Date"] = getCurrentDate(); 
+        // std::cout << "date: " << _headers["Date"] << std::endl;
     }
     
     void    send( int status_code, std::string buffer, bool isErrorPage = false)
@@ -56,22 +57,24 @@ public:
             else
                 _headers["Content-Type"] = "text/plain"; // todo fix seg
         }
+        
         // todo refactor this shitty code
         // instead of storing strings store ints[enums]
-        // add Date 
-    
+
         struct stat info;
         stat(buffer.c_str(), &info);
         off_t fileLength = info.st_size;
         std::ostringstream msg;
-        std::cout << "LENGHT: " <<fileLength << std::endl;
         int fd = open(buffer.c_str(), O_RDONLY);
         
+        // todo
+        // add all mandatory response headers
         msg << _headers["http-version"] << " " << status_code << " " 
             << HttpStatus::reasonPhrase(status_code) << "\r\n"
             << "Content-Type: " << _headers["Content-Type"] << "\r\n"
             << "Content-Length: " << fileLength << "\r\n"
-            << "Connection: close\r\n"
+            << "Connection: " << _headers["Connection"] << "\r\n"
+            << "Date: " << _headers["Date"] << "\r\n"
             << "\r\n";
         
         sendMessage(_client_fd, msg.str());
@@ -85,6 +88,7 @@ public:
             fileLength -= bytes_read;  
         }
         close(fd);
+        std::cout <<"yaaaaaaaaaaaay" << std::endl;
         // std::cout << write(_client_fd, msg.c_str(), msg.length()) << std::endl;
     }
 

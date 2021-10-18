@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 00:15:27 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 13:40:47 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/18 00:18:38 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <fcntl.h>
+#include <ctime>
 #include <string>
 
 enum methods

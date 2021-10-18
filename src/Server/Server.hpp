@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 20:32:01 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/18 03:28:39 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "CGI.hpp"
 #include "Response.hpp"
 #include "../utils/FileSystem/FileSystem.hpp"
+#include "Socket.hpp"
 
 class Server;
 
@@ -27,6 +28,7 @@ class Server
 {
 private:
     int _serverFd;
+    std::vector<int> _serverSocketsFd;
     struct sockaddr_in _address;
     int addrlen;
     int _port;
@@ -38,70 +40,28 @@ public:
 
     ~Server()
     {
-        close(_serverFd);
+        for (int i = 0; i < _serverSocketsFd.size(); i++)
+            close(_serverSocketsFd[i]);
     }
     
-    int     listen(int port)
+    std::vector<int> getSocketsFd()
     {
-        _port = port;
-        
-        // initialize adress
-        addrlen = sizeof(_address);
-        _address.sin_family = AF_INET;
-        _address.sin_addr.s_addr = INADDR_ANY;
-        _address.sin_port = htons( _port );
-        
-        memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
-        // Creating server socket file descriptor
-        if ((_serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-        {
-            perror("In socket");
-            return (3);
-        }
-        if (bind(_serverFd, (struct sockaddr *)&_address, sizeof(_address))<0)
-        {
-            perror("In bind");
-            return (4);
-        }
-        if (::listen(_serverFd, 10) < 0)
-        {
-            perror("In listen");
-            return (5);
-        }
-        std::cout << "Server started, go to 127.0.0.1:" << _port << std::endl;
-        return (0);
+       return _serverSocketsFd;
+    }
+    
+    void    addPort(int port)
+    {
+        // create new socket on the given port
+        Socket new_socket(port);
+        // save socker fd
+        _serverSocketsFd.push_back(new_socket.getSocketFd());
+        // debugging
+        std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
     }
 
-    void start()
+    void    handleConnection(std::string requestBody, int client_fd)
     {
-        int client_fd;
-        int ret;
-        
-        while(true)
-        {
-            printf("\n+++++++ Waiting for new connection ++++++++\n\n");
-            
-            if ((client_fd = accept(_serverFd, (struct sockaddr *)&_address, (socklen_t*)&addrlen))<0)
-            {
-                perror("In accept");
-                exit(EXIT_FAILURE);
-            }
-                        
-            printf("\n+++++++ Reading Request ++++++++\n\n");
-
-            char buffer[1000] = {0};
-            ret = read( client_fd , buffer, 1000);
-
-            Request req(buffer);
-            handleRequest(req, client_fd);
-
-            
-            close(client_fd);
-        }
-    }
-
-    void    handleRequest(Request req, int client_fd)
-    {
+        Request req(requestBody);
         Response res(req, client_fd);
         (this->*getMethodHandler(getMethodIndex(req.getHeader("method"))))(req, res);
     }
@@ -130,7 +90,7 @@ public:
         // if so then check if there is any default pages (index.html index ect..)
         // otherwise if autoindex is On list directory files
         // otherwise show error page
-        int status = HttpStatus::OK;
+        int status; // this will be filled by file status after passing it to readFile()
         std::string buffer = FileSystem::readFile(req.getHeader("url"), status);
         
         if (status == IS_DIRECTORY)

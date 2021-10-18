@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:43:29 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 05:16:42 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/18 00:57:29 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ private:
 public:
     Request(std::string buffer)
     {
+        // _headers["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0"; // temp
         parse(buffer);
     }
 
@@ -34,9 +35,9 @@ public:
         else
             tokens[1] = "."; // temp (brikol) will be removed
         _headers["url"] = tokens[1];
-        _headers["http-version"] = tokens[2];
         // _headers["method"] = getMethodIndex(tokens[0]);
         _headers["method"] = tokens[0];
+        _headers["http-version"] = "http/1.1"; // temp
     }
 
     std::string getHeader(std::string header_name)

@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 03:28:39 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/19 03:06:53 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ class Server
 {
 private:
     int _serverFd;
-    std::vector<int> _serverSocketsFd;
+    std::vector<Socket> _serverSockets;
     struct sockaddr_in _address;
     int addrlen;
     int _port;
@@ -44,9 +44,9 @@ public:
             close(_serverSocketsFd[i]);
     }
     
-    std::vector<int> getSocketsFd()
+    std::vector<Socket> getSockets()
     {
-       return _serverSocketsFd;
+       return _serverSockets;
     }
     
     void    addPort(int port)
@@ -54,7 +54,7 @@ public:
         // create new socket on the given port
         Socket new_socket(port);
         // save socker fd
-        _serverSocketsFd.push_back(new_socket.getSocketFd());
+        _serverSocketsFd.push_back(new_socket);
         // debugging
         std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
     }

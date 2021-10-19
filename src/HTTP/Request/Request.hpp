@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:43:29 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 00:57:29 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/19 02:07:44 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ public:
         else
             tokens[1] = "."; // temp (brikol) will be removed
         _headers["url"] = tokens[1];
-        // _headers["method"] = getMethodIndex(tokens[0]);
         _headers["method"] = tokens[0];
         _headers["http-version"] = "http/1.1"; // temp
     }

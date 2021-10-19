@@ -16,6 +16,7 @@ class Config
 		Config &operator=(Config const &rhs);
 		~Config();
 		void init_map_attr();
+		void init_map_loc();
 		void check_server(std::vector<std::string>::iterator &it);
 		// functions to save to the attributes
 		void root(std::vector<std::string>::iterator &it);

@@ -17,10 +17,25 @@ void Config::init_map_attr()
 	attributes["index"] = &Config::index;
 }
 
+std::map<std::string, void (Config::*)(std::vector<std::string>::iterator &)> attribute_locations;
+void Config::init_map_loc()
+{
+	attribute_locations["root"] = &Config::root;
+	attribute_locations["page_error"] = &Config::page_error;
+	attribute_locations["client_max_body_size"] = &Config::client_max_body_size;
+	attribute_locations["auto_index"] = &Config::isAutoIndexOn;
+	attribute_locations["redirection"] = &Config::redirectionPath;
+	attribute_locations["allow_methods"] = &Config::allow_methods;
+	attribute_locations["upload_path"] = &Config::upload_path;
+	attribute_locations["cgi"] = &Config::cgi;
+	attribute_locations["index"] = &Config::index;
+}
+
 Config::Config()
 {
 	_isAutoIndexOn = true;
 	init_map_attr();
+	init_map_loc();
 }
 Config::Config(Config const &src)
 {
@@ -205,8 +220,8 @@ void Config::locations(std::vector<std::string>::iterator &it)
 		throw std::runtime_error("Error: Missing a bracket in location");
 	while (*(++it) != "}")
 	{
-		if (attributes[*it])
-			(loc.*attributes[*it])(++it);
+		if (attribute_locations[*it])
+			(loc.*attribute_locations[*it])(++it);
 		else
 			throw std::runtime_error("Error: Something Wrong in the config File");
 	}

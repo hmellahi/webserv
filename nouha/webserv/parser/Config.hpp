@@ -1,0 +1,60 @@
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
+
+#include <iostream>
+#include <algorithm>
+#include <map>
+#include <vector>
+#include "../utils/Utils.hpp"
+#include <string>
+
+class Config
+{
+	public:
+		Config();
+		Config(Config const &src);
+		Config &operator=(Config const &rhs);
+		~Config();
+		void init_map_attr();
+		void check_server(std::vector<std::string>::iterator &it);
+		// functions to save to the attributes
+		void root(std::vector<std::string>::iterator &it);
+		void page_error(std::vector<std::string>::iterator &it);
+		void client_max_body_size(std::vector<std::string>::iterator &it);
+		void isAutoIndexOn(std::vector<std::string>::iterator &it);
+		void redirectionPath(std::vector<std::string>::iterator &it);
+		void allow_methods(std::vector<std::string>::iterator &it);
+		void upload_path(std::vector<std::string>::iterator &it);
+		void cgi(std::vector<std::string>::iterator &it);		
+		void server_name(std::vector<std::string>::iterator &it);
+		void listen(std::vector<std::string>::iterator &it);
+		void locations(std::vector<std::string>::iterator &it);
+		void index(std::vector<std::string>::iterator &it);
+		// getters 
+		std::string getRoot(void) const;
+		std::map<int, std::string> get_error_pages(void) const;
+		int get_client_max_body_size(void) const;
+		std::vector<std::string> get_index(void) const;
+		std::pair<int, std::string> get_redirectionPath(void) const;
+		std::vector<std::string> get_allowedMethods(void) const;
+		std::string get_uploadPath(void) const;
+		std::map<std::string, std::string> get_cgi(void) const;
+		std::vector<std::string> get_server_name(void) const;
+		std::vector<u_int32_t> get_listen(void) const;
+		bool get_isAutoIndexOn(void) const;
+		std::map<std::string, Config> getLocation(void) const;	
+	private:
+	   	std::string	_root;
+		std::map<int, std::string>	_error_pages;
+		int	_client_max_body_size;
+		bool _isAutoIndexOn;
+		std::vector<std::string> _index;
+		std::pair<int, std::string> _redirectionPath;
+		std::vector<std::string> _allowedMethods;
+		std::string			_uploadPath;
+		std::map<std::string, std::string>	_cgi;
+		std::vector<std::string>	_server_name;
+		std::vector<u_int32_t>	_listen;
+		std::map<std::string, Config>	_locations;
+};
+#endif

@@ -126,12 +126,13 @@ int main(int argc , char *av[])
 			if(sd > max_sd)
 				max_sd = sd;
 		}
+		add_clients();
 	
 		//wait for an activity on one of the sockets , timeout is NULL ,
 		//so wait indefinitely
 		activity = select(FD_SETSIZE , &readfds , NULL , NULL , NULL);
-	
 		if ((activity < 0) && (errno!=EINTR))
+	
 		{
 			printf("select error");
 		}

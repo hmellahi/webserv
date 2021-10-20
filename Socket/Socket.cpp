@@ -20,9 +20,9 @@ Socket::Socket( int protocol )
 	
 	
 	address.sin_family = AF_INET;
-	address.sin_port = htons(8080);
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	
+	address.sin_port = htons(protocol);
+	address.sin_addr.s_addr = INADDR_ANY;
+	memset(address.sin_zero, '\0', sizeof address.sin_zero);
 	int addrlen = sizeof(address);
 
 	if (bind(_socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
@@ -30,12 +30,13 @@ Socket::Socket( int protocol )
 		perror("bind failed"); 
 		exit(1);
 	}
-	int cnListn;
-	if ((cnListn = listen(_socket_fd, 1)) < 0)
+
+	if (listen(_socket_fd, 1) < 0)
 	{
 		perror("In listen");
 		exit(1);
 	}
+	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
 	int cnAccept;
 	while (1)
 	{
@@ -44,20 +45,22 @@ Socket::Socket( int protocol )
 			perror("In accept");
 			exit(1);
 		}
-		_cnAccept = cnAccept;
 		char buffer[1024] = {0};
 
-		//int readsocket = read( cnListn, buffer, 1024 );
-		//std::cout <<  buffer << std::endl;
+		int readsocket = read( cnAccept, buffer, 1024 );
+		std::cout <<  buffer << std::endl;
 		
-		write( _cnAccept, "Malaoui's WebServer\n", 20 );
+		printf("%s\n",buffer );
+        write( cnAccept, hello, strlen(hello) );
+        printf("------------------Hello message sent-------------------\n");
+		
 
-		// if (readsocket < 0)
-		// {
-		// 	std::cout << "Nothing To read\n";
-		// }
-		//std::cout << 
-		close(_cnAccept);
+
+		if (readsocket < 0)
+		{
+			std::cout << "Nothing To read\n";
+		}
+		close(cnAccept);
 	}
 }
 

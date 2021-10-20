@@ -26,7 +26,6 @@ class Socket
 	private:
 		Socket( void );
 		int _socket_fd;
-		int _cnAccept;
 	
 };
 

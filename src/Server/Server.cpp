@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/20 18:38:06 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/20 18:38:37 by hmellahi         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Server.hpp"
 
 void	Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds)
@@ -100,3 +88,31 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 		}
 	}
 }
+
+// void	Server::server_loop()
+// {
+// 	//set of socket descriptors
+// 	fd_set				readfds;
+// 	std::vector<Socket> clients;
+// 	Socket				new_socket;
+// 	int					max_sd;
+
+// 	while(TRUE)
+// 	{
+// 		//clear the sockets set
+// 		FD_ZERO(&readfds);
+// 		// add all servers sockets to the sockets set  [readfds]
+// 		Server::addServers(serversSockets, max_sd, readfds);
+// 		// add child sockets to the sockets set
+// 		Server::addClients(clients, max_sd, readfds);
+// 		// wait for an activity on one of the client sockets , timeout is NULL ,
+// 		// so wait indefinitely
+// 		Server::waitingForConnections(activity, readfds);
+// 		// If something happened on the servers sockets ,
+// 		// then its an incoming connection
+// 		Server::acceptNewConnection(clients, serversSockets, address, addrlen, readfds);
+// 		// otherwise its some IO operation on some other socket
+// 		// recieve Client Request And Send Back A Response();
+// 		Server::RecvAndSend(clients, readfds, servers);
+// 	}
+// }

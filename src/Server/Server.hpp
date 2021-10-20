@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/20 18:43:00 by hmellahi         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include "macros.hpp"
@@ -32,16 +20,19 @@ private:
     struct sockaddr_in _address;
     int addrlen;
     int _port;
+    Config _config;
 
 public:
-    Server()
+    Server(){}
+    Server(Config config)
     {
-    } 
+        _config = config;
+    }
 
     ~Server()
     {
-        // for (int i = 0; i < _serverSocketsFd.size(); i++)
-        //     close(_serverSocketsFd[i]);
+        for (int i = 0; i < _serverSockets.size(); i++)
+            close(_serverSockets[i]);
     }
     
     static void	addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds);
@@ -50,15 +41,12 @@ public:
     static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
     static void	RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
 
-
-
-
     std::vector<Socket> getSockets()
     {
        return _serverSockets;
     }
     
-    void    addPort(int port)
+    Socket  addPort(int port)
     {
         // create new socket on the given port
         Socket new_socket(port);
@@ -66,6 +54,8 @@ public:
         _serverSockets.push_back(new_socket);
         // debugging
         std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
+        
+        return new_socket;
     }
 
     void    handleConnection(std::string requestBody, int client_fd)

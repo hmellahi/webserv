@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   macros.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/16 00:15:27 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 00:18:38 by hamza            ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 #include <sys/socket.h>
 #include <unistd.h>
@@ -32,6 +20,8 @@
 #include <ctime>
 #include <string>
 
+#define DEFAULT_CONFIG_PATH "src/Conf/default.conf";
+
 enum methods
 {
     GET,
@@ -43,6 +33,7 @@ enum file_status
 {
     IS_DIRECTORY
 };
+
 // {
 //     SUCCESS,
 //     CANT_OPEN_FILE,

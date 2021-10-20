@@ -1,53 +1,3 @@
-// /* ************************************************************************** */
-// /*                                                                            */
-// /*                                                        :::      ::::::::   */
-// /*   main.cpp                                           :+:      :+:    :+:   */
-// /*                                                    +:+ +:+         +:+     */
-// /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
-// /*                                                +#+#+#+#+#+   +#+           */
-// /*   Created: 2021/10/12 22:11:00 by hamza             #+#    #+#             */
-// /*   Updated: 2021/10/18 01:06:13 by hamza            ###   ########.fr       */
-// /*                                                                            */
-// /* ************************************************************************** */
-
-// // Server side C program to demonstrate HTTP Server programming
-// #include "Server.hpp"
-// #include "CGI.hpp"
-// #include "Config.hpp"
-
-
-// int main(int ac, char const *av[])
-// {
-//     (void)ac;
-//     // char path[] = "tests/index.php";
-//     // std::cout << CGI::exec_file(path);
-//     // Server nginx;
-//     // nginx.listen(atoi(av[1]));
-//     // nginx.start();
-//     // Get Server
-//     Config nginx;
-//     nginx._ports.push_back(atoi(av[1]));
-//     // Config apache;
-//     // apache._ports.push_back(atoi(av[1]) + 1);
-//     std::vector<Config> serversList;
-//     serversList.push_back(nginx);
-//     // serversList.push_back(apache);
-//     Config server;
-//     std::vector<int> ports;
-    
-//     // loop throught all Servers
-//     for (std::vector<Config>::iterator it = serversList.begin(); it != serversList.end(); it++)
-//     {
-//         server = *it;
-//         ports = server._ports;
-//         Server newServer;
-//         for (int i = 0; i < ports.size(); i++)
-//             newServer.listen(ports[i]);
-//         newServer.start();
-//     }
-//     return 0;
-// }
-
 //Example code: A simple server side code, which echos back the received message.
 //Handle multiple socket connections with select and fd_set on Linux
 #include <stdio.h>
@@ -63,6 +13,7 @@
 #include "Server.hpp"
 #include "CGI.hpp"
 #include "Config.hpp"
+#include "ParseConfig.hpp"
 #include "Socket.hpp"
 
 #define TRUE 1
@@ -70,41 +21,16 @@
 #define PORT 8888
 #define MAX_CLIENTS FD_SETSIZE
 
-
-int main(int argc , char *av[])
+void	server_loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)
 {
-	int opt = TRUE;
-	int  addrlen , activity, i , valread , sd;
-	std::vector<Socket> clients;
-	Socket new_socket;
-	int max_sd;
-	struct sockaddr_in address;
-		
-	char buffer[1025];
-
 	//set of socket descriptors
-	fd_set readfds;
-		
-	// Server	nginx;
-	// nginx.addPort(atoi(av[1]));
-	// nginx.addPort(atoi(av[1]) + 1);
+	fd_set				readfds;
+	std::vector<Socket> clients;
+	Socket				new_socket;
+	int					max_sd;
+	int  addrlen , activity;
+	struct sockaddr_in address;
 
-	// Server	apache;
-	// apache.addPort(atoi(av[1]) + 2);
-	// apache.addPort(atoi(av[1]) + 3);
-
-	// std::vector<Server> servers;
-	// servers.push_back(nginx);
-	// servers.push_back(apache);
-	// std::vector<Socket> serversSockets;
-	// std::vector<Socket> nginxFds = nginx.getSockets();
-	// std::vector<Socket> apacheFds = apache.getSockets();
-
-	// serversSockets.insert(serversSockets.begin(), nginxFds.begin(), nginxFds.end());
-	// serversSockets.insert(serversSockets.begin(), apacheFds.begin(), apacheFds.end());
-
-
-	//accept the incoming connection
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
 	while(TRUE)
@@ -125,5 +51,120 @@ int main(int argc , char *av[])
 		// recieve Client Request And Send Back A Response();
 		Server::RecvAndSend(clients, readfds, servers);
 	}
+}
+
+void read_config(ParseConfig &ParseConfig)
+{
+	std::vector<Config> servers = ParseConfig.getServers();
+	std::vector<Config>::iterator it;
+	std::map<std::string, Config>::iterator it_loc;
+	for (it = servers.begin(); it != servers.end(); it++)
+	{
+		std::cout << "-------------  Server Information    -------------\n";
+		std::cout <<"Root:" << it->getRoot() << std::endl;
+		std::cout <<"Server Name: ";
+		std::vector<std::string> server_names = it->get_server_name();
+		for (std::vector<std::string>::iterator sn = server_names.begin(); sn != server_names.end(); sn++)
+		{
+			std::cout  << *sn << " ";
+		}
+		std::cout << "\n";
+		std::cout <<"Max Body:" << it->get_client_max_body_size() << std::endl;
+		std::cout <<"Auto Index:" << it->get_isAutoIndexOn() << std::endl;
+		std::map<std::string, Config> loc = it->getLocation();
+		for (it_loc = loc.begin(); it_loc != loc.end(); it_loc++)
+		{
+			std::cout << "In locations: Root: " << it_loc->second.getRoot() << " || upload_path: " << it_loc->second.get_uploadPath() << std::endl;
+			std::cout <<"-----> Server Name: ";
+			std::vector<std::string> server_names = it_loc->second.get_server_name();
+			for (std::vector<std::string>::iterator sn = server_names.begin(); sn != server_names.end(); sn++)
+			{
+				std::cout  << *sn << " ";
+			}
+			std::cout << "\n";
+		}
+		std::cout << "------------- End Server Information -------------\n\n";
+
+	}
+}
+
+void	setup_servers(ParseConfig GlobalConfig)
+{
+	std::vector<Config> serversConfigs = GlobalConfig.getServers();
+	std::vector<Config>::iterator serverConfig;
+	std::vector<u_int32_t>::iterator port;
+	std::vector<Socket> serversSockets;
+	std::vector<Server> servers;
+	Socket new_socket;
+
+	for (serverConfig = serversConfigs.begin(); serverConfig != serversConfigs.end(); serverConfig++)
+	{
+		Server newServer(*serverConfig);
+
+		std::vector<u_int32_t> ports = serverConfig->get_listen();
+		for (port = ports.begin(); port != ports.end(); port++)
+		{
+			new_socket = newServer.addPort(*port);
+			serversSockets.push_back(new_socket);
+			std::cout << new_socket.getSocketFd() << std::endl;
+		}
+		servers.push_back(newServer);
+	}
+	server_loop(serversSockets, servers);
+}
+
+int main(int ac , char *av[])
+{
+	// try
+	// {
+	// 	if (ac <= 2)
+	// 	{
+	// 		const char * file;
+
+	// 		if (av[1])
+	// 			file = av[1];
+	// 		else
+	// 			file = DEFAULT_CONFIG_PATH;
+	// 		// 1 - first thing to do is parsing the config file
+	// 		ParseConfig GlobalConfig(file);
+	// 		// read_config(ParseCo nfig);
+	// 		start_servers(GlobalConfig);
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cerr << "Error: Wrong Number of Argument ." << std::endl;
+	// 		exit(EXIT_FAILURE);
+	// 	}
+	// }
+	// catch(const std::exception& e)
+	// {
+	// 	std::cerr << e.what() << '\n';
+	// }
+	// int  addrlen , activity ;
+	// struct sockaddr_in address;
+	// char buffer[1025];
+
+	Server	nginx;
+	nginx.addPort(atoi(av[1]));
+	nginx.addPort(atoi(av[1]) + 1);
+
+	Server	apache;
+	apache.addPort(atoi(av[1]) + 2);
+	apache.addPort(atoi(av[1]) + 3);
+
+	std::vector<Server> servers;
+	servers.push_back(nginx);
+	servers.push_back(apache);
+	std::vector<Socket> serversSockets;
+	std::vector<Socket> nginxFds = nginx.getSockets();
+	std::vector<Socket> apacheFds = apache.getSockets();	
+
+	serversSockets.insert(serversSockets.begin(), nginxFds.begin(), nginxFds.end());
+	serversSockets.insert(serversSockets.begin(), apacheFds.begin(), apacheFds.end());
+
+
+	//accept the incoming connection
+	// addrlen = sizeof(address);
+	server_loop(serversSockets, servers);
 	return 0;
 }

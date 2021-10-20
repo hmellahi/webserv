@@ -25,3 +25,31 @@ bool    util::is_number(std::string str)
 	}
 	return (true);
 }
+
+std::vector<std::string> util::split(const std::string& str, const std::string& delimiter) 
+{
+    std::vector<std::string> strings;
+
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = str.find(delimiter, prev)) != std::string::npos)
+    {
+        strings.push_back(str.substr(prev, pos - prev));
+        prev = pos + 1;
+    }
+    strings.push_back(str.substr(prev));
+    return strings;
+}
+
+bool util::is_valid_method(std::string method)
+{
+	if (method == "GET" || method == "POST" || method == "DELETE")
+		return (true);
+	return (false);
+}
+bool util::is_valid_version(std::string ver)
+{
+	if (ver == "HTTP/1.1")
+		return (true);
+	return (false);
+}

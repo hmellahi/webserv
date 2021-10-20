@@ -2,6 +2,8 @@
 #define UTILS_HPP
 
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -11,5 +13,8 @@ namespace util
     std::string rtrim(const std::string &s);
     std::string trim(const std::string &s);
     bool        is_number(std::string str);
+    bool is_valid_method(std::string method);
+    bool is_valid_version(std::string ver);
+    std::vector<std::string> split(const std::string& str, const std::string& delimiter);
 }
 #endif

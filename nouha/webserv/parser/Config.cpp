@@ -148,7 +148,7 @@ void Config::allow_methods(std::vector<std::string>::iterator &it)
 {
 	while (*it != ";")
 	{
-		if (*it == "GET" || *it == "POST" || *it == "PUT")
+		if (util::is_valid_method(*it))
 			_allowedMethods.push_back(*it);
 		else
 			throw std::runtime_error("Error: Invalid Method: "+ *it);

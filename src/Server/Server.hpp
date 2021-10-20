@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 16:14:21 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/19 03:06:53 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/20 18:43:00 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,10 +40,19 @@ public:
 
     ~Server()
     {
-        for (int i = 0; i < _serverSocketsFd.size(); i++)
-            close(_serverSocketsFd[i]);
+        // for (int i = 0; i < _serverSocketsFd.size(); i++)
+        //     close(_serverSocketsFd[i]);
     }
     
+    static void	addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds);
+    static void	waitingForConnections(int &activity, fd_set &readfds);
+    static void	addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds);
+    static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
+    static void	RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
+
+
+
+
     std::vector<Socket> getSockets()
     {
        return _serverSockets;
@@ -54,7 +63,7 @@ public:
         // create new socket on the given port
         Socket new_socket(port);
         // save socker fd
-        _serverSocketsFd.push_back(new_socket);
+        _serverSockets.push_back(new_socket);
         // debugging
         std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
     }
@@ -142,12 +151,12 @@ public:
     std::string     getErrorPageContent(int status_code)
     {
         // check if there is a custom error page
-        Config conf; // todo remove this
-        int status;
-        std::map<int, std::string> errorPages = conf.getCustomErrorPages();
-        std::string filename = errorPages[status_code];
-        if (!filename.empty())
-            return (FileSystem::readFile(filename, status));
+        // Config conf; // todo remove this
+        // int status;
+        // // std::map<int, std::string> errorPages = conf.get();
+        // std::string filename = errorPages[status_code];
+        // if (!filename.empty())
+        //     return (FileSystem::readFile(filename, status));
 
 		// otherwise craft one
 		std::string html;

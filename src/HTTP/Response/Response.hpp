@@ -6,13 +6,13 @@
 /*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/15 17:14:51 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 18:30:11 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/20 18:42:06 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include "Server.hpp"
-#include "MimeTypes.h"
+#include "MediaTypes.h"
 #include "str_utils.hpp"
 
 class Response
@@ -52,7 +52,7 @@ public:
         {
             extension = GetFileExtension(_headers["url"]);
             if (!extension.empty())
-                _headers["Content-Type"] = MimeTypes::getType(extension.c_str());
+                _headers["Content-Type"] = MediaTypes::getType(extension.c_str());
             else
                 _headers["Content-Type"] = "text/plain"; // todo fix seg
         }

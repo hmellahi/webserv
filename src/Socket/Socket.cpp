@@ -6,11 +6,30 @@
 /*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/18 02:04:00 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/18 21:51:25 by hmellahi         ###   ########.fr       */
+/*   Updated: 2021/10/20 15:49:10 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Socket.hpp"
+
+Socket::Socket()
+{
+
+}
+
+// Socket::Socket(int socket_fd)
+// {
+//     _socket_fd = socket_fd;
+// }
+// Socket::Socket(const Socket &src)
+// {
+//     _socket_fd = ;
+//     _port = src._port;
+//     _domain = src._domain;
+//     _type = src._type;
+//     _host = src._host;
+//     _protocol = src._protocol;
+// }
 
 Socket::Socket(int port, int host, int domain, int type, int protocol)
 {
@@ -58,9 +77,19 @@ void    Socket::testConnection(int connection_ret, std::string customErrMsg)
     }
 }
 
-int     Socket::acceptConnection(int socket, struct sockaddr_in address, int addrlen)
+Socket     Socket::acceptConnection(int socket, struct sockaddr_in address, int addrlen)
 {
-    int new_connection = accept(socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
+    Socket new_socket;
+    int new_connection;
+
+    new_connection = accept(socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
     testConnection(new_connection, "couldnt accept new connection");
-    return (new_connection);
+    
+    new_socket.setSocketFd(new_connection);
+    
+    return (new_socket);
 }
+
+// Getters
+int Socket::getSocketFd() const{ return _socket_fd; }
+void Socket::setSocketFd(int socket_fd){ _socket_fd = socket_fd;}

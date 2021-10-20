@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/16 21:38:31 by hmellahi          #+#    #+#             */
-/*   Updated: 2021/10/19 00:11:16 by hamza            ###   ########.fr       */
+/*   Updated: 2021/10/20 18:31:56 by hmellahi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,20 +54,20 @@ std::string     FileSystem::readFile(std::string filename, int &status)
 
 std::string FileSystem::getIndexFileContent(std::string directory, std::string & filename)
 {
-    Config conf;
-    std::vector<std::string> indexFiles = conf.getIndexFiles();
+    // Config conf;
+    // std::vector<std::string> indexFiles = conf.getIndexFiles();
 
     std::string content;
 
     int status = !HttpStatus::OK;
 
-    for (int i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
-    {
-        // std::cout << status << "|" << directory + indexFiles[i] << std::endl;
-        content = readFile(directory + indexFiles[i], status);
-        if (status == HttpStatus::OK)
-            filename = indexFiles[i];
-    }
+    // for (int i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
+    // {
+    //     // std::cout << status << "|" << directory + indexFiles[i] << std::endl;
+    //     content = readFile(directory + indexFiles[i], status);
+    //     if (status == HttpStatus::OK)
+    //         filename = indexFiles[i];
+    // }
     return content;
 }
 

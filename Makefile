@@ -6,7 +6,7 @@
 #    By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/20 18:41:12 by hmellahi         ###   ########.fr        #
+#    Updated: 2021/10/20 21:16:48 by hmellahi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -41,6 +41,7 @@ all: $(NAME)
 
 $(NAME): $(SRC)
 	$(CC) ${FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)
+	# rm -rf webserv*
 
 san : $(SRC)
 	$(CC) ${FLAGS} ${DEBUG_FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)

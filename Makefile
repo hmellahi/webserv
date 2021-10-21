@@ -1,12 +1,22 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/12 23:29:55 by hamza            ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+NAME = webserv
 
+SRC  = 	main_req.cpp				\
+		parser/ParseConfig.cpp		\
+		parser/Config.cpp			\
+		parser/Request.cpp			\
+		utils/Utils.cpp				\
+
+FLAGS = -std=c++98 #-Wall -Wextra -Werror 
+
+all : $(NAME)
+
+$(NAME) : ${SRC}
+	c++  -o $(NAME) ${SRC} ${FLAGS}
+
+clean :
+	/bin/rm -f $(OBJ)
+
+fclean : clean
+	/bin/rm -f $(NAME)
+
+re : fclean all

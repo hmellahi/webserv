@@ -4,7 +4,7 @@ Request::Request(void)
 {
 }
 
-Request::Request(std::string &buffer): _buffer(buffer), _status(0)
+Request::Request(std::string &buffer): _buffer(buffer), _status(HttpStatus::OK)
 {
 	this->parse();
 }
@@ -49,7 +49,7 @@ void Request::parse()
 		// std::cout << "|" << _content_body << "|" << std::endl;
 	}
 	else
-		_status = 400; // Bad request
+		_status = HttpStatus::BadRequest; // Bad request
 }
 
 void Request::ParseFirstLine(std::string line)
@@ -67,12 +67,12 @@ void Request::ParseFirstLine(std::string line)
 			parse_query(_query);
 		_http_version = tokens[2];
 		if (util::is_valid_method(_method) == false)
-			_status = 501; // server not support this method
+			_status = HttpStatus::NotImplemented; // server not support this method
 		else if (util::is_valid_version(_http_version) == false)
-			_status = 505; // HTTP VERSION NOT SUPPORTED
+			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else
-		_status = 400; // bad request
+		_status = HttpStatus::BadRequest; // bad request
 }
 
 void Request::parse_query(std::string &query)
@@ -112,7 +112,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		pos = lines[i].find(":");
 		if (pos == std::string::npos)
 		{
-			_status = 400;
+			_status = HttpStatus::BadRequest;
 			return ;
 		}
 		key = lines[i].substr(0, pos);
@@ -123,7 +123,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		// std::cout << lines[i] << std::endl;
 	}
 	if (_headers.find("Host") == _headers.end())
-		_status = 400;
+		_status = HttpStatus::BadRequest;
 }
 
 void Request::ParseBody(std::string &buffer)

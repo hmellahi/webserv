@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstring>
 #include "../utils/Utils.hpp"
-
+#include "../Config/macros.hpp"
 class Request
 {
 	public:

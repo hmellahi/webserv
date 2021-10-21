@@ -1,5 +1,22 @@
 #include "Socket.hpp"
 
+#include<fstream>
+#include<sstream>
+
+
+std::string	handle_requests( void )
+{
+	std::ifstream f("index.html"); //taking file as inputstream
+	std::string str;
+	
+	if(f) {
+		std::ostringstream ss;
+		ss << f.rdbuf(); // reading data
+		str = ss.str();
+	}
+	std::cout << str << std::endl;
+	return str;
+}
 
 Socket::Socket( int protocol )
 {
@@ -36,8 +53,13 @@ Socket::Socket( int protocol )
 		perror("In listen");
 		exit(1);
 	}
-	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
+	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 12\n\nHello world!";
 	int cnAccept;
+
+	std::string index_html;
+	std::string res;
+
+
 	while (1)
 	{
 		if ((cnAccept = accept(_socket_fd,(struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0)
@@ -51,16 +73,23 @@ Socket::Socket( int protocol )
 		std::cout <<  buffer << std::endl;
 		
 		printf("%s\n",buffer );
-        write( cnAccept, hello, strlen(hello) );
-        printf("------------------Hello message sent-------------------\n");
-		
-
+        //write( cnAccept, hello, strlen(hello) );
+        //printf("------------------Hello message sent-------------------\n");
+		index_html = handle_requests();
+		res = "200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: ";
+		res +=  std::to_string( 72 + index_html.length() + 2) + "\n\n";
+		res += index_html;
+		std::cout << res << std::endl;
+	
+		write( cnAccept, (void *)&res, res.length());
+		//index_html = handle_requests();
 
 		if (readsocket < 0)
 		{
 			std::cout << "Nothing To read\n";
 		}
 		close(cnAccept);
+		//exit(0);
 	}
 }
 

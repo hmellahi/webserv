@@ -10,6 +10,7 @@
 #include "ParseConfig.hpp"
 
 class Server;
+class Response;
 
 typedef void  (Server::*methodType)(Request, Response);
 
@@ -53,7 +54,7 @@ public:
     int     getMethodIndex(std::string method_name);
     // ----------------------------------------------------- //
 
-    std::string     getErrorPageContent(int status_code);
+    static std::string     getErrorPageContent(int status_code, Config _serverConfig);
 
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();

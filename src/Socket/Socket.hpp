@@ -14,7 +14,7 @@ private:
     int _protocol;
 
     void    init_address();
-    void    setup_socket();
+    void    create_socket();
 
 public:
     // constructors

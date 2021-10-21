@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hmellahi <hmellahi@student.42.fr>          +#+  +:+       +#+         #
+#    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/20 21:16:48 by hmellahi         ###   ########.fr        #
+#    Updated: 2021/10/20 23:06:16 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ RESPONSE	= Response.cpp
 SOCKET		= Socket.cpp
 CGI			= CGI.cpp
 SERVER		= Server.cpp
-UTILS		= MediaTypes/MediaTypes.cpp str_utils.cpp FileSystem/FileSystem.cpp utils.cpp
+UTILS		= MediaTypes/MediaTypes.cpp FileSystem/FileSystem.cpp Utils.cpp
 PARSER		= Config/Config.cpp    ParseConfig/ParseConfig.cpp
 
 DEBUG_FLAGS = -fsanitize=address -g

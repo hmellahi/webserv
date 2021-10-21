@@ -12,8 +12,8 @@ Server::Server(Config config)
 
 Server::~Server()
 {
-	for (int i = 0; i < _serverSockets.size(); i++)
-		close(_serverSockets[i]);
+	// for (int i = 0; i < _serverSockets.size(); i++)
+	// 	close(_serverSockets[i]);
 }
 
 void	Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds)
@@ -36,10 +36,7 @@ void	Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfd
 void	Server::waitingForConnections(int &activity, fd_set &readfds)
 {
 	activity = select(FD_SETSIZE , &readfds , NULL , NULL , NULL);
-	if ((activity < 0) && (errno!=EINTR)) // todo remove checking errno is forbidden?
-	{
-		printf("select error");
-	}
+	Socket::testConnection(activity, "select error");
 }
 
 void	Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
@@ -56,7 +53,6 @@ void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 	int socketDescriptor;
 	Socket new_socket;
 
-	std::cout << "wsupp" << std::endl;
 	for (int i = 0; i < serversSockets.size(); i++)
 	{
 		socketDescriptor = serversSockets[i];
@@ -76,7 +72,6 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 	char requestBody[1025];
 	int valread;
 
-	std::cout << "wsupp" << std::endl;
 	for (int i = 0; i < clients.size(); i++)
 	{
 		sd = clients[i];	
@@ -87,9 +82,9 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 			{
 				//Somebody disconnected
 				//Close the socket and mark as 0 in list for reuse
-				close( sd );
-				clients.erase(clients.begin() + i);
-				FD_CLR(sd, &readfds);
+				// close( sd );
+				// clients.erase(clients.begin() + i);
+				// FD_CLR(sd, &readfds);
 			}
 			// otherwise handle the request
 			else
@@ -98,6 +93,9 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 				// of the data we will read
 				requestBody[valread] = '\0';
 				servers[0].handleConnection(requestBody, sd);
+				// sd = -1;
+    			// char hello[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
+				// write(sd, hello, strlen(hello));
 				close(sd);
 				clients.erase(clients.begin() + i);
 				FD_CLR(sd, &readfds);
@@ -153,9 +151,15 @@ Socket  Server::addPort(int port)
 
 void    Server::handleConnection(std::string requestBody, int client_fd)
 {
+	// std::cout <<  requestBody << std::endl;
 	Request req(requestBody);
-	Response res(req, client_fd);
-	(this->*getMethodHandler(getMethodIndex(req.getHeader("method"))))(req, res);
+	// Check if the request body is valid
+	int isRequestValid = req.get_status() == HttpStatus::OK;
+	// if its nt then show the appropriate error page
+	Response res(req, client_fd, _config);
+	// if (!isRequestValid)
+		// return res.send(req.get_status());
+	(this->*getMethodHandler(getMethodIndex(req.get_method())))(req, res);
 }
 
 methodType    Server::getMethodHandler(int methodIndex)
@@ -174,84 +178,87 @@ void    Server::getHandler(Request req, Response res)
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	// otherwise jst read it
-	std::string fileExtension = GetFileExtension(req.getHeader("url"));
-	if (fileExtension == "php")
-		return res.send(HttpStatus::OK, CGI::exec_file(req.getHeader("url").c_str()));
-	// todo
-	// check if the path is a directory
-	// if so then check if there is any default pages (index.html index ect..)
+	// std::string fileExtension = util::GetFileExtension(req.getHeader("url"));
+	// if (fileExtension == "php")
+	// 	return res.send(HttpStatus::OK, CGI::exec_file(req.getHeader("url").c_str()));
 	// otherwise if autoindex is On list directory files
-	// otherwise show error page
-	int status; // this will be filled by file status after passing it to readFile()
-	std::string buffer = FileSystem::readFile(req.getHeader("url"), status);
-	
+	// else show error page
+	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());
+    // std::cout << status << std::endl;
+	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{
-		// check if one of the index files exists
-		std::string fileName;
-		std::string indexFileContent = FileSystem::getIndexFileContent(req.getHeader("url"), fileName);
-		if (!indexFileContent.empty())
+		// if so then check if there is any default pages (index.html index ect..)
+		std::string fileName = FileSystem::getIndexFile(req.getHeader("url"), _config.get_index());
+		if (!fileName.empty())
 		{
 			res.setHeader("url", req.getHeader("url") + fileName);
-			return res.send(HttpStatus::OK, indexFileContent);
+			return res.send(HttpStatus::OK, fileName);
 		}
 		// otherwise
 		// check if autoindex is on
 		else
 		{
 			// if so then list all files in the current directory [soon]
-			// if (Config::isAutoIndexOn())
+			// if (_config.get_isAutoIndexOn())
 			if (false)
 			{
 				// SOON
 			}
 			// otherwise show permission denied page
 			else
-				return res.send(HttpStatus::Forbidden, getErrorPageContent(HttpStatus::Forbidden), true);
+				return res.send(HttpStatus::Forbidden);
 		}
 	}
 	else if (status != HttpStatus::OK)
-		return res.send(status, getErrorPageContent(status), true);
-	
-	return res.send(HttpStatus::OK, buffer);
+		return res.send(status);
+	return res.send(HttpStatus::OK, res.getHeader("url"));
 }
 
 void    Server::postHandler(Request req, Response res)
 {
 		// todo
+	res.send(HttpStatus::NotImplemented);
 }
 
 void    Server::deleteHandler(Request req, Response res)
 {
 		// todo
+	res.send(HttpStatus::NotImplemented);
 }
 
 void    Server::methodNotFoundHandler(Request req, Response res)
 {
-	// todo
+	res.send(HttpStatus::NotImplemented);
 }
 
-std::string     Server::getErrorPageContent(int status_code)
+std::string     Server::getErrorPageContent(int status_code, Config _serverConfig)
 {
 	// check if there is a custom error page // todo
-	// Config conf; // todo remove this
-	// int status;
-	// // std::map<int, std::string> errorPages = conf.get();
-	// std::string filename = errorPages[status_code];
-	// if (!filename.empty())
-	//     return (FileSystem::readFile(filename, status));
-
+	std::map<int, std::string> errorPages = _serverConfig.get_error_pages();
+	std::map<int, std::string>::iterator it;
+	it = errorPages.find(status_code);
+	int status;
+	if (it != errorPages.end())
+	{
+		try {
+			std::string filename = it->second;
+	    	return (FileSystem::readFile(filename, status));
+		}
+		catch (const std::exception)
+		{
+			// todo 
+		}
+	}
 	// otherwise craft one
-	std::string html;
 	std::string reponseMsg = std::to_string(status_code) + " " + HttpStatus::reasonPhrase(status_code);
-	html = "<html>"
-			"<head><title>" + reponseMsg +"</title></head>"
-			"<body>"
-			"<center><h1>" + reponseMsg + "</h1></center>"
-			"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
-			"</body>"
-			"</html>";
-	std::cout << html <<std::endl;
+	std::string  html = "<html>"
+						"<head><title>" + reponseMsg +"</title></head>"
+						"<body>"
+						"<center><h1>" + reponseMsg + "</h1></center>"
+						"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
+						"</body>"
+						"</html>";
 	return (html);
 }
 
@@ -271,10 +278,14 @@ void	Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 	//set of socket descriptors
 	fd_set				readfds;
 	std::vector<Socket> clients;
-	Socket				new_socket;
+	// Socket				new_socket;
 	int					max_sd;
 	int  addrlen , activity;
 	struct sockaddr_in address;
+
+	// std::cout << "after " << &serversSockets << std::endl;
+	// std::cout << servers.size() << std::endl;
+	// std::cout << serversSockets.size() << std::endl;
 
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
@@ -317,7 +328,6 @@ void	Server::setup(ParseConfig GlobalConfig)
 		{
 			new_socket = newServer.addPort(*port);
 			serversSockets.push_back(new_socket);
-			std::cout << *port << std::endl;
 		}
 		servers.push_back(newServer);
 	}

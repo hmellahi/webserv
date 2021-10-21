@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include "macros.hpp"
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -16,5 +17,9 @@ namespace util
     bool is_valid_method(std::string method);
     bool is_valid_version(std::string ver);
     std::vector<std::string> split(const std::string& str, const std::string& delimiter);
+    
+    std::string     getCurrentDate();
+    std::string     GetFileExtension(const std::string& fileName);
+    int             getFileLength(const std::string& fileName);
 }
 #endif

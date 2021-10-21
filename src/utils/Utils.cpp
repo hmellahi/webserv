@@ -53,3 +53,44 @@ bool util::is_valid_version(std::string ver)
 		return (true);
 	return (false);
 }
+
+// get current date and time
+//output ex : Sun, 17 Oct 2021 23:38:35 GMT
+std::string util::getCurrentDate()
+{
+	// current date/time based on current system
+	char outstr[200] = {0};
+	time_t t;
+	struct tm *tmp;
+	const char* fmt = "%a, %d %b %Y %T GMT"; // https://www.cplusplus.com/reference/ctime/strftime/
+
+	t = time(NULL);
+	tmp = gmtime(&t);
+	if (tmp == NULL) {
+		perror("gmtime error");
+		exit(EXIT_FAILURE);
+	}
+
+	if (strftime(outstr, sizeof(outstr), fmt, tmp) == 0) { 
+		fprintf(stderr, "strftime returned 0");
+		exit(EXIT_FAILURE); 
+	} 
+   return (outstr);
+}
+
+std::string util::GetFileExtension(const std::string& fileName)
+{
+	if(fileName.find_last_of(".") != std::string::npos)
+		return fileName.substr(fileName.find_last_of(".") + 1);
+	return "";
+}
+
+int util::getFileLength(const std::string& filename)
+{
+	struct stat info;
+
+    stat(filename.c_str(), &info);
+    off_t fileLength = info.st_size;
+
+	return fileLength;
+}

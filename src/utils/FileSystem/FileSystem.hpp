@@ -2,10 +2,10 @@
 #include "macros.hpp"
 #include <vector>
 
-class FileSystem
+namespace FileSystem
 {
-public:
-    static std::string  readFile(std::string filename, int &status);
-    static std::string  openFile(std::string filename, int &status);
-    static std::string  getIndexFileContent(std::string directory, std::string & filename);
+    std::string  readFile(std::string filename, int &status);
+    std::string  openFile(std::string filename, int &status);
+    std::string  getIndexFile(const std::string & path, const std::vector<std::string> &indexFiles);
+    int          getFileStatus(std::string filename);
 };

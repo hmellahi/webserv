@@ -53,7 +53,7 @@ Socket::Socket( int protocol )
 		perror("In listen");
 		exit(1);
 	}
-	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 12\n\nHello world!";
+	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html\n\nHello world!";
 	int cnAccept;
 
 	std::string index_html;
@@ -76,14 +76,17 @@ Socket::Socket( int protocol )
         //write( cnAccept, hello, strlen(hello) );
         //printf("------------------Hello message sent-------------------\n");
 		index_html = handle_requests();
-		res = "200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: ";
-		res +=  std::to_string( 72 + index_html.length() + 2) + "\n\n";
+		res = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+		// Content lenght represents only in this case index.html length
+		
+		res += std::to_string( index_html.length() ) + "\r\n\r\n";
+		
 		res += index_html;
 		std::cout << res << std::endl;
 	
-		write( cnAccept, (void *)&res, res.length());
+		write( cnAccept, res.c_str(), res.length() + 1);
 		//index_html = handle_requests();
-
+		//send( cnAccept, res.c_str(), res.length() + 1, 0);
 		if (readsocket < 0)
 		{
 			std::cout << "Nothing To read\n";

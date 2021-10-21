@@ -1,4 +1,6 @@
 #include "Webserv.hpp"
+#include "Indexing/Indexing.hpp"
+#include <fstream>
 
 void read_config(ParseConfig &ParseConfig)
 {
@@ -41,14 +43,24 @@ int main(int argc, char *argv[])
 	{
 		if (argc <= 2)
 		{
-			const char * file;
+			// const char * file;
 
-			if (argv[1])
-				file = argv[1];
-			else
-				file = DEFAULTFILE;
-			ParseConfig ParseConfig(file);
-			read_config(ParseConfig);
+			// if (argv[1])
+			// 	file = argv[1];
+			// else
+			// 	file = DEFAULTFILE;
+			// ParseConfig ParseConfig(file);
+			// read_config(ParseConfig);
+			// here lets make a page for autoindex if its on and not found an index
+			// 
+			std::ofstream myfile;
+			myfile.open ("autoindex.html");
+
+			Indexing indexing("html/");
+
+			myfile << indexing.getBody();
+
+			myfile.close();
 		}
 		else
 		{

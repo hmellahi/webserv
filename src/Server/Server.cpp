@@ -189,10 +189,11 @@ void    Server::getHandler(Request req, Response res)
 	if (status == IS_DIRECTORY)
 	{
 		// if so then check if there is any default pages (index.html index ect..)
-		std::string fileName = FileSystem::getIndexFile(req.getHeader("url"), _config.get_index());
+		// std::cout << req.getHeader("url")
+		std::string fileName = FileSystem::getIndexFile(res.getHeader("url"), _config.get_index());
 		if (!fileName.empty())
 		{
-			res.setHeader("url", req.getHeader("url") + fileName);
+			fileName = res.getHeader("url") + fileName;
 			return res.send(HttpStatus::OK, fileName);
 		}
 		// otherwise
@@ -243,7 +244,8 @@ std::string     Server::getErrorPageContent(int status_code, Config _serverConfi
 	{
 		try {
 			std::string filename = it->second;
-	    	return (FileSystem::readFile(filename, status));
+			// will be changed to the config file path
+	    	return (FileSystem::readFile("src/Conf/" + filename, status));
 		}
 		catch (const std::exception)
 		{

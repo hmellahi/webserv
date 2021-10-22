@@ -48,6 +48,7 @@ void    Response::send( int statusCode, std::string filename)
         << "Content-Length: " << fileLength << "\r\n"
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
+        << "Server: " << _serverConfig.get_server_name()[0] << "\r\n"
         << "\r\n";
     
 	// std::cout <<  msg.str() << std::endl; // debug

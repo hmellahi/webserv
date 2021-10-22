@@ -49,7 +49,7 @@ void    Socket::create_socket()
     
     //bind the socket to the giving port
     int connection = bind(_socket_fd, (struct sockaddr *)&_address, addrlen);
-    testConnection(connection, "the port is already in Use...");
+    testConnection(connection, "the port is already in Use..." + std::to_string(_port));
 
     //  specify maximum of 10 pending connections for this socket
     connection = listen(_socket_fd, 10);

@@ -39,11 +39,12 @@ public:
     static void	waitingForConnections(int &activity, fd_set &readfds);
     static void	addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds);
     static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
-    static void	RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
+    static void     RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
+    static void     handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers);
     // ----------------------------------------------------- //
 
     Socket  addPort(int port);
-    void    handleConnection(std::string requestBody, int client_fd);
+    void    handleRequest(Request req, int client_fd);
 
     // --------- Methods Handlers ------------------------- //
     methodType    getMethodHandler(int methodIndex);
@@ -58,5 +59,6 @@ public:
 
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();
+    std::vector<std::string>  getServerNames() const;
     // ----------------------------------------------------- //
 };

@@ -5,16 +5,16 @@ void Config::init_map_attr()
 {
 	attributes["root"] = &Config::root;
 	attributes["page_error"] = &Config::page_error;
+	attributes["index"] = &Config::index;
 	attributes["client_max_body_size"] = &Config::client_max_body_size;
 	attributes["auto_index"] = &Config::isAutoIndexOn;
+	attributes["listen"] = &Config::listen;
+	attributes["server_name"] = &Config::server_name;
 	attributes["redirection"] = &Config::redirectionPath;
 	attributes["allow_methods"] = &Config::allow_methods;
 	attributes["upload_path"] = &Config::upload_path;
 	attributes["cgi"] = &Config::cgi;
-	attributes["server_name"] = &Config::server_name;
-	attributes["listen"] = &Config::listen;
 	attributes["location"] = &Config::locations;
-	attributes["index"] = &Config::index;
 }
 
 std::map<std::string, void (Config::*)(std::vector<std::string>::iterator &)> attribute_locations;

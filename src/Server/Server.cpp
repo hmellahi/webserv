@@ -41,10 +41,11 @@ void	Server::waitingForConnections(int &activity, fd_set &readfds)
 
 void	Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
 {
-	for (int i = 0; i < sockets.size(); i++)
-		FD_SET(sockets[i], &readfds);
+	std::vector<Socket>::iterator it = sockets.begin();
+	for (it = sockets.begin(); it != sockets.end(); it++)
+		FD_SET(*it, &readfds);
 	// reset max_sd
-	max_sd = sockets[sockets.size() - 1];
+	max_sd = *it - 1;
 }
 
 void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets,
@@ -52,10 +53,11 @@ void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 {
 	int socketDescriptor;
 	Socket new_socket;
+	std::vector<Socket>::iterator it = serversSockets.begin();
 
-	for (int i = 0; i < serversSockets.size(); i++)
+	for (it = serversSockets.begin(); it != serversSockets.end(); it++)
 	{
-		socketDescriptor = serversSockets[i];
+		socketDescriptor = *it;
 		if (FD_ISSET(socketDescriptor, &readfds))
 		{
 			new_socket = Socket::acceptConnection(socketDescriptor, address, addrlen);
@@ -64,6 +66,39 @@ void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 				clients.push_back(new_socket);
 		}
 	}
+}
+
+std::vector<std::string>    Server::getServerNames() const {
+	return _config.get_server_name();
+}
+
+void    Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
+{
+	// parse request body and create new request object
+	Request req(requestBody);
+	// Check if the request body is valid
+	int isRequestValid = req.get_status() == HttpStatus::OK;
+	// if its nt then show the appropriate error page
+	// if (!isRequestValid)
+		// return res.send(req.get_status());
+	// Loop throught all servers
+	// And 
+	std::vector<Server>::iterator server;
+	for (server = servers.begin(); server != servers.end(); server++)
+	{
+		std::vector<std::string> server_names = server->getServerNames();
+		std::vector<std::string>::iterator server_name;
+		for (server_name = server_names.begin(); server_name != server_names.end(); server_name++)
+		{
+			std::string host = util::split(req.getHeader("Host"), ":")[0];
+			std::cout << "host: " << host << std::endl;
+			std::cout << "server_name: " << *server_name << std::endl;
+			// std::string = *server_name + ":" + std::to_string(server.get_port());
+			if (*server_name == host	)
+				return server->handleRequest(req, client_fd);
+		}
+	}
+	return (servers[0].handleRequest(req, client_fd));
 }
 
 void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers)
@@ -90,12 +125,11 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 			else
 			{
 				//set the string terminating NULL byte on the end
-				// of the data we will read
 				requestBody[valread] = '\0';
-				servers[0].handleConnection(requestBody, sd);
-				// sd = -1;
-    			// char hello[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-				// write(sd, hello, strlen(hello));
+				std::string requestBodyStr = requestBody;
+				// handle connection
+				handleConnection(requestBodyStr, sd, servers);
+				// Close the socket and remove the client from client list
 				close(sd);
 				clients.erase(clients.begin() + i);
 				FD_CLR(sd, &readfds);
@@ -103,34 +137,6 @@ void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::ve
 		}
 	}
 }
-
-// void	Server::loop()
-// {
-// 	//set of socket descriptors
-// 	fd_set				readfds;
-// 	std::vector<Socket> clients;
-// 	Socket				new_socket;
-// 	int					max_sd;
-
-// 	while(TRUE)
-// 	{
-// 		//clear the sockets set
-// 		FD_ZERO(&readfds);
-// 		// add all servers sockets to the sockets set  [readfds]
-// 		Server::addServers(serversSockets, max_sd, readfds);
-// 		// add child sockets to the sockets set
-// 		Server::addClients(clients, max_sd, readfds);
-// 		// wait for an activity on one of the client sockets , timeout is NULL ,
-// 		// so wait indefinitely
-// 		Server::waitingForConnections(activity, readfds);
-// 		// If something happened on the servers sockets ,
-// 		// then its an incoming connection
-// 		Server::acceptNewConnection(clients, serversSockets, address, addrlen, readfds);
-// 		// otherwise its some IO operation on some other socket
-// 		// recieve Client Request And Send Back A Response();
-// 		Server::RecvAndSend(clients, readfds, servers);
-// 	}
-// }
 
 std::vector<Socket> Server::getSockets()
 {
@@ -145,14 +151,11 @@ Socket  Server::addPort(int port)
 	_serverSockets.push_back(new_socket);
 	// debugging
 	std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
-	
 	return new_socket;
 }
 
-void    Server::handleConnection(std::string requestBody, int client_fd)
+void    Server::handleRequest(Request req, int client_fd)
 {
-	// std::cout <<  requestBody << std::endl;
-	Request req(requestBody);
 	// Check if the request body is valid
 	int isRequestValid = req.get_status() == HttpStatus::OK;
 	// if its nt then show the appropriate error page
@@ -185,7 +188,7 @@ void    Server::getHandler(Request req, Response res)
 	// else show error page
 	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());
     // std::cout << status << std::endl;
-	// check the file requested is a directory
+	// check the file requested is a directoxry
 	if (status == IS_DIRECTORY)
 	{
 		// if so then check if there is any default pages (index.html index ect..)
@@ -244,7 +247,7 @@ std::string     Server::getErrorPageContent(int status_code, Config _serverConfi
 	{
 		try {
 			std::string filename = it->second;
-			// will be changed to the config file path
+			// will be changed to the server root path
 	    	return (FileSystem::readFile("src/Conf/" + filename, status));
 		}
 		catch (const std::exception)
@@ -319,6 +322,8 @@ void	Server::setup(ParseConfig GlobalConfig)
 	std::vector<u_int32_t>::iterator port;
 	std::vector<Socket> serversSockets;
 	std::vector<Server> servers;
+	std::set<u_int32_t> usedPorts;
+	std::vector<u_int32_t> socets;
 	Socket new_socket;
 
 	for (serverConfig = serversConfigs.begin(); serverConfig != serversConfigs.end(); serverConfig++)
@@ -328,8 +333,12 @@ void	Server::setup(ParseConfig GlobalConfig)
 		std::vector<u_int32_t> ports = serverConfig->get_listen();
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
-			new_socket = newServer.addPort(*port);
-			serversSockets.push_back(new_socket);
+			if (usedPorts.find(*port) == usedPorts.end())
+			{
+				new_socket = newServer.addPort(*port);
+				serversSockets.push_back(new_socket);
+				usedPorts.insert(*port);
+			}
 		}
 		servers.push_back(newServer);
 	}

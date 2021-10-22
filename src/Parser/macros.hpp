@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <set>
 #include <fstream>
 #include <fcntl.h>
 #include <ctime>

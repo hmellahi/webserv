@@ -71,6 +71,7 @@
     "stack": "cpp",
     "__hash_table": "cpp",
     "complex": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "set": "cpp"
   }
 }

@@ -19,7 +19,8 @@ Response::Response()
 Response::Response(const Response& src)
 {
     _headers = src.getHeaders();
-    // _serverConfig = src.getConfig();
+    _client_fd = src.getClientFd();
+    _serverConfig = src.getServerConfig();
 }
 
 void    Response::send( int statusCode)
@@ -120,4 +121,14 @@ void Response::setHeader(std::string header_name, std::string value)
 std::map<std::string, std::string> Response::getHeaders() const
 {
     return _headers;
+}
+
+int  Response::getClientFd() const
+{
+    return _client_fd;
+}
+
+Config  Response::getServerConfig() const
+{
+    return _serverConfig;
 }

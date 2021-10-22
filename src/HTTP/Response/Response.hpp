@@ -7,14 +7,12 @@ class Response
 {
 private:
     int _method;
-    int _client_fd;
-    std::string _path;
     Config _serverConfig;
-    std::string _contentType;
     std::map<std::string, std::string> _headers;
 
 public:
     Response();
+    int _client_fd;
     Response(const Response& src);
     Response(Request req, int client_fd, Config serverConfig );
      
@@ -26,5 +24,7 @@ public:
 
     std::string getHeader(std::string header_name); // todo mark const
     std::map<std::string, std::string>  getHeaders() const;
+    int     getClientFd() const;
+    Config  getServerConfig() const;
     void setHeader(std::string header_name, std::string value);
 };

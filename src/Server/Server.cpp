@@ -125,7 +125,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// Somebody disconnected
 				std::cout << "Connection closed" << std::endl;
 				// Close the socket and mark as 0 in list for reuse
-				// closeConnection(clients, readfds, i, sd);
+				closeConnection(clients, readfds, i, sd);
 			}
 			// otherwise handle the request
 			else
@@ -135,12 +135,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// convert requestBody to a string
 				std::string requestBodyStr = requestBody;
 				// handle connection and store response
+				std::cout << "new Connection" << std::endl;
 				res = handleConnection(requestBodyStr, sd, servers);
 				// if (res.getHeader("Connection") == "close")
 				closeConnection(clients, readfds, i, sd);
-				// close(sd);
-				// clients.erase(clients.begin() + i);
-				// FD_CLR(sd, &readfds);
 			}
 		}
 	}
@@ -252,11 +250,11 @@ void Server::methodNotFoundHandler(Request req, Response res)
 
 std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 {
-	// check if there is a custom error page // todo
 	std::map<int, std::string> errorPages = _serverConfig.get_error_pages();
 	std::map<int, std::string>::iterator it;
 	it = errorPages.find(status_code);
 	int status;
+	// check if there is a custom error page
 	if (it != errorPages.end())
 	{
 		try
@@ -267,21 +265,18 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		}
 		catch (const std::exception)
 		{
-			// todo
 		}
 	}
-	// otherwise craft one
-	std::string reponseMsg = std::to_string(status_code) + " " + HttpStatus::reasonPhrase(status_code);
-	std::string html = "<html>"
-					   "<head><title>" +
-					   reponseMsg + "</title></head>"
-									"<body>"
-									"<center><h1>" +
-					   reponseMsg + "</h1></center>"
-									"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
-									"</body>"
-									"</html>";
-	return (html);
+	// otherwise make one
+	std::ostringstream html;
+	html<< "<html><head><title>" << status_code 
+		<< " " << HttpStatus::reasonPhrase(status_code)
+		<<  "</title></head><body><center><h1>"
+		<< status_code 
+		<< " " << HttpStatus::reasonPhrase(status_code)
+		<< "</h1></center><hr><center>Web server"
+		<< "dyal lay7sn l3wan/1.18.0 (Ubuntu)</center></body></html>";
+	return (html.str());
 }
 
 int Server::getMethodIndex(std::string method_name)
@@ -349,12 +344,12 @@ void Server::setup(ParseConfig GlobalConfig)
 		std::vector<u_int32_t> ports = serverConfig->get_listen();
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
-			if (usedPorts.find(*port) == usedPorts.end())
-			{
+			// if (usedPorts.find(*port) == usedPorts.end())
+			// {
 				new_socket = newServer.addPort(*port);
 				serversSockets.push_back(new_socket);
-				usedPorts.insert(*port);
-			}
+				// usedPorts.insert(*port);
+			// }
 		}
 		servers.push_back(newServer);
 	}

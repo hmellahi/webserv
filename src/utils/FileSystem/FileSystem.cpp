@@ -5,7 +5,7 @@ std::string     FileSystem::readFile(std::string filename, int &status)
 {
     if (getFileStatus(filename) != HttpStatus::OK)
         throw std::runtime_error("invalid file");
-    std::ifstream  file(filename);
+    std::ifstream  file(filename.c_str());
     int fd = open(filename.c_str(), O_RDONLY);
     char buffer[20000] = {0};
     int ret = read(fd, buffer, 3000);

@@ -14,7 +14,8 @@ private:
     std::map<std::string, std::string> _headers;
 
 public:
-
+    Response();
+    Response(const Response& src);
     Response(Request req, int client_fd, Config serverConfig );
      
     void    send( int statusCode);
@@ -23,6 +24,7 @@ public:
     int     sendRaw(int fd, const void *buf, int buflen);
     void    readRaw(std::string buffer, int FileLength);
 
-    std::string getHeader(std::string header_name);
+    std::string getHeader(std::string header_name); // todo mark const
+    std::map<std::string, std::string>  getHeaders() const;
     void setHeader(std::string header_name, std::string value);
 };

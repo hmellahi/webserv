@@ -35,16 +35,17 @@ public:
     // ----------------------------------------------------- //
     static void setup(ParseConfig GlobalConfig);
     static void	loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers);
+    static void	closeConnection(std::vector<Socket> &clients, fd_set &readfds, int clientIndex, int sd);
     static void	addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds);
     static void	waitingForConnections(int &activity, fd_set &readfds);
     static void	addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds);
     static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
     static void     RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
-    static void     handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers);
+    static Response     handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers);
     // ----------------------------------------------------- //
 
     Socket  addPort(int port);
-    void    handleRequest(Request req, int client_fd);
+    Response    handleRequest(Request req, int client_fd);
 
     // --------- Methods Handlers ------------------------- //
     methodType    getMethodHandler(int methodIndex);

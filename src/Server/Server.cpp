@@ -1,7 +1,6 @@
 #include "Server.hpp"
 
-Server::Server()
-{
+Server::Server(){
 
 };
 
@@ -16,40 +15,42 @@ Server::~Server()
 	// 	close(_serverSockets[i]);
 }
 
-void	Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds)
+void Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfds)
 {
-	int	fd;
-	//add child sockets to set
-	for (int i = 0 ; i < clients.size() ; i++)
+	int fd;
+	// add child sockets to set
+	for (int i = 0; i < clients.size(); i++)
 	{
-		//socket descriptor
+		// socket descriptor
 		fd = clients[i];
-		//if valid socket descriptor then add to read list
-		if(fd > 0)
-			FD_SET( fd , &readfds);
-		//highest file descriptor number, need it for the select function
-		if(fd > max_fd)
+		// if valid socket descriptor then add to read list
+		if (fd > 0)
+			FD_SET(fd, &readfds);
+		// highest file descriptor number, need it for the select function
+		if (fd > max_fd)
 			max_fd = fd;
 	}
 }
 
-void	Server::waitingForConnections(int &activity, fd_set &readfds)
+void Server::waitingForConnections(int &activity, fd_set &readfds)
 {
-	activity = select(FD_SETSIZE , &readfds , NULL , NULL , NULL);
+	activity = select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
 	Socket::testConnection(activity, "select error");
 }
 
-void	Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
+void Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
 {
 	std::vector<Socket>::iterator it = sockets.begin();
 	for (it = sockets.begin(); it != sockets.end(); it++)
+	{
 		FD_SET(*it, &readfds);
-	// reset max_sd
-	max_sd = *it - 1;
+		if (*it > max_sd)
+			max_sd = *it;
+	}
 }
 
-void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets,
-			struct sockaddr_in &address, int &addrlen, fd_set &readfds)
+void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets,
+								 struct sockaddr_in &address, int &addrlen, fd_set &readfds)
 {
 	int socketDescriptor;
 	Socket new_socket;
@@ -68,21 +69,18 @@ void	Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 	}
 }
 
-std::vector<std::string>    Server::getServerNames() const {
+std::vector<std::string> Server::getServerNames() const
+{
 	return _config.get_server_name();
 }
 
-void    Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
+Response Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
 	Request req(requestBody);
-	// Check if the request body is valid
-	int isRequestValid = req.get_status() == HttpStatus::OK;
-	// if its nt then show the appropriate error page
-	// if (!isRequestValid)
-		// return res.send(req.get_status());
-	// Loop throught all servers
-	// And 
+
+	// Loop throught all serversname of all running servers
+	// then look for the servername who matches the request host header
 	std::vector<Server>::iterator server;
 	for (server = servers.begin(); server != servers.end(); server++)
 	{
@@ -91,48 +89,58 @@ void    Server::handleConnection(std::string &requestBody, int &client_fd, std::
 		for (server_name = server_names.begin(); server_name != server_names.end(); server_name++)
 		{
 			std::string host = util::split(req.getHeader("Host"), ":")[0];
-			std::cout << "host: " << host << std::endl;
-			std::cout << "server_name: " << *server_name << std::endl;
+			// std::cout << "host: " << host << std::endl;
+			// std::cout << "server_name: " << *server_name << std::endl;
 			// std::string = *server_name + ":" + std::to_string(server.get_port());
-			if (*server_name == host	)
+			if (*server_name == host)
 				return server->handleRequest(req, client_fd);
 		}
 	}
 	return (servers[0].handleRequest(req, client_fd));
 }
 
-void	Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers)
+void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int clientIndex, int sd)
+{
+	close(sd);
+	clients.erase(clients.begin() + clientIndex);
+	FD_CLR(sd, &readfds);
+}
+
+void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
 {
 	int sd;
 	char requestBody[1025];
 	int valread;
+	Response res;
 
 	for (int i = 0; i < clients.size(); i++)
 	{
-		sd = clients[i];	
-		if (FD_ISSET( sd , &readfds))
+		// sd : socket descriptor
+		sd = clients[i];
+		if (FD_ISSET(sd, &readfds))
 		{
-			//Check if it was for closing
-			if ((valread = read( sd , requestBody, 1024)) == 0)
+			// Check if it was for closing
+			if ((valread = read(sd, requestBody, 1024)) == 0)
 			{
-				//Somebody disconnected
-				//Close the socket and mark as 0 in list for reuse
-				// close( sd );
-				// clients.erase(clients.begin() + i);
-				// FD_CLR(sd, &readfds);
+				// Somebody disconnected
+				std::cout << "Connection closed" << std::endl;
+				// Close the socket and mark as 0 in list for reuse
+				// closeConnection(clients, readfds, i, sd);
 			}
 			// otherwise handle the request
 			else
 			{
-				//set the string terminating NULL byte on the end
+				// set the string terminating NULL byte on the end
 				requestBody[valread] = '\0';
+				// convert requestBody to a string
 				std::string requestBodyStr = requestBody;
-				// handle connection
-				handleConnection(requestBodyStr, sd, servers);
-				// Close the socket and remove the client from client list
-				close(sd);
-				clients.erase(clients.begin() + i);
-				FD_CLR(sd, &readfds);
+				// handle connection and store response
+				res = handleConnection(requestBodyStr, sd, servers);
+				// if (res.getHeader("Connection") == "close")
+				closeConnection(clients, readfds, i, sd);
+				// close(sd);
+				// clients.erase(clients.begin() + i);
+				// FD_CLR(sd, &readfds);
 			}
 		}
 	}
@@ -143,7 +151,7 @@ std::vector<Socket> Server::getSockets()
 	return _serverSockets;
 }
 
-Socket  Server::addPort(int port)
+Socket Server::addPort(int port)
 {
 	// create new socket on the given port
 	Socket new_socket(port);
@@ -154,29 +162,35 @@ Socket  Server::addPort(int port)
 	return new_socket;
 }
 
-void    Server::handleRequest(Request req, int client_fd)
+Response Server::handleRequest(Request req, int client_fd)
 {
 	// Check if the request body is valid
-	int isRequestValid = req.get_status() == HttpStatus::OK;
-	// if its nt then show the appropriate error page
+	int isRequestValid = req.get_status() == 0; // HttpStatus::OK;
+	// if its not valid then show the appropriate error page
+	// std::cout << "status " << req.get_status() << std::endl;
 	Response res(req, client_fd, _config);
 	// if (!isRequestValid)
-		// return res.send(req.get_status());
-	(this->*getMethodHandler(getMethodIndex(req.get_method())))(req, res);
+	// {
+	// 	res.send(req.get_status());
+	// 	return (res);
+	// }
+	int methodINdex = getMethodIndex(req.get_method());
+	(this->*getMethodHandler(methodINdex))(req, res);
+	return (res);
 }
 
-methodType    Server::getMethodHandler(int methodIndex)
+methodType Server::getMethodHandler(int methodIndex)
 {
-	std::map<int, methodType>methodsHandler;
-	
+	std::map<int, methodType> methodsHandler;
+
 	methodsHandler[GET] = &Server::getHandler;
 	methodsHandler[POST] = &Server::postHandler;
 	methodsHandler[DELETE] = &Server::deleteHandler;
-	
+
 	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler);
 }
 
-void    Server::getHandler(Request req, Response res)
+void Server::getHandler(Request req, Response res)
 {
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
@@ -187,8 +201,8 @@ void    Server::getHandler(Request req, Response res)
 	// otherwise if autoindex is On list directory files
 	// else show error page
 	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());
-    // std::cout << status << std::endl;
-	// check the file requested is a directoxry
+	// std::cout << status << std::endl;
+	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{
 		// if so then check if there is any default pages (index.html index ect..)
@@ -219,24 +233,24 @@ void    Server::getHandler(Request req, Response res)
 	return res.send(HttpStatus::OK, res.getHeader("url"));
 }
 
-void    Server::postHandler(Request req, Response res)
+void Server::postHandler(Request req, Response res)
 {
-		// todo
+	// todo
 	res.send(HttpStatus::NotImplemented);
 }
 
-void    Server::deleteHandler(Request req, Response res)
+void Server::deleteHandler(Request req, Response res)
 {
-		// todo
+	// todo
 	res.send(HttpStatus::NotImplemented);
 }
 
-void    Server::methodNotFoundHandler(Request req, Response res)
+void Server::methodNotFoundHandler(Request req, Response res)
 {
 	res.send(HttpStatus::NotImplemented);
 }
 
-std::string     Server::getErrorPageContent(int status_code, Config _serverConfig)
+std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 {
 	// check if there is a custom error page // todo
 	std::map<int, std::string> errorPages = _serverConfig.get_error_pages();
@@ -245,32 +259,35 @@ std::string     Server::getErrorPageContent(int status_code, Config _serverConfi
 	int status;
 	if (it != errorPages.end())
 	{
-		try {
+		try
+		{
 			std::string filename = it->second;
 			// will be changed to the server root path
-	    	return (FileSystem::readFile("src/Conf/" + filename, status));
+			return (FileSystem::readFile("src/Conf/" + filename, status));
 		}
 		catch (const std::exception)
 		{
-			// todo 
+			// todo
 		}
 	}
 	// otherwise craft one
 	std::string reponseMsg = std::to_string(status_code) + " " + HttpStatus::reasonPhrase(status_code);
-	std::string  html = "<html>"
-						"<head><title>" + reponseMsg +"</title></head>"
-						"<body>"
-						"<center><h1>" + reponseMsg + "</h1></center>"
-						"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
-						"</body>"
-						"</html>";
+	std::string html = "<html>"
+					   "<head><title>" +
+					   reponseMsg + "</title></head>"
+									"<body>"
+									"<center><h1>" +
+					   reponseMsg + "</h1></center>"
+									"<hr><center>Web server dyal lay7sn l3wan/1.18.0 (Ubuntu)</center>"
+									"</body>"
+									"</html>";
 	return (html);
 }
 
 int Server::getMethodIndex(std::string method_name)
 {
 	if (method_name == "GET")
-		return GET;    
+		return GET;
 	else if (method_name == "POST")
 		return POST;
 	// else if (method_name == "DELETE")
@@ -278,14 +295,14 @@ int Server::getMethodIndex(std::string method_name)
 	// todo handle unhandled methods ..
 }
 
-void	Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)
+void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)
 {
-	//set of socket descriptors
-	fd_set				readfds;
+	// set of socket descriptors
+	fd_set readfds;
 	std::vector<Socket> clients;
 	// Socket				new_socket;
-	int					max_sd;
-	int  addrlen , activity;
+	int max_sd;
+	int addrlen, activity;
 	struct sockaddr_in address;
 
 	// std::cout << "after " << &serversSockets << std::endl;
@@ -294,9 +311,9 @@ void	Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
-	while(TRUE)
+	while (TRUE)
 	{
-		//clear the sockets set
+		// clear the sockets set
 		FD_ZERO(&readfds);
 		// add all servers sockets to the sockets set  [readfds]
 		Server::addServers(serversSockets, max_sd, readfds);
@@ -314,8 +331,7 @@ void	Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 	}
 }
 
-
-void	Server::setup(ParseConfig GlobalConfig)
+void Server::setup(ParseConfig GlobalConfig)
 {
 	std::vector<Config> serversConfigs = GlobalConfig.getServers();
 	std::vector<Config>::iterator serverConfig;

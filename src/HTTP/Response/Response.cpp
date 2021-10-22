@@ -11,6 +11,17 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     _headers["Date"] = util::getCurrentDate(); 
 }
 
+Response::Response()
+{
+
+}
+
+Response::Response(const Response& src)
+{
+    _headers = src.getHeaders();
+    // _serverConfig = src.getConfig();
+}
+
 void    Response::send( int statusCode)
 {
     std::string errorPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
@@ -48,7 +59,7 @@ void    Response::send( int statusCode, std::string filename)
         << "Content-Length: " << fileLength << "\r\n"
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
-        << "Server: " << _serverConfig.get_server_name()[0] << "\r\n"
+        // << "Server: " << _serverConfig.get_server_name()[0] << "\r\n"
         << "\r\n";
     
 	// std::cout <<  msg.str() << std::endl; // debug
@@ -104,4 +115,9 @@ std::string Response::getHeader(std::string header_name)
 void Response::setHeader(std::string header_name, std::string value)
 {
     _headers[header_name] = value;
+}
+
+std::map<std::string, std::string> Response::getHeaders() const
+{
+    return _headers;
 }

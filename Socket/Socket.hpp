@@ -22,7 +22,8 @@ class Socket
 
 		Socket( int protocol );
 		~Socket();
-
+		std::string handle_cgi( void );
+	
 	private:
 		Socket( void );
 		int _socket_fd;

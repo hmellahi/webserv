@@ -4,6 +4,50 @@
 #include<sstream>
 
 
+std::string Socket::handle_cgi( void ) {
+
+    int filedes[2];
+    char * a[] ={"php", "index.html", (char*)0};
+    std::string f = "";
+
+    if (pipe(filedes) == -1) {
+        perror("pipe");
+        exit(1);
+    }
+
+    pid_t pid = fork();
+        
+    if (pid == -1) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (pid > 0) {
+        close(filedes[1]);
+        FILE *result;
+
+        result = fdopen(filedes[0], "r");
+        char c;
+        while((c = fgetc(result)) != EOF)
+            f += c;
+        close(filedes[0]);
+
+        fclose(result);
+
+    }
+    else     if (pid == 0)
+    {
+        dup2(filedes[1], 1);
+        close(filedes[1]);
+        close(filedes[0]);
+
+        execve("/usr/bin/php", a, NULL);
+        perror("execve");
+        exit(1);
+    }
+    return f;
+}
+
 std::string	handle_requests( void )
 {
 	std::ifstream f("index.html"); //taking file as inputstream
@@ -75,7 +119,8 @@ Socket::Socket( int protocol )
 		printf("%s\n",buffer );
         //write( cnAccept, hello, strlen(hello) );
         //printf("------------------Hello message sent-------------------\n");
-		index_html = handle_requests();
+		//index_html = handle_requests();
+		index_html = handle_cgi();
 		res = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 		// Content lenght represents only in this case index.html length
 		

@@ -7,7 +7,7 @@
 std::string Socket::handle_cgi( void ) {
 
     int filedes[2];
-    char * a[] ={"php", "index.html", (char*)0};
+    char * a[] ={"php", "-s", "index.php", (char*)0};
     std::string f = "";
 
     if (pipe(filedes) == -1) {

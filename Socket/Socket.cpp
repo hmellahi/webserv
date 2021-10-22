@@ -2,13 +2,18 @@
 
 #include<fstream>
 #include<sstream>
-
+#include <vector>
 
 std::string Socket::handle_cgi( void ) {
 
     int filedes[2];
-    char * a[] ={"php", "-s", "index.php", (char*)0};
-    std::string f = "";
+	char **a = (char **)malloc(sizeof(char *) * 4);
+
+	a[0] = strdup("./cgi-bin/php-cgi");
+	a[1] = strdup("-q");
+	a[2] = strdup("index.php");
+	a[3] = (char *)0;
+	std::string f = "";
 
     if (pipe(filedes) == -1) {
         perror("pipe");
@@ -41,7 +46,7 @@ std::string Socket::handle_cgi( void ) {
         close(filedes[1]);
         close(filedes[0]);
 
-        execve("/usr/bin/php", a, NULL);
+        execve(a[0], a, NULL);
         perror("execve");
         exit(1);
     }
@@ -97,7 +102,6 @@ Socket::Socket( int protocol )
 		perror("In listen");
 		exit(1);
 	}
-	char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html\n\nHello world!";
 	int cnAccept;
 
 	std::string index_html;
@@ -116,19 +120,14 @@ Socket::Socket( int protocol )
 		int readsocket = read( cnAccept, buffer, 1024 );
 		std::cout <<  buffer << std::endl;
 		
-		printf("%s\n",buffer );
-        //write( cnAccept, hello, strlen(hello) );
-        //printf("------------------Hello message sent-------------------\n");
 		//index_html = handle_requests();
 		index_html = handle_cgi();
 		res = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 		// Content lenght represents only in this case index.html length
-		
 		res += std::to_string( index_html.length() ) + "\r\n\r\n";
-		
 		res += index_html;
-		std::cout << res << std::endl;
-	
+
+		std::cout << res << std::endl;	
 		write( cnAccept, res.c_str(), res.length() + 1);
 		//index_html = handle_requests();
 		//send( cnAccept, res.c_str(), res.length() + 1, 0);

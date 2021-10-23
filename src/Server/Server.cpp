@@ -193,9 +193,10 @@ void Server::getHandler(Request req, Response res)
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	// otherwise jst read it
-	// std::string fileExtension = util::GetFileExtension(req.getHeader("url"));
-	// if (fileExtension == "php")
-	// 	return res.send(HttpStatus::OK, CGI::exec_file(req.getHeader("url").c_str()));
+	std::string fileExtension = util::GetFileExtension(req.get_url());
+
+	if (fileExtension == "php")
+		return res.send(HttpStatus::OK, CGI::exec_file(req.get_url()),  req.get_url());
 	// otherwise if autoindex is On list directory files
 	// else show error page
 	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());

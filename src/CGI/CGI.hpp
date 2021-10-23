@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: malaoui <malaoui@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/17 01:37:33 by hamza             #+#    #+#             */
-/*   Updated: 2021/10/17 04:33:13 by hamza            ###   ########.fr       */
+/*   Created: 2021/10/17 01:37:33 by malaoui           #+#    #+#             */
+/*   Updated: 2021/10/17 04:33:13 by malaoui          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,5 +16,5 @@
 class CGI
 {
 public:
-   static std::string     exec_file(const char* path);
+   static std::string     exec_file(std::string path);
 };

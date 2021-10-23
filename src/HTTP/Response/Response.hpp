@@ -18,6 +18,7 @@ public:
      
     void    send( int statusCode);
     void    send( int status_code, std::string filename);
+    void    send( int statusCode, std::string content, std::string filename);
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);
     void    readRaw(std::string buffer, int FileLength);

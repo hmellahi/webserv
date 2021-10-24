@@ -18,11 +18,13 @@ public:
      
     void    send( int statusCode);
     void    send( int status_code, std::string filename);
+    void    sendRedirect(int statusCode, const std::string & location);
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);
     void    readRaw(std::string buffer, int FileLength);
+    std::string     CraftRedirectionPage(int statusCode);
 
-    std::string getHeader(std::string header_name); // todo mark const
+    std::string getHeader(std::string header_name);
     std::map<std::string, std::string>  getHeaders() const;
     int     getClientFd() const;
     Config  getServerConfig() const;

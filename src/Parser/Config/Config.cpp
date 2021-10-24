@@ -296,3 +296,12 @@ bool Config::get_isAutoIndexOn(void) const
 {
 	return (_isAutoIndexOn);
 }
+
+// template<typename T>
+// T	Request::getAttribute(std::string attributeName, std::string location) const
+// {
+// 	return (_attributes[attributeName]);
+// }
+
+		// template <typename T>
+		// T	getAttribute(std::string attributeName, std::string location) const;

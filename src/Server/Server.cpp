@@ -164,20 +164,66 @@ Response Server::handleRequest(Request req, int client_fd)
 {
 	// Check if the request body is valid
 	int isRequestValid = req.get_status() == 0; // HttpStatus::OK;
-	// if its not valid then show the appropriate error page
-	// std::cout << "status " << req.get_status() << std::endl;
+
 	Response res(req, client_fd, _config);
 	// if (!isRequestValid)
 	// {
 	// 	res.send(req.get_status());
 	// 	return (res);
 	// }
+
+	// Check if the request body size doesnt exceed
+	// the 
+	if (_config.get_client_max_body_size() < atoi(req.getHeader("Content-Length").c_str()))
+	{
+		res.send(HttpStatus::PayloadTooLarge);
+		return (res);
+	}
+
 	int methodINdex = getMethodIndex(req.get_method());
-	(this->*getMethodHandler(methodINdex))(req, res);
+
+	// Check if there is a redirection
+	std::pair<int, std::string> redirection = _config.get_redirectionPath();
+	if (redirection.first != 0)
+	{
+		int status_code = redirection.first;
+		std::string location = redirection.second;
+		res.sendRedirect(status_code, location);
+		return res;
+	}
+
+	/*
+		Check if the request with the given method and location is permitted
+		knt baghi nswlk, 9aditi chi unit tester wla sta3mliti chiwahd f webserv?
+		anyways, jst wanted to asked u abt webserv, if u did make a tester or u used one? beside subject testers
+		anyway, knt baghi nswlk, wach 9aditi chi unit tester dyal webserv? mn rir hadak tester li kayn f subject
+	*/
+	bool isAllowed = false;
+	std::vector<std::string> allowedMethods = _config.get_allowedMethods();
+	std::vector<std::string>::iterator it;
+
+	if (allowedMethods.size() > 0)
+	{
+		for (it = allowedMethods.begin(); it != allowedMethods.end(); it++)
+		{
+			if (req.get_method() == *it)
+			{
+				isAllowed = true;
+				break;
+			}
+		}
+	}
+	else
+		isAllowed = true;
+	
+	if (!isAllowed)
+		res.send(HttpStatus::MethodNotAllowed);
+	else
+		(this->*handleMethod(methodINdex))(req, res);
 	return (res);
 }
 
-methodType Server::getMethodHandler(int methodIndex)
+methodType Server::handleMethod(int methodIndex)
 {
 	std::map<int, methodType> methodsHandler;
 
@@ -185,31 +231,24 @@ methodType Server::getMethodHandler(int methodIndex)
 	methodsHandler[POST] = &Server::postHandler;
 	methodsHandler[DELETE] = &Server::deleteHandler;
 
-	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler);
+	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler); // todo clean
 }
 
 void Server::getHandler(Request req, Response res)
 {
-	// check if the requested file isnt a static file
-	// if so then pass it to CGI
-	// otherwise jst read it
-	// std::string fileExtension = util::GetFileExtension(req.getHeader("url"));
-	// if (fileExtension == "php")
-	// 	return res.send(HttpStatus::OK, CGI::exec_file(req.getHeader("url").c_str()));
-	// otherwise if autoindex is On list directory files
-	// else show error page
-	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());
-	// std::cout << status << std::endl;
+	std::string filename = _config.getRoot() + req.get_url();
+    std::cout << filename << std::endl;
+	int status = FileSystem::getFileStatus(filename.c_str());
 	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{
-		// if so then check if there is any default pages (index.html index ect..)
-		// std::cout << req.getHeader("url")
-		std::string fileName = FileSystem::getIndexFile(res.getHeader("url"), _config.get_index());
-		if (!fileName.empty())
+		// if so then check if there is any default pages in the current dir (index.html index ect..)
+		std::string indexFileName = FileSystem::getIndexFile(filename, _config.get_index());
+		if (!indexFileName.empty())
 		{
-			fileName = res.getHeader("url") + fileName;
-			return res.send(HttpStatus::OK, fileName);
+			// Concatenate filename and directory path
+			filename = filename + indexFileName;
+			return res.send(HttpStatus::OK, indexFileName);
 		}
 		// otherwise
 		// check if autoindex is on
@@ -228,7 +267,33 @@ void Server::getHandler(Request req, Response res)
 	}
 	else if (status != HttpStatus::OK)
 		return res.send(status);
-	return res.send(HttpStatus::OK, res.getHeader("url"));
+	
+	// check if the requested file isnt a static file
+	// if so then pass it to CGI
+	std::string fileExtension = util::GetFileExtension(filename.c_str());
+	std::map<std::string, std::string> cgis = _config.get_cgi();
+	std::map<std::string, std::string>::iterator cgi;
+	std::string cgiOutput;
+	for (cgi = cgis.begin(); cgi != cgis.end(); ++cgi)
+	{
+		std::string cgiType = cgi->first;
+		std::string cgiPath = cgi->second;
+		if (fileExtension == cgiType)
+		{
+			try {
+				// execute the file using cgi
+				cgiOutput = CGI::exec_file(filename.c_str());
+				return res.send(HttpStatus::OK, cgiOutput);
+			}
+			catch (const std::exception)
+			{
+				// some went wrong while executing the file
+				return res.send(HttpStatus::InternalServerError);
+			}
+		}
+	}
+	// otherwise jst read it
+	return res.send(HttpStatus::OK, filename);
 }
 
 void Server::postHandler(Request req, Response res)
@@ -285,9 +350,9 @@ int Server::getMethodIndex(std::string method_name)
 		return GET;
 	else if (method_name == "POST")
 		return POST;
-	// else if (method_name == "DELETE")
-	return DELETE;
-	// todo handle unhandled methods ..
+	else if (method_name == "DELETE")
+		return DELETE;
+	return GET;
 }
 
 void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)
@@ -315,7 +380,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		// add child sockets to the sockets set
 		Server::addClients(clients, max_sd, readfds);
 		// wait for an activity on one of the client sockets , timeout is NULL ,
-		// so wait indefinitely
+		// so wait indefinitely	
 		Server::waitingForConnections(activity, readfds);
 		// If something happened on the servers sockets ,
 		// then its an incoming connection
@@ -344,12 +409,12 @@ void Server::setup(ParseConfig GlobalConfig)
 		std::vector<u_int32_t> ports = serverConfig->get_listen();
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
-			// if (usedPorts.find(*port) == usedPorts.end())
-			// {
+			if (usedPorts.find(*port) == usedPorts.end())
+			{
 				new_socket = newServer.addPort(*port);
 				serversSockets.push_back(new_socket);
-				// usedPorts.insert(*port);
-			// }
+				usedPorts.insert(*port);
+			}
 		}
 		servers.push_back(newServer);
 	}

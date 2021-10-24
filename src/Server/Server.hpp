@@ -48,7 +48,7 @@ public:
     Response    handleRequest(Request req, int client_fd);
 
     // --------- Methods Handlers ------------------------- //
-    methodType    getMethodHandler(int methodIndex);
+    methodType    handleMethod(int methodIndex);
     void    getHandler(Request req, Response res);
     void    postHandler(Request req, Response res);
     void    deleteHandler(Request req, Response res);

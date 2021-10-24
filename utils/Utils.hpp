@@ -2,6 +2,7 @@
 #define UTILS_HPP
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <vector>
 
@@ -15,6 +16,7 @@ namespace util
     bool        is_number(std::string str);
     bool is_valid_method(std::string method);
     bool is_valid_version(std::string ver);
+    size_t to_hex(std::string &str);
     std::vector<std::string> split(const std::string& str, const std::string& delimiter);
 }
 #endif

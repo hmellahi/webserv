@@ -23,13 +23,14 @@ class Request
 		void ParseFirstLine(std::string line);
 		void ParseHeaders(std::vector<std::string> lines);
 		void ParseBody(std::string &buffer);
+		void ParseChunkBody(std::string &buffer);
 		void parse_query(std::string &query);
-		std::map<std::string, std::string> get_headers(void) const;
-		std::string get_method(void) const;
-		std::string get_url(void) const;
-		std::string get_http_version(void) const;
-		std::string get_content_body(void) const;
-		int get_status(void) const;
+		std::map<std::string, std::string> GetHeaders(void) const;
+		std::string GetMethod(void) const;
+		std::string GetUrl(void) const;
+		std::string GetHttpVersion(void) const;
+		std::string GetContentBody(void) const;
+		int GetStatus(void) const;
 	private:
 		std::string _buffer;
 		std::map<std::string, std::string> _headers;

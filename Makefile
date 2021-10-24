@@ -1,6 +1,6 @@
 NAME = webserv
 
-SRC  = 	main.cpp				\
+SRC  = 	main_req.cpp				\
 		parser/ParseConfig.cpp		\
 		parser/Config.cpp			\
 		parser/Request.cpp			\

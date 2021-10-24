@@ -25,7 +25,9 @@ int main ()
 		/*------------------------------------*/
 		// std::cout << buffer;
 		Request request(buffer);
-		
+		std::cout << request.GetContentBody();
+		// std::cout << strtol("9 ewfwf", NULL, 16);
+
 	}
 	catch(const std::exception& e)
 	{

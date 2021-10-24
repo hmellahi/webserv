@@ -45,7 +45,10 @@ void Request::parse()
 	{
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		ParseBody(_buffer);
+		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
+			ParseChunkBody(_buffer);
+		else
+			ParseBody(_buffer);
 		// std::cout << "|" << _content_body << "|" << std::endl;
 	}
 	else
@@ -146,6 +149,27 @@ void Request::ParseBody(std::string &buffer)
 	}
 }
 
+void Request::ParseChunkBody(std::string &buffer)
+{
+	std::string body;
+	std::string hex;
+	int size;
+	int i = 0;
+
+	body = buffer.substr(buffer.find("\r\n\r\n") + 4, buffer.size() - 1);
+	hex = body.substr(0, body.size());
+	size = util::to_hex(hex);
+
+	while (size)
+	{
+		i = body.find("\r\n", i) + 2;
+		_content_body += body.substr(i, size);
+		i += size + 2;
+		hex = body.substr(i, body.size());
+		size = util::to_hex(hex);
+	}
+}
+
 // getters accessors
 std::string Request::getHeader(std::string header_name)
 {
@@ -157,32 +181,32 @@ void Request::setHeader(std::string header_name, std::string value)
 	 _headers[header_name] = value;
 }
 
-std::map<std::string, std::string> Request::get_headers(void) const
+std::map<std::string, std::string> Request::GetHeaders(void) const
 {
 	return (_headers);
 }
 
-std::string Request::get_method(void) const
+std::string Request::GetMethod(void) const
 {
 	return (_method);
 }
 
-std::string Request::get_url(void) const
+std::string Request::GetUrl(void) const
 {
 	return (_url);
 }
 
-std::string Request::get_http_version(void) const
+std::string Request::GetHttpVersion(void) const
 {
 	return (_http_version);
 }
 
-std::string Request::get_content_body(void) const
+std::string Request::GetContentBody(void) const
 {
 	return (_content_body);
 }
 
-int Request::get_status(void) const
+int Request::GetStatus(void) const
 {
 	return (_status);
 }

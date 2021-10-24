@@ -1,12 +1,12 @@
-POST /echo/post/json?hello&ddd=dd HTTP/1.1
-Authorization: Bearer {token}
-Host: reqbin.com
-Content-Type: application/json
-Content-Length: 80
+GET /html HTTP/1.1
+Content-Type: text/plain
+Transfer-Encoding: chunked
 
-{
-	"Id": 12345,
-	"Customer": "John Smith",
-	"Quantity": 1,
-	"Price": 10.00
-}
+6\r\n
+Media \r\n
+9\r\n
+Services \r\n
+6\r\n
+Live\n\r\n
+0\r\n
+\r\n

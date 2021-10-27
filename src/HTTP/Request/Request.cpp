@@ -45,11 +45,14 @@ void Request::parse()
 	{
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		ParseBody(_buffer);
+		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
+			ParseChunkBody(_buffer);
+		else
+			ParseBody(_buffer);
 		// std::cout << "|" << _content_body << "|" << std::endl;
 	}
 	else
-		_status = 400; // Bad request
+		_status = HttpStatus::BadRequest;; // Bad request
 }
 
 void Request::ParseFirstLine(std::string line)
@@ -68,12 +71,12 @@ void Request::ParseFirstLine(std::string line)
 			parse_query(_query);
 		_http_version = tokens[2];
 		if (util::is_valid_method(_method) == false)
-			_status = 501; // server not support this method
-		else if (util::is_valid_version(_http_version) == false)
-			_status = 505; // HTTP VERSION NOT SUPPORTED
+			_status = HttpStatus::NotImplemented; // server not support this method
+		else if (util::is_valid_version(util::trim(_http_version)) == false)
+			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else
-		_status = 400; // bad request
+		_status = HttpStatus::BadRequest;; // bad request
 }
 
 void Request::parse_query(std::string &query)
@@ -110,10 +113,14 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 	int pos;
 	for (int i = 1; i < lines.size() && !lines[i].empty(); i++)
 	{
+		// std::cout << "[" << lines[i] << "] " << std::endl;
+		if (util::trim(lines[i]).empty())
+			continue;
 		pos = lines[i].find(":");
+		// todo: check with nginx if its neccesary
 		if (pos == std::string::npos)
 		{
-			_status = 400;
+			_status = HttpStatus::BadRequest;
 			return ;
 		}
 		key = lines[i].substr(0, pos);
@@ -124,7 +131,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		// std::cout << lines[i] << std::endl;
 	}
 	if (_headers.find("Host") == _headers.end())
-		_status = 400;
+		_status = HttpStatus::BadRequest;
 }
 
 void Request::ParseBody(std::string &buffer)
@@ -144,6 +151,27 @@ void Request::ParseBody(std::string &buffer)
 				count++;
 			}
 		}
+	}
+}
+
+void Request::ParseChunkBody(std::string &buffer)
+{
+	std::string body;
+	std::string hex;
+	int size;
+	int i = 0;
+
+	body = buffer.substr(buffer.find("\r\n\r\n") + 4, buffer.size() - 1);
+	hex = body.substr(0, body.size());
+	size = util::to_hex(hex);
+
+	while (size)
+	{
+		i = body.find("\r\n", i) + 2;
+		_content_body += body.substr(i, size);
+		i += size + 2;
+		hex = body.substr(i, body.size());
+		size = util::to_hex(hex);
 	}
 }
 
@@ -187,3 +215,5 @@ int Request::get_status(void) const
 {
 	return (_status);
 }
+
+

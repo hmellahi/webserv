@@ -74,6 +74,24 @@ std::vector<std::string> Server::getServerNames() const
 	return _config.get_server_name();
 }
 
+void	Server::updateLocationConfig(std::string path)
+{
+	_locConfig = _config;
+	std::map<std::string, Config> locations = _locConfig.getLocation();
+	std::map<std::string, Config>::iterator location;
+	for (location = locations.begin(); location != locations.end(); location++)
+	{
+		std::string locationPath = location->first;
+		std::cout << "location" << locationPath << std::endl;
+		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
+		{
+			_locConfig = location->second;
+			break;
+		}
+	}
+	std::cout << "not found" << std::endl;
+}
+
 Response Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
@@ -92,10 +110,13 @@ Response Server::handleConnection(std::string &requestBody, int &client_fd, std:
 			// std::cout << "host: " << host << std::endl;
 			// std::cout << "server_name: " << *server_name << std::endl;
 			// std::string = *server_name + ":" + std::to_string(server.get_port());
+			// server->updateLocationConfig(req.get_url());
 			if (*server_name == host)
 				return server->handleRequest(req, client_fd);
 		}
 	}
+	// server->_locConfig = server->_config;
+	// server[0].updateLocationConfig(req.get_url());
 	return (servers[0].handleRequest(req, client_fd));
 }
 
@@ -135,7 +156,6 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// convert requestBody to a string
 				std::string requestBodyStr = requestBody;
 				// handle connection and store response
-				std::cout << "new Connection" << std::endl;
 				res = handleConnection(requestBodyStr, sd, servers);
 				// if (res.getHeader("Connection") == "close")
 				closeConnection(clients, readfds, i, sd);
@@ -163,21 +183,65 @@ Socket Server::addPort(int port)
 Response Server::handleRequest(Request req, int client_fd)
 {
 	// Check if the request body is valid
+	_locConfig = _config;
+	// updateLocationConfig("/" + req.get_url());
 	int isRequestValid = req.get_status() == 0; // HttpStatus::OK;
-	// if its not valid then show the appropriate error page
-	// std::cout << "status " << req.get_status() << std::endl;
-	Response res(req, client_fd, _config);
-	// if (!isRequestValid)
-	// {
-	// 	res.send(req.get_status());
-	// 	return (res);
-	// }
+
+	Response res(req, client_fd, _locConfig);
+	if (!isRequestValid)
+	{
+		res.send(req.get_status());
+		return (res);
+	}
+
+	// Check if the request body size doesnt exceed
+	// the 
+	if (_locConfig.get_client_max_body_size() < atoi(req.getHeader("Content-Length").c_str()))
+	{
+		res.send(HttpStatus::PayloadTooLarge);
+		return (res);
+	}
+
 	int methodINdex = getMethodIndex(req.get_method());
-	(this->*getMethodHandler(methodINdex))(req, res);
+	std::string location = "/" + req.get_url();
+
+	// Check if there is a redirection
+	std::pair<int, std::string> redirection = _locConfig.get_redirectionPath();
+	std::cout << redirection.first << std::endl;
+	if (redirection.first != 0)
+	{
+		int status_code = redirection.first;
+		std::string location = redirection.second;
+		if (!location.empty() && location[0] == '/')
+			location = util::getFullUrl(req.get_url(), req.getHeader("Host"));
+		std::cout << "redirection happened to " << location << std::endl;
+		res.sendRedirect(status_code, location);
+		return res;
+	}
+
+	/*
+		Check if the request with the given method and location is permitted
+	*/
+	bool isAllowed = true;
+	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
+
+	if (allowedMethods.size() > 0)
+	{
+		/// std::cout << "allowed methods: " << allowedMethods[0] << std::endl;
+		std::vector<std::string>::iterator it;
+		it = find(allowedMethods.begin(), allowedMethods.end(), req.get_method());
+		if (it == allowedMethods.end())
+			isAllowed = false;
+	}
+
+	if (!isAllowed)
+		res.send(HttpStatus::MethodNotAllowed);
+	else
+		(this->*handleMethod(methodINdex))(req, res);
 	return (res);
 }
 
-methodType Server::getMethodHandler(int methodIndex)
+methodType Server::handleMethod(int methodIndex)
 {
 	std::map<int, methodType> methodsHandler;
 
@@ -185,42 +249,52 @@ methodType Server::getMethodHandler(int methodIndex)
 	methodsHandler[POST] = &Server::postHandler;
 	methodsHandler[DELETE] = &Server::deleteHandler;
 
-	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler);
+	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler); // todo clean
 }
 
 void Server::getHandler(Request req, Response res)
 {
-	// check if the requested file isnt a static file
-	// if so then pass it to CGI
-	// otherwise jst read it
-	std::string fileExtension = util::GetFileExtension(req.get_url());
-
-	if (fileExtension == "php")
-		return res.send(HttpStatus::OK, CGI::exec_file(req.get_url()),  req.get_url());
-	// otherwise if autoindex is On list directory files
-	// else show error page
-	int status = FileSystem::getFileStatus(res.getHeader("url").c_str());
-	// std::cout << status << std::endl;
+	std::string filename = _locConfig.getRoot() + req.get_url();
+    // std::cout << filename << std::endl;
+	int status = FileSystem::getFileStatus(filename.c_str());
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "Status"<< status << std::endl;
+	// std::cout << "-------------------------------------\n";
 	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{
-		// if so then check if there is any default pages (index.html index ect..)
-		// std::cout << req.getHeader("url")
-		std::string fileName = FileSystem::getIndexFile(res.getHeader("url"), _config.get_index());
-		if (!fileName.empty())
+		if (filename[filename.length() - 1] != '/')
 		{
-			fileName = res.getHeader("url") + fileName;
-			return res.send(HttpStatus::OK, fileName);
+			std::cout << "-------------------------------------\n";
+			std::cout << "[" << util::getFullUrl(req.get_url() + "/", req.getHeader("Host")) << "]" << std::endl;
+			// std::cout << "new url" << req.get_url() << std::endl;
+			std::cout << "-------------------------------------\n";
+			return res.sendRedirect(301, util::getFullUrl(req.get_url() + "/", req.getHeader("Host")));
 		}
+		// if so then check if there is any default pages in the current dir (index.html index ect..)
+		std::string indexFileName = FileSystem::getIndexFile(filename, _locConfig.get_index());
+		// if indexfile is found then
+		// Concatenate filename and directory path
+		if (!indexFileName.empty())
+			filename += indexFileName;
 		// otherwise
 		// check if autoindex is on
 		else
 		{
 			// if so then list all files in the current directory [soon]
-			// if (_config.get_isAutoIndexOn())
+			if (_locConfig.get_isAutoIndexOn())
+			{
+				std::cout << "Url: " << req.get_url() << std::endl;
+				std::cout << "File: " << filename << std::endl;
+				std::cout << "Root: " << _locConfig.getRoot() << std::endl;
+				Indexing indexing(_locConfig.getRoot(), req.get_url());
+
+				return res.sendContent(HttpStatus::OK, indexing.getBody());
+			}
 			if (false)
 			{
 				// SOON
+				//res.send(HttpStatus::NotImplemented);
 			}
 			// otherwise show permission denied page
 			else
@@ -229,7 +303,33 @@ void Server::getHandler(Request req, Response res)
 	}
 	else if (status != HttpStatus::OK)
 		return res.send(status);
-	return res.send(HttpStatus::OK, res.getHeader("url"));
+	
+	// check if the requested file isnt a static file
+	// if so then pass it to CGI
+	std::string fileExtension = util::GetFileExtension(filename.c_str());
+	std::map<std::string, std::string> cgis = _locConfig.get_cgi();
+	std::map<std::string, std::string>::iterator cgi;
+	std::string cgiOutput;
+	for (cgi = cgis.begin(); cgi != cgis.end(); ++cgi)
+	{
+		std::string cgiType = cgi->first;
+		std::string cgiPath = cgi->second;
+		if (fileExtension == cgiType)
+		{
+			try {
+				// execute the file using approriate cgi
+				cgiOutput = CGI::exec_file(filename.c_str());
+				return res.send(HttpStatus::OK, cgiOutput);
+			}
+			catch (const std::exception)
+			{
+				// some went wrong while executing the file
+				return res.send(HttpStatus::InternalServerError);
+			}
+		}
+	}
+	// otherwise jst read it
+	return res.send(HttpStatus::OK, filename);
 }
 
 void Server::postHandler(Request req, Response res)
@@ -240,8 +340,18 @@ void Server::postHandler(Request req, Response res)
 
 void Server::deleteHandler(Request req, Response res)
 {
-	// todo
-	res.send(HttpStatus::NotImplemented);
+	// check if the file is founded and is a file 
+	// if its a directory so its forbidden to remove 
+	std::string path = _locConfig.getRoot() + req.get_url();
+	if (FileSystem::getFileStatus(path) == HttpStatus::OK)
+	{
+		if (remove(path.c_str()) == 0)
+			res.send(HttpStatus::NoContent);
+		else
+			res.send(HttpStatus::Forbidden);
+	}
+	if (FileSystem::getFileStatus(path) == IS_DIRECTORY)
+		res.send(HttpStatus::Forbidden);
 }
 
 void Server::methodNotFoundHandler(Request req, Response res)
@@ -286,9 +396,9 @@ int Server::getMethodIndex(std::string method_name)
 		return GET;
 	else if (method_name == "POST")
 		return POST;
-	// else if (method_name == "DELETE")
-	return DELETE;
-	// todo handle unhandled methods ..
+	else if (method_name == "DELETE")
+		return DELETE;
+	return GET;
 }
 
 void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)
@@ -316,7 +426,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		// add child sockets to the sockets set
 		Server::addClients(clients, max_sd, readfds);
 		// wait for an activity on one of the client sockets , timeout is NULL ,
-		// so wait indefinitely
+		// so wait indefinitely	
 		Server::waitingForConnections(activity, readfds);
 		// If something happened on the servers sockets ,
 		// then its an incoming connection
@@ -326,13 +436,13 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		Server::RecvAndSend(clients, readfds, servers);
 	}
 }
+	std::vector<Socket> serversSockets;
 
 void Server::setup(ParseConfig GlobalConfig)
 {
 	std::vector<Config> serversConfigs = GlobalConfig.getServers();
 	std::vector<Config>::iterator serverConfig;
 	std::vector<u_int32_t>::iterator port;
-	std::vector<Socket> serversSockets;
 	std::vector<Server> servers;
 	std::set<u_int32_t> usedPorts;
 	std::vector<u_int32_t> socets;
@@ -343,15 +453,24 @@ void Server::setup(ParseConfig GlobalConfig)
 		Server newServer(*serverConfig);
 
 		std::vector<u_int32_t> ports = serverConfig->get_listen();
+		if (ports.size() == 0)
+		{
+			if (usedPorts.find(DEFAULT_PORT) == usedPorts.end())
+			{
+				new_socket = newServer.addPort(DEFAULT_PORT);
+				serversSockets.push_back(new_socket);
+				usedPorts.insert(DEFAULT_PORT);
+			}
+		}
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
-			// if (usedPorts.find(*port) == usedPorts.end())
-			// {
+			if (usedPorts.find(*port) == usedPorts.end())
+			{
 				new_socket = newServer.addPort(*port);
 				serversSockets.push_back(new_socket);
-				// usedPorts.insert(*port);
-			// }
-		}
+				usedPorts.insert(*port);
+			}
+		}	
 		servers.push_back(newServer);
 	}
 	// this is where magic happens :wink:

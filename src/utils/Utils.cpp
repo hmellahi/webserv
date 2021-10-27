@@ -34,7 +34,8 @@ std::vector<std::string> util::split(const std::string& str, const std::string& 
     std::string::size_type prev = 0;
     while ((pos = str.find(delimiter, prev)) != std::string::npos)
     {
-        strings.push_back(str.substr(prev, pos - prev));
+		if (!str.empty())
+        	strings.push_back(str.substr(prev, pos - prev));
         prev = pos + 1;
     }
     strings.push_back(str.substr(prev));
@@ -68,12 +69,12 @@ std::string util::getCurrentDate()
 	tmp = gmtime(&t);
 	if (tmp == NULL) {
 		perror("gmtime error");
-		exit(EXIT_FAILURE);
+		util::ft_exit(EXIT_FAILURE);
 	}
 
 	if (strftime(outstr, sizeof(outstr), fmt, tmp) == 0) { 
 		fprintf(stderr, "strftime returned 0");
-		exit(EXIT_FAILURE); 
+		util::ft_exit(EXIT_FAILURE); 
 	} 
    return (outstr);
 }
@@ -93,4 +94,39 @@ int util::getFileLength(const std::string& filename)
     off_t fileLength = info.st_size;
 
 	return fileLength;
+}
+
+void	util::closeAllListeners()
+{
+	for (int i = 0; i < serversSockets.size();i++)
+		close(serversSockets[i]);
+}
+
+void	util::signal_handler(int signal)
+{
+	closeAllListeners();
+}
+
+void	util::ft_exit(int status)
+{
+	closeAllListeners();
+	exit(status);
+}
+
+std::string	util::getFullUrl(std::string location, std::string host)
+{
+	std::string fullUrl;
+	fullUrl = "http://" + host + "/" + location;
+	return fullUrl;
+}
+
+size_t  util::to_hex(std::string &str)
+{
+	std::stringstream ss;
+	size_t hex;
+
+	ss << std::hex << str;
+	ss >> hex;
+
+	return hex;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "macros.hpp"
+#include "Utils.hpp"
 
 class Socket
 {

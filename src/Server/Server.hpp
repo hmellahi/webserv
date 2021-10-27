@@ -8,6 +8,7 @@
 #include "../utils/FileSystem/FileSystem.hpp"
 #include "Socket.hpp"
 #include "ParseConfig.hpp"
+#include "Indexing.hpp"
 
 class Server;
 class Response;
@@ -22,9 +23,9 @@ private:
     struct sockaddr_in _address;
     int addrlen;
     int _port;
-    Config _config;
-
+    Config _locConfig;
 public:
+    Config _config;
 
     // ------------ Constructors --------------------------- //
     Server();
@@ -48,7 +49,7 @@ public:
     Response    handleRequest(Request req, int client_fd);
 
     // --------- Methods Handlers ------------------------- //
-    methodType    getMethodHandler(int methodIndex);
+    methodType    handleMethod(int methodIndex);
     void    getHandler(Request req, Response res);
     void    postHandler(Request req, Response res);
     void    deleteHandler(Request req, Response res);
@@ -61,5 +62,6 @@ public:
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();
     std::vector<std::string>  getServerNames() const;
+    void    updateLocationConfig(std::string location);
     // ----------------------------------------------------- //
 };

@@ -44,7 +44,21 @@ class Config
 		std::vector<u_int32_t> get_listen(void) const;
 		bool get_isAutoIndexOn(void) const;
 		std::map<std::string, Config> getLocation(void) const;	
-	private:
+
+		Config		getConfig(std::string path) const;
+		std::string getRoot(std::string path) const;
+		std::string getUploadPath(std::string path) const;
+		std::vector<std::string> getAllowedMethods(std::string path) const;
+		std::pair<int, std::string> getRedirectionPath(std::string path) const;
+		std::vector<std::string> getIndex(std::string path) const;
+		bool isAutoIndexOn(std::string path) const;
+		int getClientMaxBodySize(std::string path) const;
+
+		void	setIndex(std::vector<std::string> indexFiles);
+		void	setRoot(std::string root);
+		void	setAllowedMethods(std::vector<std::string> allowedMethods);
+	
+//	private:
 	   	std::string	_root;
 		std::map<int, std::string>	_error_pages;
 		int	_client_max_body_size;

@@ -72,6 +72,7 @@
     "__hash_table": "cpp",
     "complex": "cpp",
     "filesystem": "cpp",
-    "set": "cpp"
+    "set": "cpp",
+    "csignal": "cpp"
   }
 }

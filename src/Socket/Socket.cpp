@@ -40,6 +40,10 @@ void    Socket::init_address()
     _address.sin_port = htons( _port );
     memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
 }
+
+/*
+    
+*/
 void    Socket::create_socket()
 {
     // Creating server socket file descriptor
@@ -61,7 +65,7 @@ void    Socket::testConnection(int connection_ret, std::string customErrMsg)
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
-        exit(EXIT_FAILURE);
+        util::ft_exit(EXIT_FAILURE);
     }
 }
 

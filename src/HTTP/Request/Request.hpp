@@ -30,6 +30,7 @@ class Request
 		std::string get_http_version(void) const;
 		std::string get_content_body(void) const;
 		int get_status(void) const;
+		void ParseChunkBody(std::string &buffer);
 	private:
 		std::string _buffer;
 		std::map<std::string, std::string> _headers;

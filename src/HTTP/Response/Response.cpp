@@ -39,19 +39,20 @@ std::string     Response::CraftRedirectionPage(int statusCode)
 
 void    Response::sendRedirect(int statusCode, const std::string &location)
 {
-    std::string redirectPageContent = CraftRedirectionPage(statusCode);
+    std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
 
-    msg << _headers["http-version"] << " " << statusCode << " " 
+    msg << "HTTP/1.1" << " " << statusCode << " " 
         << HttpStatus::reasonPhrase(statusCode) << "\r\n"
         << "Connection: close" << "\r\n"
         << "Server: server dyal lah y7sn l3wan" << "\r\n"
         << "Location: " << location << "\r\n"
-        << "Date: " << _headers["Date"] << "\r\n";
-        // << "Content-Type: text/html\r\n"
-        // << "Content-Length: " << redirectPageContent.size() << "\r\n"
-        // << "\r\n"
-        // << redirectPageContent;
+        << "Date: " << _headers["Date"] << "\r\n"
+        << "Content-Type: text/html\r\n"
+        << "Content-Length: " << redirectPageContent.size() << "\r\n"
+        << "\r\n"
+        << redirectPageContent;
+	std::cout <<  "res: " << msg.str() << std::endl; // debug
     
     sendMessage(_client_fd, msg.str());
 }
@@ -102,7 +103,7 @@ void    Response::send( int statusCode, std::string filename)
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
     
-	// std::cout <<  msg.str() << std::endl; // debug
+	std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     
     // send it to the client
     sendMessage(_client_fd, msg.str());

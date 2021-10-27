@@ -22,9 +22,11 @@
 #include <ctime>
 #include <string>
 
-
+class Socket;
+extern std::vector<Socket> serversSockets;
 #define TRUE 1
 #define BUFSIZE 100
+#define DEFAULT_PORT 80
 #define FALSE 0
 #define MAX_CLIENTS FD_SETSIZE
 #define DEFAULT_CONFIG_PATH "src/Conf/default.conf";

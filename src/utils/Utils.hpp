@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include "Socket.hpp"
 #include "macros.hpp"
 
 const std::string WHITESPACE = " \n\r\t\f\v";
@@ -21,5 +22,8 @@ namespace util
     std::string     getCurrentDate();
     std::string     GetFileExtension(const std::string& fileName);
     int             getFileLength(const std::string& fileName);
+    void            closeAllListeners();
+    void            signal_handler(int signal);
+    void            ft_exit(int status);
 }
 #endif

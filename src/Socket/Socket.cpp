@@ -65,7 +65,7 @@ void    Socket::testConnection(int connection_ret, std::string customErrMsg)
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
-        exit(EXIT_FAILURE);
+        util::ft_exit(EXIT_FAILURE);
     }
 }
 

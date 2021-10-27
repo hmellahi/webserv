@@ -23,7 +23,7 @@ private:
     int addrlen;
     int _port;
     Config _config;
-
+    Config _locConfig;
 public:
 
     // ------------ Constructors --------------------------- //
@@ -61,5 +61,6 @@ public:
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();
     std::vector<std::string>  getServerNames() const;
+    void    updateLocationConfig(std::string location);
     // ----------------------------------------------------- //
 };

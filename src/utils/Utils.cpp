@@ -68,12 +68,12 @@ std::string util::getCurrentDate()
 	tmp = gmtime(&t);
 	if (tmp == NULL) {
 		perror("gmtime error");
-		exit(EXIT_FAILURE);
+		util::ft_exit(EXIT_FAILURE);
 	}
 
 	if (strftime(outstr, sizeof(outstr), fmt, tmp) == 0) { 
 		fprintf(stderr, "strftime returned 0");
-		exit(EXIT_FAILURE); 
+		util::ft_exit(EXIT_FAILURE); 
 	} 
    return (outstr);
 }
@@ -93,4 +93,21 @@ int util::getFileLength(const std::string& filename)
     off_t fileLength = info.st_size;
 
 	return fileLength;
+}
+
+void	util::closeAllListeners()
+{
+	for (int i = 0; i < serversSockets.size();i++)
+		close(serversSockets[i]);
+}
+
+void	util::signal_handler(int signal)
+{
+	closeAllListeners();
+}
+
+void	util::ft_exit(int status)
+{
+	closeAllListeners();
+	exit(status);
 }

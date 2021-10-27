@@ -8,6 +8,7 @@
 #include "../utils/FileSystem/FileSystem.hpp"
 #include "Socket.hpp"
 #include "ParseConfig.hpp"
+#include "Indexing.hpp"
 
 class Server;
 class Response;
@@ -22,9 +23,9 @@ private:
     struct sockaddr_in _address;
     int addrlen;
     int _port;
-    Config _config;
     Config _locConfig;
 public:
+    Config _config;
 
     // ------------ Constructors --------------------------- //
     Server();

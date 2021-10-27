@@ -25,5 +25,7 @@ namespace util
     void            closeAllListeners();
     void            signal_handler(int signal);
     void            ft_exit(int status);
+    std::string     getFullUrl(std::string location, std::string host);
+    size_t          to_hex(std::string &str);
 }
 #endif

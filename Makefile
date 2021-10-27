@@ -6,7 +6,7 @@
 #    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/22 22:58:29 by hamza            ###   ########.fr        #
+#    Updated: 2021/10/27 20:22:30 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ CGI			= CGI.cpp
 SERVER		= Server.cpp
 UTILS		= MediaTypes/MediaTypes.cpp FileSystem/FileSystem.cpp Utils.cpp
 PARSER		= Config/Config.cpp    ParseConfig/ParseConfig.cpp
+INDEXING	= Indexing.cpp
 
 DEBUG_FLAGS = -fsanitize=address -g
 
@@ -33,9 +34,10 @@ SRC	=	$(ROOT:%.cpp=./src/%.cpp)\
 		$(UTILS:%.cpp=./src/utils/%.cpp)\
 		$(SERVER:%.cpp=./src/Server/%.cpp)\
 		$(SOCKET:%.cpp=./src/Socket/%.cpp)\
-		$(CGI:%.cpp=./src/CGI/%.cpp)
+		$(CGI:%.cpp=./src/CGI/%.cpp)\
+		$(INDEXING:%.cpp=./src/Indexing/%.cpp)
 
-INCLUDE = -I src/Server -I src/HTTP/Request -I src/HTTP/Response  -I src/Parser -I src/Parser/ParseConfig -I  src/utils/MediaTypes -I src/utils/ -I src/CGI  -I src/Socket  -I src/Parser/Config
+INCLUDE = -I src/Server -I src/HTTP/Request -I src/HTTP/Response  -I src/Parser -I src/Parser/ParseConfig -I  src/utils/MediaTypes -I src/utils/ -I src/CGI  -I src/Socket  -I src/Parser/Config -I src/Indexing
 
 all: $(NAME)
 

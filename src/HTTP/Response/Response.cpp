@@ -52,7 +52,7 @@ void    Response::sendRedirect(int statusCode, const std::string &location)
         << "Content-Length: " << redirectPageContent.size() << "\r\n"
         << "\r\n"
         << redirectPageContent;
-	std::cout <<  "res: " << msg.str() << std::endl; // debug
+	// std::cout <<  "res: " << msg.str() << std::endl; // debug
     
     sendMessage(_client_fd, msg.str());
 }
@@ -80,8 +80,8 @@ void    Response::send( int statusCode, std::string filename)
     std::string extension;
 
     extension = util::GetFileExtension(filename);
-    std::cout << filename << std::endl;
-    std::cout << extension << std::endl;
+    // std::cout << filename << std::endl;
+    // std::cout << extension << std::endl;
     if (!extension.empty())
     {
         std::string type  = MediaTypes::getType(extension.c_str());
@@ -103,13 +103,37 @@ void    Response::send( int statusCode, std::string filename)
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
     
-	std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
+	// std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     
     // send it to the client
     sendMessage(_client_fd, msg.str());
     
     // open file and read it by chunks
     readRaw(filename, fileLength);
+}
+
+void    Response::sendContent( int statusCode, std::string content)
+{
+    _headers["Content-Type"] = "text/html";
+    // todo
+    // add all mandatory response headers
+    // craft a response 
+    int fileLength = content.length();
+    std::ostringstream msg;
+    msg << _headers["http-version"] << " " << statusCode << " " 
+        << HttpStatus::reasonPhrase(statusCode) << "\r\n"
+        << "Content-Type: " << _headers["Content-Type"] << "\r\n"
+        << "Content-Length: " << fileLength << "\r\n"
+        << "Connection: " << _headers["Connection"] << "\r\n"
+        << "Date: " << _headers["Date"] << "\r\n"
+        //<< "Server: " << _serverConfig.get_server_name()[0] << "\r\n"
+        << "\r\n"
+        << content;
+    
+	// std::cout <<  msg.str() << std::endl; // debug
+    
+    // send it to the client
+    sendMessage(_client_fd, msg.str());    
 }
 
 void    Response::readRaw(std::string filename, int fileLength)

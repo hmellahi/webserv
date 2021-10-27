@@ -211,7 +211,8 @@ void Config::listen(std::vector<std::string>::iterator &it)
 void Config::locations(std::vector<std::string>::iterator &it)
 {
 	Config loc;
-	
+
+	loc = *this;
 	std::string path = *it;
 	if (path.empty())
 		throw std::runtime_error("Error: Something wrong with Location");

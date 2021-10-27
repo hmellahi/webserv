@@ -18,6 +18,7 @@ public:
      
     void    send( int statusCode);
     void    send( int status_code, std::string filename);
+    void    sendContent( int status_code, std::string content);
     void    sendRedirect(int statusCode, const std::string & location);
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);

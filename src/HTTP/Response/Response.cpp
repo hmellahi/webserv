@@ -90,8 +90,6 @@ void    Response::send( int statusCode, std::string filename)
     else
         _headers["Content-Type"] = "text/plain"; // todo fix seg
 
-    // todo
-    // add all missing response headers 
     // craft a response 
     int fileLength = util::getFileLength(filename);
     std::ostringstream msg;
@@ -115,8 +113,6 @@ void    Response::send( int statusCode, std::string filename)
 void    Response::sendContent( int statusCode, std::string content)
 {
     _headers["Content-Type"] = "text/html";
-    // todo
-    // add all mandatory response headers
     // craft a response 
     int fileLength = content.length();
     std::ostringstream msg;
@@ -158,7 +154,7 @@ int Response::sendMessage(int fd, const std::string &s)
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);
-    // int bytes_written;
+    int bytes_written;
 
     // while (buflen > 0) {
     //     bytes_written = write(fd, pbuf, buflen);
@@ -166,7 +162,11 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     //     pbuf += bytes_written; 
     //     buflen -= bytes_written;
     // }
-    write(fd, pbuf, buflen);
+    bytes_written = write(fd, pbuf, buflen);
+    if (bytes_written <= 0)
+    {
+        perror("couldnt send the msg"); // todo should exit?
+    }
     return 0;
 }
 

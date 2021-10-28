@@ -9,6 +9,7 @@ std::string     FileSystem::readFile(std::string filename, int &status)
     int fd = open(filename.c_str(), O_RDONLY);
     char buffer[20000] = {0};
     int ret = read(fd, buffer, 3000);
+    // todo check ret
     close(fd);
     status = HttpStatus::OK;
     return (buffer);
@@ -61,7 +62,7 @@ int     FileSystem::getFileStatus(std::string filename)
         return (HttpStatus::NotFound);
     
     if (info.st_mode & S_IFDIR)
-        return (IS_DIRECTORY); // todo change 
+        return (IS_DIRECTORY);
 
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd < 1)

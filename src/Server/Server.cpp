@@ -187,10 +187,10 @@ Socket Server::addPort(int port)
 
 Response Server::handleRequest(Request req, int client_fd)
 {
+	updateLocationConfig("/" + req.get_url());
+	// _locConfig = _config;
 	// Check if the request body is valid
-	_locConfig = _config;
-	// updateLocationConfig("/" + req.get_url());
-	int isRequestValid = req.get_status() == 0; // HttpStatus::OK;
+	int isRequestValid = req.get_status() == 0;
 
 	Response res(req, client_fd, _locConfig);
 	if (!isRequestValid)
@@ -200,7 +200,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	}
 
 	// Check if the request body size doesnt exceed
-	// the 
+	// the  max client body size
 	if (_locConfig.get_client_max_body_size() < atoi(req.getHeader("Content-Length").c_str()))
 	{
 		res.send(HttpStatus::PayloadTooLarge);
@@ -224,20 +224,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		return res;
 	}
 
-	/*
-		Check if the request with the given method and location is permitted
-	*/
-	bool isAllowed = true;
-	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
-
-	if (allowedMethods.size() > 0)
-	{
-		/// std::cout << "allowed methods: " << allowedMethods[0] << std::endl;
-		std::vector<std::string>::iterator it;
-		it = find(allowedMethods.begin(), allowedMethods.end(), req.get_method());
-		if (it == allowedMethods.end())
-			isAllowed = false;
-	}
+	bool isAllowed = checkPermissions(req.get_method());
 
 	if (!isAllowed)
 		res.send(HttpStatus::MethodNotAllowed);
@@ -246,6 +233,24 @@ Response Server::handleRequest(Request req, int client_fd)
 	return (res);
 }
 
+/*
+	Check if the request with the given method and location is permitted
+*/
+bool	Server::checkPermissions(std::string method)
+{
+	bool isAllowed = true;
+	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
+
+	if (allowedMethods.size() > 0)
+	{
+		/// std::cout << "allowed methods: " << allowedMethods[0] << std::endl;
+		std::vector<std::string>::iterator it;
+		it = find(allowedMethods.begin(), allowedMethods.end(), method);
+		if (it == allowedMethods.end())
+			isAllowed = false;
+	}
+	return isAllowed;
+}
 methodType Server::handleMethod(int methodIndex)
 {
 	std::map<int, methodType> methodsHandler;
@@ -381,12 +386,13 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		try
 		{
 			std::string filename = it->second;
+			// todo
 			// will be changed to the server root path
 			return (FileSystem::readFile("src/Conf/" + filename, status));
 		}
 		catch (const std::exception)
 		{
-		}
+		}	
 	}
 	// otherwise make one
 	std::ostringstream html;

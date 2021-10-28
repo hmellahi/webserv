@@ -62,6 +62,7 @@ public:
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();
     std::vector<std::string>  getServerNames() const;
+    bool	checkPermissions(std::string method);
     void    updateLocationConfig(std::string location);
     // ----------------------------------------------------- //
 };

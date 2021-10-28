@@ -33,7 +33,7 @@ void Config::init_map_loc()
 
 Config::Config()
 {
-	_isAutoIndexOn = true;
+	_isAutoIndexOn = false;
 	init_map_attr();
 	init_map_loc();
 }

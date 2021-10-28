@@ -61,6 +61,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 		socketDescriptor = *it;
 		if (FD_ISSET(socketDescriptor, &readfds))
 		{
+			std::cout << "Connection started" << std::endl;
 			new_socket = Socket::acceptConnection(socketDescriptor, address, addrlen);
 			// if a position is empty
 			if (clients.size() < FD_SETSIZE)
@@ -141,11 +142,12 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		if (FD_ISSET(sd, &readfds))
 		{
 			// Check if it was for closing
-			if ((valread = read(sd, requestBody, 1024)) == 0)
+			valread = read(sd, requestBody, 1024);
+			if (valread <= 0)
 			{
 				// Somebody disconnected
 				std::cout << "Connection closed" << std::endl;
-				// Close the socket and mark as 0 in list for reuse
+				// Close the socket and remove client from client list
 				closeConnection(clients, readfds, i, sd);
 			}
 			// otherwise handle the request
@@ -157,8 +159,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				std::string requestBodyStr = requestBody;
 				// handle connection and store response
 				res = handleConnection(requestBodyStr, sd, servers);
-				// if (res.getHeader("Connection") == "close")
-				closeConnection(clients, readfds, i, sd);
+					std::cout << "Connection waiting" << std::endl;
+				if (res.getHeader("Connection") == "close")
+				{
+					closeConnection(clients, readfds, i, sd);
+				}
 			}
 		}
 	}
@@ -207,7 +212,7 @@ Response Server::handleRequest(Request req, int client_fd)
 
 	// Check if there is a redirection
 	std::pair<int, std::string> redirection = _locConfig.get_redirectionPath();
-	std::cout << redirection.first << std::endl;
+	// std::cout << redirection.first << std::endl;
 	if (redirection.first != 0)
 	{
 		int status_code = redirection.first;
@@ -261,6 +266,7 @@ void Server::getHandler(Request req, Response res)
 	// std::cout << "Status"<< status << std::endl;
 	// std::cout << "-------------------------------------\n";
 	// check the file requested is a directory
+	// DBG("HELLO");
 	if (status == IS_DIRECTORY)
 	{
 		if (filename[filename.length() - 1] != '/')
@@ -291,11 +297,6 @@ void Server::getHandler(Request req, Response res)
 
 				return res.sendContent(HttpStatus::OK, indexing.getBody());
 			}
-			if (false)
-			{
-				// SOON
-				//res.send(HttpStatus::NotImplemented);
-			}
 			// otherwise show permission denied page
 			else
 				return res.send(HttpStatus::Forbidden);
@@ -314,12 +315,15 @@ void Server::getHandler(Request req, Response res)
 	{
 		std::string cgiType = cgi->first;
 		std::string cgiPath = cgi->second;
+		// std::cout <<"filename" << cgiType << std::endl;
 		if (fileExtension == cgiType)
 		{
 			try {
 				// execute the file using approriate cgi
+				std::cout <<"filename : " << filename << std::endl;
+				std::cout <<"content" << cgiOutput << std::endl;
 				cgiOutput = CGI::exec_file(filename.c_str());
-				return res.send(HttpStatus::OK, cgiOutput);
+				return res.sendContent(HttpStatus::OK, cgiOutput);
 			}
 			catch (const std::exception)
 			{
@@ -334,7 +338,10 @@ void Server::getHandler(Request req, Response res)
 
 void Server::postHandler(Request req, Response res)
 {
-	// todo
+	// if (("/" + req.get_url()) == _locConfig.get_uploadPath())
+	// {
+
+	// }
 	res.send(HttpStatus::NotImplemented);
 }
 
@@ -343,15 +350,18 @@ void Server::deleteHandler(Request req, Response res)
 	// check if the file is founded and is a file 
 	// if its a directory so its forbidden to remove 
 	std::string path = _locConfig.getRoot() + req.get_url();
-	if (FileSystem::getFileStatus(path) == HttpStatus::OK)
+	int status = FileSystem::getFileStatus(path);
+	if (status == HttpStatus::OK)
 	{
 		if (remove(path.c_str()) == 0)
 			res.send(HttpStatus::NoContent);
 		else
 			res.send(HttpStatus::Forbidden);
 	}
-	if (FileSystem::getFileStatus(path) == IS_DIRECTORY)
+	else if (status == IS_DIRECTORY)
 		res.send(HttpStatus::Forbidden);
+	else
+		res.send(status);
 }
 
 void Server::methodNotFoundHandler(Request req, Response res)

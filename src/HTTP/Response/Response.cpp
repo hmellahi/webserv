@@ -158,15 +158,15 @@ int Response::sendMessage(int fd, const std::string &s)
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);
-    int bytes_written;
+    // int bytes_written;
 
-    while (buflen > 0) {
-        bytes_written = write(fd, pbuf, buflen);
-        if (bytes_written == -1) return -1;
-        pbuf += bytes_written; 
-        buflen -= bytes_written;
-    }
-
+    // while (buflen > 0) {
+    //     bytes_written = write(fd, pbuf, buflen);
+    //     if (bytes_written == -1) return -1;
+    //     pbuf += bytes_written; 
+    //     buflen -= bytes_written;
+    // }
+    write(fd, pbuf, buflen);
     return 0;
 }
 

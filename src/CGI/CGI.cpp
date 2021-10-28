@@ -5,7 +5,8 @@ std::string     CGI::exec_file(std::string path)
     int filedes[2];
 	char **a = (char **)malloc(sizeof(char *) * 6);
 
-	a[0] = strdup("./cgi-bin/php-cgi");
+	// a[0] = strdup("./cgi-bin/php-cgi");
+	a[0] = strdup("php-cgi");
 	a[1] = strdup("-q");
 	a[2] = strdup(path.c_str());
 	a[3] = strdup("2>");

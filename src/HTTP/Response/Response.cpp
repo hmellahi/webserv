@@ -3,10 +3,10 @@
 Response::Response(Request req, int client_fd, Config serverConfig)
 {
     _client_fd = client_fd;
-    _headers["url"] = req.get_url();
+    _headers["url"] = req.getUrl();
     _serverConfig = serverConfig;
-    _headers["http-version"] = req.get_http_version();
-    // _headers = req.get_headers();
+    _headers["http-version"] = req.getHttpVersion();
+    // _headers = req.getHeaders();
     _headers["Connection"] = req.getHeader("Connection");
     _headers["Date"] = util::getCurrentDate(); 
 }
@@ -122,7 +122,7 @@ void    Response::sendContent( int statusCode, std::string content)
         << "Content-Length: " << fileLength << "\r\n"
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
-        //<< "Server: " << _serverConfig.get_server_name()[0] << "\r\n"
+        //<< "Server: " << _serverConfig.getServerName()[0] << "\r\n"
         << "\r\n"
         << content;
     

@@ -164,13 +164,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			else
 			{
 				requestBody[valread] = '\0';
-				
-				std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
 				requestBodyStr = requestBody;
-				std::cout << "\n\nsize\n\n" << requestBodyStr.size() << std::endl;
-				if (requestBodyStr != requestBody) {
-					std::cout << "nooooooooooooo\n";
-				}
 				// set the string terminating NULL byte on the end
 				// convert requestBody to a string
 				// handle connection and store response
@@ -198,7 +192,7 @@ Socket Server::addPort(int port)
 	return new_socket;
 }
 
-char	*join(char *s1, char *s2, int s1len, int s2len)
+char	*join(char *s1, char *s2)
 {
 	unsigned int	i;
 	unsigned int	l;
@@ -206,19 +200,19 @@ char	*join(char *s1, char *s2, int s1len, int s2len)
 
 	if (!s1 || !s2)
 		return (NULL);
-	i = s1len + s2len;
+	i = strlen(s1) + strlen(s2);
 	s3 = (char *)malloc((i + 1) * sizeof(char));
 	if (!s3)
 		return (NULL);
 	s3[i] = '\0';
 	i = 0;
-	while (i <= s1len)
+	while (s1[i] != 0)
 	{
 		s3[i] = s1[i];
 		i++;
 	}
 	l = 0;
-	while (i <= s2len)
+	while (s2[l])
 	{
 		s3[i++] = (char)s2[l];
 		l++;
@@ -232,12 +226,14 @@ Response Server::handleRequest(Request req, int client_fd)
 	updateLocationConfig("/" + req.getUrl());
 	// Check if the request body is valid
 	int isRequestValid = req.getStatus() == 0;
+	DBG("AM HERE");
 	Response res(req, client_fd, _locConfig);
-	if (!isRequestValid)
-	{
-		res.send(req.getStatus());
-		return (res);
-	}
+	// if (!isRequestValid)
+	// {
+	// 	res.send(req.getStatus());
+	// 	return (res);
+	// }
+	DBG("HERE")
 	// Check if the request body size doesnt exceed
 	// the  max client body size
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
@@ -252,23 +248,17 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cout << "\n-------------------------------------\n";
 	std::cout << "BODY SIZE " << req.getContentBody().size() << std::endl;
 	std::cout << "\n-------------------------------------\n";
-	int bytes_read = req.getContentBody().size();
-	std::cout << req.getContentBody();
-	while (bytes_read < contentLength)
+	char *complete_body = strdup(req.getContentBody().c_str());
+	// strcpy(complete_body, req.getContentBody().c_str());
+	while (strlen(complete_body) < contentLength)
 	{
-		// nbytes = read(client_fd, buffer, 1024);//std::min(1024, bytes_read - nbytes));
-		nbytes = read(client_fd, buffer, std::min(1024, contentLength - bytes_read));
+		nbytes = read(client_fd, buffer, 1024);
 		if (nbytes <= 0) break;
 		buffer[nbytes] = '\0';
-		req._content_body += buffer;
-		std::cout << buffer;
-		bytes_read += nbytes;
-		// std::cout << "read: " << bytes_read << "| bodySize : " << contentLength << std::endl;
+		complete_body = join(complete_body, buffer);
+		std::cout << "left " << contentLength - req.getContentBody().size() << " bytes" << std::endl;
 	}
-	std::cout << "\n-------------------------------------\n";
-	std::cout << "done reading" << std::endl;
-	std::cout << "\n-------------------------------------\n";
-	// req._content_body = complete_body;
+	req._content_body = complete_body;
 	int methodINdex = getMethodIndex(req.getMethod());
 	std::string location = "/" + req.getUrl();
 
@@ -313,7 +303,6 @@ bool	Server::checkPermissions(std::string method)
 	}
 	return isAllowed;
 }
-
 methodType Server::handleMethod(int methodIndex)
 {
 	std::map<int, methodType> methodsHandler;
@@ -396,6 +385,10 @@ void Server::getHandler(Request req, Response res)
 
 void Server::postHandler(Request req, Response res)
 {
+	// if (("/" + req.getUrl()) == _locConfig.getUploadPath())
+	// {
+
+	// }
 	std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 	std::string filename = tokens[tokens.size() - 1];
 	if (!filename.empty())
@@ -403,14 +396,14 @@ void Server::postHandler(Request req, Response res)
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {
 			FileSystem::uploadFile(uploadLocation, req.getContentBody());
-			return res.sendContent(HttpStatus::OK, "file uploaded succefully!");
+			return res.sendContent(HttpStatus::OK, "file uploaded succefully, u can access the new file in this path: " + uploadLocation);
 		}
 		catch (std::exception& e)
 		{
-			return res.send(HttpStatus::InternalServerError); //todo compare with nginx?	
+			return res.send(HttpStatus::InternalServerError);
 		}
 	}
-	res.send(HttpStatus::Forbidden);
+	res.send(HttpStatus::NotImplemented);
 }
 
 void Server::deleteHandler(Request req, Response res)

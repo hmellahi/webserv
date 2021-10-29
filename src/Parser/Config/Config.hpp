@@ -35,13 +35,13 @@ class Config
 		std::string getRoot(void) const;
 		std::map<int, std::string> get_error_pages(void) const;
 		int get_client_max_body_size(void) const;
-		std::vector<std::string> get_index(void) const;
+		std::vector<std::string> getIndex(void) const;
 		std::pair<int, std::string> get_redirectionPath(void) const;
 		std::vector<std::string> get_allowedMethods(void) const;
-		std::string get_uploadPath(void) const;
-		std::map<std::string, std::string> get_cgi(void) const;
-		std::vector<std::string> get_server_name(void) const;
-		std::vector<u_int32_t> get_listen(void) const;
+		std::string getUploadPath(void) const;
+		std::map<std::string, std::string> getCGI(void) const;
+		std::vector<std::string> getServerName(void) const;
+		std::vector<u_int32_t> getPorts(void) const;
 		bool get_isAutoIndexOn(void) const;
 		std::map<std::string, Config> getLocation(void) const;	
 

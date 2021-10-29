@@ -258,7 +258,7 @@ int Config::get_client_max_body_size(void) const
 	return (_client_max_body_size);
 }
 
-std::vector<std::string> Config::get_index(void) const
+std::vector<std::string> Config::getIndex(void) const
 {
 	return (_index);
 }
@@ -273,22 +273,22 @@ std::vector<std::string> Config::get_allowedMethods(void) const
 	return (_allowedMethods);
 }
 
-std::string Config::get_uploadPath(void) const
+std::string Config::getUploadPath(void) const
 {
 	return (_uploadPath);
 }
 
-std::map<std::string, std::string> Config::get_cgi(void) const
+std::map<std::string, std::string> Config::getCGI(void) const
 {
 	return (_cgi);
 }
 
-std::vector<std::string> Config::get_server_name(void) const
+std::vector<std::string> Config::getServerName(void) const
 {
 	return (_server_name);
 }
 
-std::vector<u_int32_t> Config::get_listen(void) const
+std::vector<u_int32_t> Config::getPorts(void) const
 {
 	return (_listen);
 }
@@ -356,7 +356,7 @@ void	Config::setRoot(std::string root)
 
 // std::vector<std::string> Config::getIndex(std::string path) const
 // {
-// 	return (getConfig(path).get_index());
+// 	return (getConfig(path).getIndex());
 // }
 
 // bool Config::isAutoIndexOn(std::string path) const

@@ -86,3 +86,16 @@ int     FileSystem::getFileStatus(std::string filename)
     
     return HttpStatus::OK;
 }
+
+void    FileSystem::uploadFile(std::string uploadLocation, std::string content)
+{
+    std::fstream new_file;
+
+    // std::cout << "location: " << uploadLocation << std::endl;
+    new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
+    if (!new_file.is_open())
+        throw std::runtime_error("couldnt open the file for writing");
+    
+    new_file.write(content.c_str(), content.size());
+    new_file.close();
+}

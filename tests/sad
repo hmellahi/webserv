@@ -1,0 +1,41 @@
+[
+    {
+      "key": "ctrl+tab",
+      "command": "workbench.action.nextEditor"
+    },
+    {
+      "key": "ctrl+shift+tab",
+      "command": "workbench.action.previousEditor"
+    },
+    {
+      "key": "tab",
+      "command": "selectNextSuggestion",
+      "when": "editorTextFocus && suggestWidgetMultipleSuggestions && suggestWidgetVisible"
+    },
+    {
+      "key": "shift+tab",
+      "command": "selectPrevSuggestion",
+      "when": "editorTextFocus && suggestWidgetMultipleSuggestions && suggestWidgetVisible"
+    },
+    {
+      "key": "ctrl+alt+v",
+      "command": "toggleVim"
+    },
+    {
+      "key": "shift+alt+j",
+      "command": "editor.action.moveLinesDownAction"
+    },
+    {
+      "key": "shift+alt+k",
+      "command": "editor.action.moveLinesUpAction",
+      "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+      "key": "shift+k",
+      "command": "editor.action.showHover",
+      "when": "editorTextFocus"
+    }
+  
+]
+  
+  

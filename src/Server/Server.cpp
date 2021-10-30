@@ -138,6 +138,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int sd;
 	char requestBody[1025];
 	int valread;
+	static int c;
 	Response res;
 	std::string requestBodyStr;
 	int j;
@@ -158,6 +159,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			// }
 			// DBG("done");
 			// Check if it was for closing
+			c += valread;
+				std::cout << "-------------------------------------\n";
+			std::cout << "buffer: " << c << std::endl;
+				std::cout << "-------------------------------------\n";
 			if (valread <= 0)
 			{
 				// Somebody disconnected
@@ -242,9 +247,9 @@ Response Server::handleRequest(Request req, int client_fd)
 	// {
 	// 	if (req.getContentBody().size() < contentLength)
 	// 	{
-	std::cout << "-------------------------------------\n";
-	std::cout << "ContentLength:" << req.getContentBody().size()  << std::endl;
-	std::cout << "-------------------------------------\n";
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "ContentLength:" << req.getContentBody().size()  << std::endl;
+	// std::cout << "-------------------------------------\n";
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	if (it == unCompletedRequests.end() && req.getContentBody().size() < contentLength)
 	{
@@ -255,18 +260,19 @@ Response Server::handleRequest(Request req, int client_fd)
 	{
 		(it->second)._content_body += req._buffer;
 		req = it->second;
-		std::cout << "-------------------------------------\n";
-		std::cout << "bufferd:" << req.getContentBody().size() << std::endl;
-		std::cout << "-------------------------------------\n";
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
+		// std::cout << "-------------------------------------\n";
+		// std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		// std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
 			return Response();
 		unCompletedRequests.erase(it);
 	}
-	std::cout << "-------------------------------------\n";
-	std::cout << "Content:" << req.getContentBody() << std::endl;
-	std::cout << "-------------------------------------\n";
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "Content:" << req.getContentBody() << std::endl;
+	// std::cout << "Done Reading : " <<  req.getContentBody().size() << std::endl;
+	// std::cout << "-------------------------------------\n";
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	// std::cout << "old url:" << req.getUrl() << std::endl;
 	// req.setUrl((req.getUrl()).erase(0, locationPath.size()));
@@ -287,14 +293,14 @@ Response Server::handleRequest(Request req, int client_fd)
 	// 	res.send(HttpStatus::PayloadTooLarge);
 	// 	return (res);
 	// }
-	std::cout << "Content-Length: " << contentLength << std::endl;
+	// std::cout << "Content-Length: " << contentLength << std::endl;
 	char buffer[1025];
 	int nbytes;
-	std::cout << "\n-------------------------------------\n";
-	std::cout << "BODY SIZE " << req.getContentBody().size() << std::endl;
-	std::cout << "\n-------------------------------------\n";
+	// std::cout << "\n-------------------------------------\n";
+	// std::cout << "BODY SIZE " << req.getContentBody().size() << std::endl;
+	// std::cout << "\n-------------------------------------\n";
 	int bytes_read = req.getContentBody().size();
-	std::cout << req.getContentBody();
+	// std::cout << req.getContentBody();
 	// while (bytes_read < contentLength)
 	// {
 	// 	// nbytes = read(client_fd, buffer, 1024);//std::min(1024, bytes_read - nbytes));

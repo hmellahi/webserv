@@ -27,13 +27,14 @@ class Request
 		std::map<std::string, std::string> getHeaders(void) const;
 		std::string getMethod(void) const;
 		std::string getUrl(void) const;
+		void	setUrl(std::string url);
 		std::string getHttpVersion(void) const;
 		std::string getContentBody(void) const;
 		int getStatus(void) const;
 		void ParseChunkBody(std::string &buffer);
 		std::string _content_body;
-	private:
 		std::string _buffer;
+	private:
 		std::map<std::string, std::string> _headers;
 		std::string _method;
 		std::string _url;

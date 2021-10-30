@@ -6,7 +6,6 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     _headers["url"] = req.getUrl();
     _serverConfig = serverConfig;
     _headers["http-version"] = req.getHttpVersion();
-    // _headers = req.getHeaders();
     _headers["Connection"] = req.getHeader("Connection");
     _headers["Date"] = util::getCurrentDate(); 
 }

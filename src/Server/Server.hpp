@@ -26,7 +26,7 @@ private:
     Config _locConfig;
 public:
     Config _config;
-
+    std::map<int, Request> unCompletedRequests;
     // ------------ Constructors --------------------------- //
     Server();
     Server(Config config);
@@ -43,6 +43,7 @@ public:
     static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
     static void     RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
     static Response     handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers);
+
     // ----------------------------------------------------- //
 
     Socket  addPort(int port);
@@ -63,6 +64,8 @@ public:
     std::vector<Socket> getSockets();
     std::vector<std::string>  getServerNames() const;
     bool	checkPermissions(std::string method);
-    void    updateLocationConfig(std::string location);
+    std::string	    updateLocationConfig(std::string location);
     // ----------------------------------------------------- //
 };
+
+// std::map<int, Request> unCompletedRequests = std::map<int, Request>();

@@ -6,9 +6,9 @@ Request::Request(void)
 
 Request::Request(std::string &buffer): _buffer(buffer), _status(0)
 {
-	std::cout << "-------------------------------------\n";
-	std::cout << buffer << std::endl;
-	std::cout << "-------------------------------------\n";
+	// std::cout << "-------------------------------------\n";
+	// std::cout << buffer << std::endl;
+	// std::cout << "-------------------------------------\n";
 	parse();
 }
 
@@ -72,10 +72,10 @@ void Request::ParseFirstLine(std::string line)
 		_url.erase(0, 1); // erase "/" at the start
 		if (!_query.empty())
 			parse_query(_query);
-		_http_version = tokens[2];
+		_http_version = util::trim(tokens[2]);
 		if (util::is_valid_method(_method) == false)
 			_status = HttpStatus::NotImplemented; // server not support this method
-		else if (util::is_valid_version(util::trim(_http_version)) == false)
+		else if (util::is_valid_version(_http_version) == false)
 			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else
@@ -212,6 +212,11 @@ std::string Request::getHttpVersion(void) const
 std::string Request::getContentBody(void) const
 {
 	return (_content_body);
+}
+
+void	Request::setUrl(std::string url)
+{
+	_url = url;
 }
 
 int Request::getStatus(void) const

@@ -1,11 +1,13 @@
 
-<?php
+<!DOCTYPE HTML>
+<html>  
+<body>
 
-// Show all information, defaults to INFO_ALL
-phpinfo();
+<form action="welcome.php" method="post">
+Name: <input type="text" name="name"><br>
+E-mail: <input type="text" name="email"><br>
+<input type="submit">
+</form>
 
-// Show just the module information.
-// phpinfo(8) yields identical results.
-phpinfo(INFO_MODULES);
-
-?>
+</body>
+</html>

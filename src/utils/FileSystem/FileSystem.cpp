@@ -73,8 +73,8 @@ int     FileSystem::getFileStatus(std::string filename)
     //     }
     // F_OK
     // Tests whether the file exists.
-    // R_OK
     // Tests whether the file can be accessed for reading.
+    // R_OK
     // X_OK — for a directory, test for search permission. Otherwise, test for execute permission. 
     // const char file[] = filename.c_;   
     // if (access(filename.c_str(), F_OK) == -1)

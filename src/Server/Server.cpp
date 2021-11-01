@@ -177,9 +177,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// 		<< "client with id " << sd 
 				// 		<< "--------------------------------" << std::endl;
 				requestBody[valread] = '\0';
-				
-				// std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
 				requestBodyStr = requestBody;
+				// std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
+				// std::vector<char> requestBodyList(requestBody, requestBody + valread);
+				// requestBodyList.insert(requestBody, requestBody + valread);
 				// std::cout << "\n\nsize\n\n" << requestBodyStr.size() << std::endl;
 				// if (requestBodyStr != requestBody) {
 				// 	std::cout << "nooooooooooooo\n";
@@ -258,7 +259,9 @@ Response Server::handleRequest(Request req, int client_fd)
 	}
 	else if (it != unCompletedRequests.end())
 	{
-		(it->second)._content_body += req._buffer;
+		// (it->second)._content_body += req._buffer;
+		for (int i = 0; i < req._buffer.size(); i++)
+			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
 		// std::cout << "-------------------------------------\n";
@@ -531,7 +534,6 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 {
 	// set of socket descriptors
 	fd_set readfds;
-	std::vector<Socket> clients;
 	// Socket				new_socket;
 	int max_sd;
 	int addrlen, activity;
@@ -562,6 +564,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		Server::RecvAndSend(clients, readfds, servers);
 	}
 }
+std::vector<Socket> clients;
 	std::vector<Socket> serversSockets;
 
 void Server::setup(ParseConfig GlobalConfig)

@@ -149,7 +149,8 @@ void Request::ParseBody(std::string &buffer)
 			i += 4;
 			while (buffer[i] && count < atoi(_headers["Content-Length"].c_str()))
 			{
-				_content_body += buffer[i];
+				// _content_body += buffer[i];
+				_content_body.push_back(buffer[i]);
 				i++;
 				count++;
 			}
@@ -171,7 +172,7 @@ void Request::ParseChunkBody(std::string &buffer)
 	while (size)
 	{
 		i = body.find("\r\n", i) + 2;
-		_content_body += body.substr(i, size);
+		// _content_body += body.substr(i, size);
 		i += size + 2;
 		hex = body.substr(i, body.size());
 		size = util::to_hex(hex);
@@ -209,7 +210,7 @@ std::string Request::getHttpVersion(void) const
 	return (_http_version); 
 }
 
-std::string Request::getContentBody(void) const
+std::vector<char>  Request::getContentBody(void) const
 {
 	return (_content_body);
 }

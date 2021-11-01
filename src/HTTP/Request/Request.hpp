@@ -29,10 +29,10 @@ class Request
 		std::string getUrl(void) const;
 		void	setUrl(std::string url);
 		std::string getHttpVersion(void) const;
-		std::string getContentBody(void) const;
+		std::vector<char> getContentBody(void) const;
 		int getStatus(void) const;
 		void ParseChunkBody(std::string &buffer);
-		std::string _content_body;
+		std::vector<char> _content_body;
 		std::string _buffer;
 	private:
 		std::map<std::string, std::string> _headers;

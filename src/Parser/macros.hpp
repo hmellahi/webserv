@@ -27,6 +27,7 @@
 #define DBG(msg) std::cout << "line : " << __LINE__ << ",file : " << __FILE__ << ", msg:" << msg << "\n"  << std::endl;
 class Socket;
 extern std::vector<Socket> serversSockets;
+extern std::vector<Socket> clients;
 #define TRUE 1
 #define BUFSIZE 100
 #define DEFAULT_PORT 80

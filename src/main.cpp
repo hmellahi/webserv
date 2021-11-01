@@ -3,9 +3,15 @@
 #include "Server.hpp"
 #include <csignal>
 
+void	handle(int a){
+	std::cout << "quited with signal : " << a << std::endl;
+	util::signal_handler(a);
+}
 int main(int ac , char *av[])
 {
-	std::signal(SIGINT, util::signal_handler);
+	std::signal(SIGINT, handle);
+	std::signal(SIGKILL, handle);
+	std::signal(SIGBUS, handle);
 
 	const char *file;
 	if (ac <= 2)
@@ -27,7 +33,7 @@ int main(int ac , char *av[])
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
+		std::cerr << "error [" << e.what() << "]: " << '\n';
 		util::ft_exit(EXIT_FAILURE);
 	}
 

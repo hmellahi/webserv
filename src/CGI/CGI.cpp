@@ -73,20 +73,22 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
         throw std::runtime_error("pipe error");
 
     pid_t pid = fork();
-        
+
     if (pid == -1)
         throw std::runtime_error("fork error");
+    
     if (pid > 0) {
+
         close(fd[1]);
+        
         FILE *result;
 
         result = fdopen(fd[0], "r");
         char c;
         while((c = fgetc(result)) != EOF)
             cgiOutput += c;
-        close(fd[0]);
         fclose(result);
-
+        close(fd[0]);
     }
     else if (pid == 0)
     {
@@ -95,6 +97,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
         close(fd[0]);
         if (execve(args[0], args, environ) == - 1)
             throw std::runtime_error("execve error");
+        //close(fd[0]);
     }
     int i = -1;
     while (args[++i] != NULL)

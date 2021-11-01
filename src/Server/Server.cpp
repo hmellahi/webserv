@@ -97,12 +97,11 @@ std::string	Server::updateLocationConfig(std::string path)
 	// _locConfig._root.erase(, path.size());
 	// std::cout << "not found" << std::endl;
 }
-
+int requestSize;
 Response Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
-	Request req(requestBody);
-	
+	Request req(requestBody, requestSize);	
 	// Loop throught all serversname of all running servers
 	// then look for the servername who matches the request host header
 	std::vector<Server>::iterator server;
@@ -114,15 +113,12 @@ Response Server::handleConnection(std::string &requestBody, int &client_fd, std:
 		{
 			std::string host = util::split(req.getHeader("Host"), ":")[0];
 			// std::cout << "host: " << host << std::endl;
-			// std::cout << "server_name: " << *server_name << std::endl;
+			// std::cout << "server_name: " << *server_name << s	td::endl;
 			// std::string = *server_name + ":" + std::to_string(server.get_port());
-			// server->updateLocationConfig(req.getUrl());
 			if (*server_name == host)
 				return server->handleRequest(req, client_fd);
 		}
 	}
-	// server->_locConfig = server->_config;
-	// server[0].updateLocationConfig(req.getUrl());
 	return (servers[0].handleRequest(req, client_fd));
 }
 
@@ -138,7 +134,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int sd;
 	char requestBody[1025];
 	int valread;
-	static int c;
+	// static int c;
 	Response res;
 	std::string requestBodyStr;
 	int j;
@@ -159,10 +155,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			// }
 			// DBG("done");
 			// Check if it was for closing
-			c += valread;
-				std::cout << "-------------------------------------\n";
-			std::cout << "buffer: " << c << std::endl;
-				std::cout << "-------------------------------------\n";
+			// c += valread;
+			// 	std::cout << "-------------------------------------\n";
+			// std::cout << "buffer: " << c << std::endl;
+			// 	std::cout << "-------------------------------------\n";
 			if (valread <= 0)
 			{
 				// Somebody disconnected
@@ -177,7 +173,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// 		<< "client with id " << sd 
 				// 		<< "--------------------------------" << std::endl;
 				requestBody[valread] = '\0';
-				requestBodyStr = requestBody;
+				// std::cout << "before : "<< valread << std::endl;
+				requestBodyStr = std::string(requestBody, valread);
+				// std::cout << "after : "<< requestBodyStr << std::endl;
 				// std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
 				// std::vector<char> requestBodyList(requestBody, requestBody + valread);
 				// requestBodyList.insert(requestBody, requestBody + valread);
@@ -188,6 +186,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// set the string terminating NULL byte on the end
 				// convert requestBody to a string
 				// handle connection and store response
+				requestSize = valread;
 				res = handleConnection(requestBodyStr, sd, servers);
 				// if (res.getHeader("Connection") == "close")
 					// closeConnection(clients, readfds, i, sd);
@@ -210,34 +209,6 @@ Socket Server::addPort(int port)
 	// debugging
 	std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
 	return new_socket;
-}
-
-char	*join(char *s1, char *s2, int s1len, int s2len)
-{
-	unsigned int	i;
-	unsigned int	l;
-	char			*s3;
-
-	if (!s1 || !s2)
-		return (NULL);
-	i = s1len + s2len;
-	s3 = (char *)malloc((i + 1) * sizeof(char));
-	if (!s3)
-		return (NULL);
-	s3[i] = '\0';
-	i = 0;
-	while (i <= s1len)
-	{
-		s3[i] = s1[i];
-		i++;
-	}
-	l = 0;
-	while (i <= s2len)
-	{
-		s3[i++] = (char)s2[l];
-		l++;
-	}
-	return (s3);
 }
 
 
@@ -264,9 +235,9 @@ Response Server::handleRequest(Request req, int client_fd)
 			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
-		// std::cout << "-------------------------------------\n";
-		// std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
-		// std::cout << "-------------------------------------\n";
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
 			return Response();

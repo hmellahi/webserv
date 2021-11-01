@@ -73,6 +73,7 @@
     "complex": "cpp",
     "filesystem": "cpp",
     "set": "cpp",
-    "csignal": "cpp"
+    "csignal": "cpp",
+    "__memory": "cpp"
   }
 }

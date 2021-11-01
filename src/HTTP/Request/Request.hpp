@@ -13,7 +13,7 @@ class Request
 {
 	public:
 		Request();
-		Request(std::string &buffer);
+		Request(std::string buffer, int buffSize);
 		Request(Request const &src);
 		Request &operator=(Request const &rhs);
 		~Request();

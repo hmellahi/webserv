@@ -4,11 +4,21 @@ Request::Request(void)
 {
 }
 
-Request::Request(std::string &buffer): _buffer(buffer), _status(0)
+Request::Request(std::string buffer, int buffSize):_status(0)
 {
+	std::cout << buffSize << std::endl;
+	// _buffer = std::string(buffer, buffSize);
+	_buffer = buffer;
 	// std::cout << "-------------------------------------\n";
-	// std::cout << buffer << std::endl;
+	// std::cout << "mine " << _buffer << std::endl;
 	// std::cout << "-------------------------------------\n";
+	// if (buffSize != _buffer.size())
+	// {
+	// 	std::cout << "-------------------------------------\n";
+	// 	std::cout << "diff" << std::endl;
+	// 	std::cout << "-------------------------------------\n";
+	// 	// exit(0);
+	// }
 	parse();
 }
 

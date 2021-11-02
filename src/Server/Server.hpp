@@ -42,7 +42,7 @@ public:
     static void	addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds);
     static void	acceptNewConnection(std::vector<Socket> &clients, std::vector<Socket> &serversSockets, struct sockaddr_in &address, int &addrlen, fd_set &readfds);
     static void     RecvAndSend(std::vector<Socket> &clients, fd_set &readfds,  std::vector<Server> &servers);
-    static Response     handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers);
+    static Response     handleConnection(std::string &requestBody,  int &requestSize, int &client_fd, std::vector<Server> &servers);
 
     // ----------------------------------------------------- //
 

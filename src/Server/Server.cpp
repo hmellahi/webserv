@@ -83,7 +83,7 @@ std::string	Server::updateLocationConfig(std::string path)
 	for (location = locations.begin(); location != locations.end(); location++)
 	{
 		std::string locationPath = location->first;
-		// std::cout << "location" << locationPath << std::endl;
+		std::cout << "location" << path << std::endl;
 		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
 			_locConfig = location->second;
@@ -91,14 +91,8 @@ std::string	Server::updateLocationConfig(std::string path)
 		}
 	}
 	return "";
-	// if (location == locations.end()) // means a location with the given path isnt found
-		// return ;
-	// erase the location path from root
-	// _locConfig._root.erase(, path.size());
-	// std::cout << "not found" << std::endl;
 }
-int requestSize;
-Response Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
+Response Server::handleConnection(std::string &requestBody, int &requestSize, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
 	Request req(requestBody, requestSize);	
@@ -134,7 +128,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int sd;
 	char requestBody[1025];
 	int valread;
-	// static int c;
+	int requestSize;
 	Response res;
 	std::string requestBodyStr;
 	int j;
@@ -172,24 +166,15 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// std::cout << "-------------------------------------\n"
 				// 		<< "client with id " << sd 
 				// 		<< "--------------------------------" << std::endl;
-				requestBody[valread] = '\0';
-				// std::cout << "before : "<< valread << std::endl;
-				requestBodyStr = std::string(requestBody, valread);
-				// std::cout << "after : "<< requestBodyStr << std::endl;
-				// std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
-				// std::vector<char> requestBodyList(requestBody, requestBody + valread);
-				// requestBodyList.insert(requestBody, requestBody + valread);
-				// std::cout << "\n\nsize\n\n" << requestBodyStr.size() << std::endl;
-				// if (requestBodyStr != requestBody) {
-				// 	std::cout << "nooooooooooooo\n";
-				// }
 				// set the string terminating NULL byte on the end
+				requestBody[valread] = '\0';
 				// convert requestBody to a string
+				requestBodyStr = std::string(requestBody, valread);
 				// handle connection and store response
 				requestSize = valread;
-				res = handleConnection(requestBodyStr, sd, servers);
-				// if (res.getHeader("Connection") == "close")
-					// closeConnection(clients, readfds, i, sd);
+				res = handleConnection(requestBodyStr, requestSize, sd, servers);
+				if (res.getHeader("Connection") == "close")
+					closeConnection(clients, readfds, i, sd);
 			}
 		}
 	}
@@ -225,6 +210,14 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	if (it == unCompletedRequests.end() && req.getContentBody().size() < contentLength)
 	{
+		// Check if the request body size doesnt exceed
+		// the max client body size
+		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+		{
+			Response res(req, client_fd, _locConfig);
+			res.send(HttpStatus::PayloadTooLarge);
+			return (res);
+		}
 		unCompletedRequests[client_fd] = req;
 		return Response();
 	}
@@ -234,67 +227,39 @@ Response Server::handleRequest(Request req, int client_fd)
 			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
-		std::cout << "-------------------------------------\n";
-		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
-		std::cout << "-------------------------------------\n";
+		// std::cout << "-------------------------------------\n";
+		// std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		// std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
 			return Response();
 		unCompletedRequests.erase(it);
 	}
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "Content:" << req.getContentBody() << std::endl;
-	// std::cout << "Done Reading : " <<  req.getContentBody().size() << std::endl;
-	// std::cout << "-------------------------------------\n";
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
-	// std::cout << "old url:" << req.getUrl() << std::endl;
-	// req.setUrl((req.getUrl()).erase(0, locationPath.size()));
-	// std::cout << "new url:" << req.getUrl() << std::endl;
+	std::cout <<"root " << _locConfig._root << "locationPath :" << locationPath << ", old url:" << req.getUrl() << std::endl;
+	req.setUrl((req.getUrl()).erase(0, locationPath.size()));
+	std::cout << "new url:" << req.getUrl() << std::endl;
 	// Check if the request body is valid
-	int isRequestValid = req.getStatus() == 0;
 	Response res(req, client_fd, _locConfig);
-	// if (!isRequestValid)
+	// if (req.getStatus() != HttpStatus::OK) // TODO FIX
 	// {
-		// res.send(req.getStatus());
-		// return (res);
-	// }
-	// Check if the request body size doesnt exceed
-	// the  max client body size
-	// int contentLength =  atoi(req.getHeader("Content-Length").c_str());
-	// if (_locConfig.get_client_max_body_size() < contentLength)
-	// {
-	// 	res.send(HttpStatus::PayloadTooLarge);
+	// 	res.send(req.getStatus());
 	// 	return (res);
 	// }
-	// std::cout << "Content-Length: " << contentLength << std::endl;
-	char buffer[1025];
-	int nbytes;
-	// std::cout << "\n-------------------------------------\n";
-	// std::cout << "BODY SIZE " << req.getContentBody().size() << std::endl;
-	// std::cout << "\n-------------------------------------\n";
-	int bytes_read = req.getContentBody().size();
-	// std::cout << req.getContentBody();
-	// while (bytes_read < contentLength)
-	// {
-	// 	// nbytes = read(client_fd, buffer, 1024);//std::min(1024, bytes_read - nbytes));
-	// 	nbytes = read(client_fd, buffer, std::min(1024, contentLength - bytes_read));
-	// 	if (nbytes <= 0) break;
-	// 	buffer[nbytes] = '\0';
-	// 	req._content_body += buffer;
-	// 	std::cout << buffer;
-	// 	bytes_read += nbytes;
-	// 	// std::cout << "read: " << bytes_read << "| bodySize : " << contentLength << std::endl;
-	// }
-	// std::cout << "\n-------------------------------------\n";
-	// std::cout << "done reading" << std::endl;
-	// std::cout << "\n-------------------------------------\n";
-	// req._content_body = complete_body;
-	int methodINdex = getMethodIndex(req.getMethod());
+	
+	// Check if the request body size doesnt exceed
+	// the max client body size
+	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+	{
+		res.send(HttpStatus::PayloadTooLarge);
+		return (res);
+	}
+
+	int methodIndex = getMethodIndex(req.getMethod());
 	std::string location = "/" + req.getUrl();
 
 	// Check if there is a redirection
 	std::pair<int, std::string> redirection = _locConfig.get_redirectionPath();
-	// std::cout << redirection.first << std::endl;
 	if (redirection.first != 0)
 	{
 		int status_code = redirection.first;
@@ -311,7 +276,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (!isAllowed)
 		res.send(HttpStatus::MethodNotAllowed);
 	else
-		(this->*handleMethod(methodINdex))(req, res);
+		(this->*handleMethod(methodIndex))(req, res);
 	return (res);
 }
 
@@ -325,7 +290,6 @@ bool	Server::checkPermissions(std::string method)
 
 	if (allowedMethods.size() > 0)
 	{
-		/// std::cout << "allowed methods: " << allowedMethods[0] << std::endl;
 		std::vector<std::string>::iterator it;
 		it = find(allowedMethods.begin(), allowedMethods.end(), method);
 		if (it == allowedMethods.end())
@@ -348,13 +312,8 @@ methodType Server::handleMethod(int methodIndex)
 void Server::getHandler(Request req, Response res)
 {
 	std::string filename = _locConfig.getRoot() + req.getUrl();
-    // std::cout << filename << std::endl;
 	int status = FileSystem::getFileStatus(filename.c_str());
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "Status"<< status << std::endl;
-	// std::cout << "-------------------------------------\n";
 	// check the file requested is a directory
-	// DBG("HELLO");
 	if (status == IS_DIRECTORY)
 	{
 		if (filename[filename.length() - 1] != '/')
@@ -393,13 +352,10 @@ void Server::getHandler(Request req, Response res)
 	{
 		std::string cgiType = cgi->first;
 		std::string cgiPath = cgi->second;
-		// std::cout <<"filename" << cgiType << std::endl;
 		if (fileExtension == cgiType)
 		{
 			try {
 				// execute the file using approriate cgi
-				std::cout <<"filename : " << filename << std::endl;
-				std::cout <<"content" << cgiOutput << std::endl;
 				cgiOutput = CGI::exec_file(filename.c_str());
 				return res.sendContent(HttpStatus::OK, cgiOutput);
 			}

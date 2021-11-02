@@ -4,21 +4,8 @@ Request::Request(void)
 {
 }
 
-Request::Request(std::string buffer, int buffSize):_status(0)
+Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpStatus::OK)
 {
-	std::cout << buffSize << std::endl;
-	// _buffer = std::string(buffer, buffSize);
-	_buffer = buffer;
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "buffersize before" << buffSize << std::endl;
-	// std::cout << "-------------------------------------\n";
-	if (buffSize != _buffer.size())
-	{
-		std::cout << "-------------------------------------\n";
-		std::cout << "diff" << std::endl;
-		std::cout << "-------------------------------------\n";
-	// 	// exit(0);
-	}
 	_buffSize = buffSize;
 	parse();
 }

@@ -19,5 +19,5 @@ class CGI
 {
 public:
    static std::string     exec_file(std::string path);
-   static std::string     exec_file(std::string path, Request req);
+   static std::string     exec_file(std::string path, Request &req);
 };

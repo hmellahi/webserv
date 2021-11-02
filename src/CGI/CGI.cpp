@@ -15,53 +15,6 @@ char        **fill_args(std::string path) {
     return (args);
 }
 
-std::string     CGI::exec_file(std::string path)
-{
-    int fd[2];
-    char    **args = fill_args(path);
-
-    // get query  string 
-
-    // setenv("QUERY_STRING", req.getContentBody().c_str(), 1);
-	std::string f = "";
-
-    if (pipe(fd) == -1)
-        throw std::runtime_error("pipe error");
-
-    pid_t pid = fork();
-        
-    if (pid == -1)
-        throw std::runtime_error("fork error");
-    if (pid > 0) {
-        close(fd[1]);
-        FILE *result;
-
-        result = fdopen(fd[0], "r");
-        char c;
-        while((c = fgetc(result)) != EOF)
-            f += c;
-        close(fd[0]);
-        fclose(result);
-
-    }
-    else if (pid == 0)
-    {
-        dup2(fd[1], 1);
-        close(fd[1]);
-        close(fd[0]);
-
-        if (execve(args[0], args, NULL) == - 1)
-            throw std::runtime_error("execve error");
-    }
-    int i = -1;
-    while (args[++i] != NULL)
-        free(args[i]);
-    free(args);
-    return f;
-}
-
-
-
 std::string            exec_cgi( Request req, char **args , std::string path ) {
 
     int         fd[2];
@@ -76,28 +29,40 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
 
     if (pid == -1)
         throw std::runtime_error("fork error");
+
+   int tmp = open("test.txt", O_RDWR | O_CREAT, 0777);
     
+
+
     if (pid > 0) {
 
         close(fd[1]);
-        
+        close(fd[0]);
+
         FILE *result;
 
-        result = fdopen(fd[0], "r");
+        result = fdopen(tmp, "r");
         char c;
         while((c = fgetc(result)) != EOF)
             cgiOutput += c;
         fclose(result);
-        close(fd[0]);
+        close(tmp);
     }
     else if (pid == 0)
     {
-        dup2(fd[1], 1);
-        close(fd[1]);
-        close(fd[0]);
+
+        if (write(fd[1], req.getContentBody().c_str(), req.getContentBody().length()) == -1)
+            throw std::runtime_error("wrtie dzb");
+        // dup2(tmp, 0);
+        // printf("%s | %d\n", req.getContentBody().c_str(), req.getContentBody().length());
+        dup2(tmp, 1);
+        dup2(fd[0], 0);
+
+
         if (execve(args[0], args, environ) == - 1)
             throw std::runtime_error("execve error");
-        //close(fd[0]);
+        close(fd[0]);
+        close(fd[1]);
     }
     int i = -1;
     while (args[++i] != NULL)
@@ -106,7 +71,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
     return cgiOutput;
 }
 
-std::string    CGI::exec_file(std::string path, Request req) {
+std::string    CGI::exec_file(std::string path, Request &req) {
 
     int fd[2];
     char    **args = fill_args(path);
@@ -150,7 +115,7 @@ std::string    CGI::exec_file(std::string path, Request req) {
     // SERVER_SOFTWARE
 
     std::cout << "------------------------------------" << std::endl;
-    std::cout << "Query :: "<< req.getQuery() << std::endl;
+    std::cout << "Query :: "<< req.getContentBody() << std::endl;
     std::cout << "------------------------------------" << std::endl;
 
 

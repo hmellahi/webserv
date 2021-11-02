@@ -560,7 +560,8 @@ void Server::setup(ParseConfig GlobalConfig)
 		{
 			if (usedPorts.find(*port) == usedPorts.end())
 			{
-				new_socket = newServer.addPort(*port, "10.12.5.12");// serverConfig->host);
+				// new_socket = newServer.addPort(*port, "10.30.247.190");// serverConfig->host);
+				new_socket = newServer.addPort(*port, "127.0.0.1");// serverConfig->host);
 				serversSockets.push_back(new_socket);
 				usedPorts.insert(*port);
 			}

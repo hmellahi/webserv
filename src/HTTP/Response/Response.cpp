@@ -165,6 +165,7 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     if (bytes_written <= 0)
     {
         perror("couldnt send the msg"); // todo should exit?
+        return -1;
     }
     return 0;
 }

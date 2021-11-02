@@ -9,16 +9,16 @@ Request::Request(std::string buffer, int buffSize):_status(0)
 	std::cout << buffSize << std::endl;
 	// _buffer = std::string(buffer, buffSize);
 	_buffer = buffer;
-	std::cout << "-------------------------------------\n";
-	std::cout << "buffersize before" << buffSize << std::endl;
-	std::cout << "-------------------------------------\n";
-	// if (buffSize != _buffer.size())
-	// {
-	// 	std::cout << "-------------------------------------\n";
-	// 	std::cout << "diff" << std::endl;
-	// 	std::cout << "-------------------------------------\n";
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "buffersize before" << buffSize << std::endl;
+	// std::cout << "-------------------------------------\n";
+	if (buffSize != _buffer.size())
+	{
+		std::cout << "-------------------------------------\n";
+		std::cout << "diff" << std::endl;
+		std::cout << "-------------------------------------\n";
 	// 	// exit(0);
-	// }
+	}
 	_buffSize = buffSize;
 	parse();
 }
@@ -41,6 +41,7 @@ Request & Request::operator=(Request const &rhs)
 		_content_body = rhs._content_body;
 		_status = rhs._status;
 		_query_map = rhs._query_map;
+		_buffSize = rhs._buffSize;
 	}
 	return (*this);
 }
@@ -152,13 +153,14 @@ void Request::ParseBody(std::string &buffer)
 {
 	//  Each heading is followed by a line feed character \r\n.
 	int i  = buffer.find("\r\n\r\n");
+	// _buffSize -= i;
 	int count = 0;
 	if (i != _buffSize)
 	{
 		if (_headers.find("Content-Length") != _headers.end())
 		{
 			i += 4;
-			while (buffer[i] && count < atoi(_headers["Content-Length"].c_str()))
+			while (i != _buffSize && count < atoi(_headers["Content-Length"].c_str()))
 			{
 				// _content_body += buffer[i];
 				_content_body.push_back(buffer[i]);

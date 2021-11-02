@@ -200,14 +200,14 @@ std::vector<Socket> Server::getSockets()
 	return _serverSockets;
 }
 
-Socket Server::addPort(int port)
+Socket Server::addPort(int port, std::string host)
 {
 	// create new socket on the given port
-	Socket new_socket(port);
+	Socket new_socket(port, host);
 	// save socker fd
 	_serverSockets.push_back(new_socket);
 	// debugging
-	std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
+	std::cout << "Server started, go to " << host << ":" << port << std::endl;
 	return new_socket;
 }
 
@@ -556,24 +556,15 @@ void Server::setup(ParseConfig GlobalConfig)
 		Server newServer(*serverConfig);
 
 		std::vector<u_int32_t> ports = serverConfig->getPorts();
-		// if (ports.size() == 0)
-		// {
-		// 	if (usedPorts.find(DEFAULT_PORT) == usedPorts.end())
-		// 	{
-		// 		new_socket = newServer.addPort(DEFAULT_PORT);
-		// 		serversSockets.push_back(new_socket);
-		// 		usedPorts.insert(DEFAULT_PORT);
-		// 	}
-		// }
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
 			if (usedPorts.find(*port) == usedPorts.end())
 			{
-				new_socket = newServer.addPort(*port);
+				new_socket = newServer.addPort(*port, "10.12.5.12");// serverConfig->host);
 				serversSockets.push_back(new_socket);
 				usedPorts.insert(*port);
 			}
-		}	
+		}
 		servers.push_back(newServer);
 	}
 	// this is where magic happens :wink:

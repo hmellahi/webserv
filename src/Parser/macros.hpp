@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sstream>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <map>
 #include <stdio.h>

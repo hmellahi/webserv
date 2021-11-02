@@ -46,7 +46,7 @@ public:
 
     // ----------------------------------------------------- //
 
-    Socket  addPort(int port);
+    Socket  addPort(int port, std::string host = "127.0.0.1");
     Response    handleRequest(Request req, int client_fd);
 
     // --------- Methods Handlers ------------------------- //

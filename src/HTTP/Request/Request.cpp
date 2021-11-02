@@ -9,9 +9,9 @@ Request::Request(std::string buffer, int buffSize):_status(0)
 	std::cout << buffSize << std::endl;
 	// _buffer = std::string(buffer, buffSize);
 	_buffer = buffer;
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "mine " << _buffer << std::endl;
-	// std::cout << "-------------------------------------\n";
+	std::cout << "-------------------------------------\n";
+	std::cout << "buffersize before" << buffSize << std::endl;
+	std::cout << "-------------------------------------\n";
 	// if (buffSize != _buffer.size())
 	// {
 	// 	std::cout << "-------------------------------------\n";
@@ -19,6 +19,7 @@ Request::Request(std::string buffer, int buffSize):_status(0)
 	// 	std::cout << "-------------------------------------\n";
 	// 	// exit(0);
 	// }
+	_buffSize = buffSize;
 	parse();
 }
 
@@ -152,7 +153,7 @@ void Request::ParseBody(std::string &buffer)
 	//  Each heading is followed by a line feed character \r\n.
 	int i  = buffer.find("\r\n\r\n");
 	int count = 0;
-	if (i != std::string::npos)
+	if (i != _buffSize)
 	{
 		if (_headers.find("Content-Length") != _headers.end())
 		{
@@ -166,6 +167,9 @@ void Request::ParseBody(std::string &buffer)
 			}
 		}
 	}
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "reqsize" << i << std::endl;
+	// std::cout << "-------------------------------------\n";
 }
 
 void Request::ParseChunkBody(std::string &buffer)

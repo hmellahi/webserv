@@ -182,7 +182,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// std::cout << "\n\nsize\n\n" << requestBodyStr.size() << std::endl;
 				// if (requestBodyStr != requestBody) {
 				// 	std::cout << "nooooooooooooo\n";
-				// }
+				// }0
 				// set the string terminating NULL byte on the end
 				// convert requestBody to a string
 				// handle connection and store response
@@ -231,6 +231,9 @@ Response Server::handleRequest(Request req, int client_fd)
 	else if (it != unCompletedRequests.end())
 	{
 		// (it->second)._content_body += req._buffer;
+		std::cout << "-------------------------------------\n";
+		std::cout << "buffersize before" << req._buffer.size() << " | " << req._buffSize << std::endl;
+		std::cout << "-------------------------------------\n";
 		for (int i = 0; i < req._buffer.size(); i++)
 			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;

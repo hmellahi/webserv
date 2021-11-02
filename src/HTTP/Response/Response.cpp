@@ -84,6 +84,7 @@ void    Response::send( int statusCode, std::string filename)
     // std::cout << extension << std::endl;
     if (!extension.empty())
     {
+        std::cout << "extension: " << extension << std::endl;
         std::string type  = MediaTypes::getType(extension.c_str());
         _headers["Content-Type"] = type.empty() ? "text/plain" : MediaTypes::getType(extension.c_str());
     }

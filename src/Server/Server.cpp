@@ -233,11 +233,11 @@ Response Server::handleRequest(Request req, int client_fd)
 	// Check if the request body is valid
 	int isRequestValid = req.getStatus() == 0;
 	Response res(req, client_fd, _locConfig);
-	if (!isRequestValid)
-	{
-		res.send(req.getStatus());
-		return (res);
-	}
+	// if (!isRequestValid)
+	// {
+	// 	res.send(req.getStatus());
+	// 	return (res);
+	// }
 	// Check if the request body size doesnt exceed
 	// the  max client body size
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
@@ -289,9 +289,43 @@ Response Server::handleRequest(Request req, int client_fd)
 	bool isAllowed = checkPermissions(req.getMethod());
 
 	if (!isAllowed)
+	{
 		res.send(HttpStatus::MethodNotAllowed);
-	else
-		(this->*handleMethod(methodINdex))(req, res);
+		return (res);
+	}
+	std::string filename = _locConfig.getRoot() + req.getUrl();
+	// check if the requested file isnt a static file
+	// if so then pass it to CGI
+	std::string fileExtension = util::GetFileExtension(filename.c_str());
+	std::map<std::string, std::string> cgis = _locConfig.getCGI();
+	std::map<std::string, std::string>::iterator cgi;
+	std::string cgiOutput;
+	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
+	{
+		std::string cgiType = cgi->first;
+		std::string cgiPath = cgi->second;
+		// std::cout <<"filename" << cgiType << std::endl;
+		if (fileExtension == cgiType)
+		{
+			try {
+				// execute the file using approriate cgi
+				std::cout <<"filename : " << filename << std::endl;
+				std::cout <<"content" << cgiOutput << std::endl;
+				std::cout << "zbi rah\n";
+				cgiOutput = CGI::exec_file(filename.c_str(), req);
+				std::cout << cgiOutput << std::endl;
+				res.sendContent(HttpStatus::OK, cgiOutput);
+			return (res);
+			}
+			catch (const std::exception)
+			{
+				// some went wrong while executing the file
+				res.send(HttpStatus::InternalServerError);
+			return (res);
+			}
+		}
+	}
+	(this->*handleMethod(methodINdex))(req, res);
 	return (res);
 }
 
@@ -365,31 +399,44 @@ void Server::getHandler(Request req, Response res)
 	
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
-	std::string fileExtension = util::GetFileExtension(filename.c_str());
-	std::map<std::string, std::string> cgis = _locConfig.getCGI();
-	std::map<std::string, std::string>::iterator cgi;
-	std::string cgiOutput;
-	for (cgi = cgis.begin(); cgi != cgis.end(); ++cgi)
-	{
-		std::string cgiType = cgi->first;
-		std::string cgiPath = cgi->second;
-		// std::cout <<"filename" << cgiType << std::endl;
-		if (fileExtension == cgiType)
-		{
-			try {
-				// execute the file using approriate cgi
-				std::cout <<"filename : " << filename << std::endl;
-				std::cout <<"content" << cgiOutput << std::endl;
-				cgiOutput = CGI::exec_file(filename.c_str());
-				return res.sendContent(HttpStatus::OK, cgiOutput);
-			}
-			catch (const std::exception)
-			{
-				// some went wrong while executing the file
-				return res.send(HttpStatus::InternalServerError);
-			}
-		}
-	}
+	// std::string fileExtension = util::GetFileExtension(filename.c_str());
+
+	// std::map<std::string, std::string> cgis = _locConfig.getCGI();
+	// std::map<std::string, std::string>::iterator cgi;
+	// std::string cgiOutput;
+	// for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
+	// {
+	// 	std::string cgiType = cgi->first;
+	// 	std::string cgiPath = cgi->second;
+	// 	// std::cout <<"filename" << cgiType << std::endl;
+	// 	if (fileExtension == cgiType)
+	// 	{
+	// 		try {
+	// 			// execute the file using approriate cgi
+	// 			std::cout <<"filename : " << filename << std::endl;
+	// 			std::cout <<"content" << cgiOutput << std::endl;
+	// 			std::cout << "zbi rah\n";
+	// 			// if (req.getMethod() == "POST")
+	// 			// {
+	// 			// 	std::cout << "POST\n";
+	// 			std::cout << "trying query " << req.getQuery() << std::endl;
+	// 			cgiOutput = CGI::exec_file(filename.c_str(), req);
+	// 			// }
+	// 			// else
+	// 			// {
+	// 			// 	std::cout << "GET\n";
+	// 				// cgiOutput = CGI::exec_file(filename.c_str());
+	// 			//}
+	// 			std::cout << cgiOutput << std::endl;
+	// 			return res.sendContent(HttpStatus::OK, cgiOutput);
+	// 		}
+	// 		catch (const std::exception)
+	// 		{
+	// 			// some went wrong while executing the file
+	// 			return res.send(HttpStatus::InternalServerError);
+	// 		}
+	// 	}
+	// }
 	// otherwise jst read it
 	return res.send(HttpStatus::OK, filename);
 }

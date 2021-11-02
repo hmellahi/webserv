@@ -30,6 +30,7 @@ class Request
 		std::string getHttpVersion(void) const;
 		std::string getContentBody(void) const;
 		int getStatus(void) const;
+		std::string getQuery() const;
 		void ParseChunkBody(std::string &buffer);
 		std::string _content_body;
 	private:

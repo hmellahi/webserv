@@ -81,7 +81,11 @@ std::string util::getCurrentDate()
 
 std::string util::GetFileExtension(const std::string& fileName)
 {
-	if(fileName.find_last_of(".") != std::string::npos)
+	std::cout << fileName << std::endl;
+	if (fileName[0] == '.')
+		return "";
+	size_t index = fileName.find_last_of(".");
+	if(index != std::string::npos && (fileName.find_last_of("/") + 1) != index)
 		return fileName.substr(fileName.find_last_of(".") + 1);
 	return "";
 }

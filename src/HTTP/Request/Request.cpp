@@ -55,7 +55,7 @@ void Request::parse()
 		// std::cout << "|" << _content_body << "|" << std::endl;
 	}
 	else
-		_status = HttpStatus::BadRequest;; // Bad request
+		_status = HttpStatus::BadRequest; // Bad request
 }
 
 void Request::ParseFirstLine(std::string line)
@@ -79,7 +79,7 @@ void Request::ParseFirstLine(std::string line)
 			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else
-		_status = HttpStatus::BadRequest;; // bad request
+		_status = HttpStatus::BadRequest; // bad request
 }
 
 void Request::parse_query(std::string &query)
@@ -217,6 +217,11 @@ std::string Request::getContentBody(void) const
 int Request::getStatus(void) const
 {
 	return (_status);
+}
+
+std::string Request::getQuery() const
+{
+	return _query;
 }
 
 

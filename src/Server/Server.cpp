@@ -250,7 +250,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	char buffer[1025];
 	int nbytes;
 	std::cout << "\n-------------------------------------\n";
-	std::cout << "BODY SIZE|||m " << req.getContentBody().size() << std::endl;
+	std::cout << "BODY SIZE " << req.getContentBody().size() << std::endl;
 	std::cout << "\n-------------------------------------\n";
 	int bytes_read = req.getContentBody().size();
 	std::cout << req.getContentBody();

@@ -1,4 +1,4 @@
-<html>
+
 <head>
 	<title>Registration Form</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -19,7 +19,7 @@
                     <?php echo $_POST['firstname'] . ' ' . $_POST['lastname']; ?>
                 </p>
 
-                <p> Go <a href="/registration_form2.php">back</a> to the form</p>
+                <p> Go <a href="/registration_form.php">back</a> to the form</p>
 
             <?php endif; ?>
 
@@ -46,4 +46,4 @@
                         </form>
 	<?php endif; ?>
 </body>
-</html>
+

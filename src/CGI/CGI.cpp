@@ -9,27 +9,19 @@ char        **fill_args(std::string path) {
 	args[0] = strdup("./cgi-bin/php-cgi");
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
-    // args[3] = strdup("/dev/null");
-    // args[4] = 
-
     return (args);
 }
 
 
 std::string             parseOutput( std::string out ) {
 
-    // out.erase(0, out.find("\n") + 1);
-    // out.erase(0, out.find("\n") + 1);
-   
 
-    // while (out.find("\n") != std::string::npos) {
-    
-    // }
-    // std::string to;
-    std::vector<std::string> headers;
+    // std::vector<std::string> headers;
+    std::map<std::string, std::string> headers;
     std::stringstream ss(out);
     std::string line;
     std::string outContent;
+    std::vector<std::string> tab;
 
     outContent = "";
     line = "";
@@ -38,10 +30,14 @@ std::string             parseOutput( std::string out ) {
 
         getline(ss, line, '\n');
         line = util::trim(line);
-        if (line.find("<html>") == std::string::npos && line.length() > 0)
+        // std::cout << "line :" << line << "|" << std::endl;
+        // if (line.find("<html>") == std::string::npos && line.length() > 0)
+        if (line.length() > 0)
         {
-            std::cout << "Found this header " << line << std::endl;
-            headers.push_back(line);
+            // headers.push_back(line);
+            tab = util::split(line, ": ");
+            headers[tab[0]] = util::trim(tab[1]);
+            // std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
         }
         else
             break ;
@@ -51,14 +47,9 @@ std::string             parseOutput( std::string out ) {
         getline(ss, line, '\n');
         outContent += line;
     }
+    
     return outContent;
-    // if (out != NULL)
-    // {
-    //     while(std::getline(ss,to,'\n')){
-    //     cout << to <<endl;
-    //     }
-    // }
-   // return out;
+
 }
 
 std::string            exec_cgi( Request req, char **args , std::string path ) {
@@ -114,6 +105,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
     while (args[++i] != NULL)
         free(args[i]);
     free(args);
+
     // remove cgi useless headers
     std::cout << "Status is " << status << std::endl;
     return parseOutput(cgiOutput);
@@ -142,7 +134,7 @@ std::string    CGI::exec_file(std::string path, Request &req) {
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("QUERY_STRING", req.getQuery().c_str(), 1);
 
-    // PATH_INFO
+    // PATH_INFO FULL PATH
     // PATH_TRANSLATED
     // REMOTE_ADDR
     // REMOTE_HOST
@@ -154,7 +146,7 @@ std::string    CGI::exec_file(std::string path, Request &req) {
     // SERVER_PORT
     // SERVER_PROTOCOL
     // SERVER_SOFTWARE
-    setenv("SERVER_SOFTWARE", "Webserv/1.0", 1);
+    //setenv("SERVER_SOFTWARE", "Webserv/1.0", 1);
 
     //QUERY_STRING
     //if (!req.getQuery().empty())

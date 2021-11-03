@@ -16,22 +16,50 @@ char        **fill_args(std::string path) {
 }
 
 
-// std::string             parseOutput( std::string in ) {
+std::string             parseOutput( std::string out ) {
 
-//     std::istringstream lines( in );
-//     std::string         one_line;
-//     std::string         out;
-//     int i = 0;
+    // out.erase(0, out.find("\n") + 1);
+    // out.erase(0, out.find("\n") + 1);
+   
 
-//     while ( getline( lines, one_line ) ) {
-//         ++i;
-//         if (i < 3)
-//             continue ;        
-//         in += one_line + '\n';
-//     }
-//    // std::cout << in;
-//     return in;
-// }
+    // while (out.find("\n") != std::string::npos) {
+    
+    // }
+    // std::string to;
+    std::vector<std::string> headers;
+    std::stringstream ss(out);
+    std::string line;
+    std::string outContent;
+
+    outContent = "";
+    line = "";
+    while (ss.good())
+    {
+
+        getline(ss, line, '\n');
+        line = util::trim(line);
+        if (line.find("<html>") == std::string::npos && line.length() > 0)
+        {
+            std::cout << "Found this header " << line << std::endl;
+            headers.push_back(line);
+        }
+        else
+            break ;
+    }
+    while (ss.good())
+    {
+        getline(ss, line, '\n');
+        outContent += line;
+    }
+    return outContent;
+    // if (out != NULL)
+    // {
+    //     while(std::getline(ss,to,'\n')){
+    //     cout << to <<endl;
+    //     }
+    // }
+   // return out;
+}
 
 std::string            exec_cgi( Request req, char **args , std::string path ) {
 
@@ -48,6 +76,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
 
     if (pid == -1)
         throw std::runtime_error("fork error");
+    int status;
 
     if (pid > 0) {
 
@@ -77,7 +106,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
         close(nfd[1]);
         close(nfd[0]);
 
-        if (execve(args[0], args, environ) == - 1)
+        if ((status = execve(args[0], args, environ)) == - 1)
             throw std::runtime_error("execve error");
 
     }
@@ -86,8 +115,9 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
         free(args[i]);
     free(args);
     // remove cgi useless headers
-    // return parseOutput(cgiOutput);
-    return cgiOutput;
+    std::cout << "Status is " << status << std::endl;
+    return parseOutput(cgiOutput);
+    // return cgiOutput;
 }
 
 std::string    CGI::exec_file(std::string path, Request &req) {

@@ -236,9 +236,9 @@ Response Server::handleRequest(Request req, int client_fd)
 		unCompletedRequests.erase(it);
 	}
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
-	std::cout <<"root " << _locConfig._root << "locationPath :" << locationPath << ", old url:" << req.getUrl() << std::endl;
+	// std::cout <<"root " << _locConfig._root << "locationPath :" << locationPath << ", old url:" << req.getUrl() << std::endl;
 	req.setUrl((req.getUrl()).erase(0, locationPath.size()));
-	std::cout << "new url:" << req.getUrl() << std::endl;
+	// std::cout << "new url:" << req.getUrl() << std::endl;
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
 	// if (req.getStatus() != HttpStatus::OK) // TODO FIX

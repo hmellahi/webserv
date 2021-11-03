@@ -297,7 +297,7 @@ Response Server::handleRequest(Request req, int client_fd)
 				std::cout <<"filename : " << filename << std::endl;
 				std::cout <<"content" << cgiOutput << std::endl;
 				cgiOutput = CGI::exec_file(filename.c_str(), req);
-				std::cout << cgiOutput << std::endl;
+				// std::cout << cgiOutput << std::endl;
 				res.sendContent(HttpStatus::OK, cgiOutput);
 				return (res);
 			}

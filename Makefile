@@ -6,11 +6,11 @@
 #    By: hamza <hamza@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/12 23:29:54 by hamza             #+#    #+#              #
-#    Updated: 2021/10/27 20:22:30 by hamza            ###   ########.fr        #
+#    Updated: 2021/11/03 01:09:32 by hamza            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-FLAGS	= --std=c++98 # -Wall -Wextra -Werror
+FLAGS	= #--std=c++98 # -Wall -Wextra -Werror
 CC		= clang++
 NAME	= webserv
 

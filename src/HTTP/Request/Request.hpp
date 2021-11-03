@@ -31,6 +31,7 @@ class Request
 		std::string getHttpVersion(void) const;
 		std::vector<char> getContentBody(void) const;
 		int getStatus(void) const;
+		std::string getQuery() const;
 		void ParseChunkBody(std::string &buffer);
 		std::vector<char> _content_body;
 		std::string _buffer;

@@ -13,7 +13,7 @@ char        **fill_args(std::string path) {
 }
 
 
-std::string             parseOutput( std::string out ) {
+std::string             parseOutput( std::string out  ) {
 
 
     // std::vector<std::string> headers;
@@ -47,7 +47,6 @@ std::string             parseOutput( std::string out ) {
         getline(ss, line, '\n');
         outContent += line;
     }
-    
     return outContent;
 
 }
@@ -87,7 +86,7 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
     else if (pid == 0)
     {
 
-        if (write(fd[1], req.getContentBody().c_str(), req.getContentBody().length()) == -1)
+        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) == -1)
             throw std::runtime_error("write error");
 
         dup2(nfd[1], 1);
@@ -107,7 +106,6 @@ std::string            exec_cgi( Request req, char **args , std::string path ) {
     free(args);
 
     // remove cgi useless headers
-    std::cout << "Status is " << status << std::endl;
     return parseOutput(cgiOutput);
     // return cgiOutput;
 }
@@ -126,7 +124,7 @@ std::string    CGI::exec_file(std::string path, Request &req) {
 
     }
     if (!req.getContentBody().empty())
-        setenv("CONTENT_LENGTH", std::to_string(req.getContentBody().length()).c_str(), 1);
+        setenv("CONTENT_LENGTH", std::to_string(req.getContentBody().size()).c_str(), 1);
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);
@@ -157,11 +155,11 @@ std::string    CGI::exec_file(std::string path, Request &req) {
 
 
     std::cout << "------------------------------------" << std::endl;
-    std::cout << "Query :: "<< req.getContentBody() << std::endl;
+    //std::cout << "Query :: "<< req.getContentBody().data() << std::endl;
     std::cout << "------------------------------------" << std::endl;
 
 
-    std::cout << std::to_string(req.getContentBody().length()).c_str() << std::endl;
+    std::cout << std::to_string(req.getContentBody().size()).c_str() << std::endl;
     
     return exec_cgi( req, args, path);
 }

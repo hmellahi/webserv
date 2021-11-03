@@ -19,7 +19,7 @@ Socket::Socket()
 //     _protocol = src._protocol;
 // }
 
-Socket::Socket(int port, int host, int domain, int type, int protocol)
+Socket::Socket(int port, std::string &host, int domain, int type, int protocol)
 {
     _port = port;
     _domain = domain;    
@@ -36,7 +36,7 @@ void    Socket::init_address()
 {
     addrlen = sizeof(_address);
     _address.sin_family = _domain;
-    _address.sin_addr.s_addr = _host;
+    _address.sin_addr.s_addr = inet_addr(_host.c_str());
     _address.sin_port = htons( _port );
     memset(_address.sin_zero, '\0', sizeof _address.sin_zero);
 }

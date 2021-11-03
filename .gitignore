@@ -1,5 +1,10 @@
 ## vscode settings
-.vscode/
+.vscode
 
 ## executable shit
+webserv
+webserv.dSYM
+
+#docker
+docker
 webserv.dSYM/

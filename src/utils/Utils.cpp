@@ -102,6 +102,10 @@ int util::getFileLength(const std::string& filename)
 
 void	util::closeAllListeners()
 {
+	std::cout << clients.size() << std::endl;
+	for (int i = 0; i < clients.size();i++)
+		close(clients[i]);
+	std::cout << serversSockets.size() << std::endl;
 	for (int i = 0; i < serversSockets.size();i++)
 		close(serversSockets[i]);
 }

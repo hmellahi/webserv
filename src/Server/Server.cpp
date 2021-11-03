@@ -75,7 +75,7 @@ std::vector<std::string> Server::getServerNames() const
 	return _config.getServerName();
 }
 
-void	Server::updateLocationConfig(std::string path)
+std::string	Server::updateLocationConfig(std::string path)
 {
 	_locConfig = _config;
 	std::map<std::string, Config> locations = _locConfig.getLocation();
@@ -83,21 +83,19 @@ void	Server::updateLocationConfig(std::string path)
 	for (location = locations.begin(); location != locations.end(); location++)
 	{
 		std::string locationPath = location->first;
-		// std::cout << "location" << locationPath << std::endl;
+		std::cout << "location" << path << std::endl;
 		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
 			_locConfig = location->second;
-			break;
+			return locationPath;
 		}
 	}
-	// std::cout << "not found" << std::endl;
+	return "";
 }
-
-Response Server::handleConnection(std::string &requestBody, int &client_fd, std::vector<Server> &servers)
+Response Server::handleConnection(std::string &requestBody, int &requestSize, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
-	Request req(requestBody);
-
+	Request req(requestBody, requestSize);	
 	// Loop throught all serversname of all running servers
 	// then look for the servername who matches the request host header
 	std::vector<Server>::iterator server;
@@ -109,15 +107,12 @@ Response Server::handleConnection(std::string &requestBody, int &client_fd, std:
 		{
 			std::string host = util::split(req.getHeader("Host"), ":")[0];
 			// std::cout << "host: " << host << std::endl;
-			// std::cout << "server_name: " << *server_name << std::endl;
+			// std::cout << "server_name: " << *server_name << s	td::endl;
 			// std::string = *server_name + ":" + std::to_string(server.get_port());
-			// server->updateLocationConfig(req.getUrl());
 			if (*server_name == host)
 				return server->handleRequest(req, client_fd);
 		}
 	}
-	// server->_locConfig = server->_config;
-	// server[0].updateLocationConfig(req.getUrl());
 	return (servers[0].handleRequest(req, client_fd));
 }
 
@@ -133,6 +128,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int sd;
 	char requestBody[1025];
 	int valread;
+	int requestSize;
 	Response res;
 	std::string requestBodyStr;
 	int j;
@@ -153,6 +149,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			// }
 			// DBG("done");
 			// Check if it was for closing
+			// c += valread;
+			// 	std::cout << "-------------------------------------\n";
+			// std::cout << "buffer: " << c << std::endl;
+			// 	std::cout << "-------------------------------------\n";
 			if (valread <= 0)
 			{
 				// Somebody disconnected
@@ -163,18 +163,16 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			// otherwise handle the request
 			else
 			{
-				requestBody[valread] = '\0';
-				
-				std::cout << "\n\nsize\n\n" << strlen(requestBody) << std::endl;
-				requestBodyStr = requestBody;
-				std::cout << "\n\nsize\n\n" << requestBodyStr.size() << std::endl;
-				if (requestBodyStr != requestBody) {
-					std::cout << "nooooooooooooo\n";
-				}
+				// std::cout << "-------------------------------------\n"
+				// 		<< "client with id " << sd 
+				// 		<< "--------------------------------" << std::endl;
 				// set the string terminating NULL byte on the end
+				requestBody[valread] = '\0';
 				// convert requestBody to a string
+				requestBodyStr = std::string(requestBody, valread);
 				// handle connection and store response
-				res = handleConnection(requestBodyStr, sd, servers);
+				requestSize = valread;
+				res = handleConnection(requestBodyStr, requestSize, sd, servers);
 				if (res.getHeader("Connection") == "close")
 					closeConnection(clients, readfds, i, sd);
 			}
@@ -187,94 +185,79 @@ std::vector<Socket> Server::getSockets()
 	return _serverSockets;
 }
 
-Socket Server::addPort(int port)
+Socket Server::addPort(int port, std::string host)
 {
 	// create new socket on the given port
-	Socket new_socket(port);
+	Socket new_socket(port, host);
 	// save socker fd
 	_serverSockets.push_back(new_socket);
 	// debugging
-	std::cout << "Server started, go to 127.0.0.1:" << port << std::endl;
+	std::cout << "Server started, go to " << host << ":" << port << std::endl;
 	return new_socket;
-}
-
-char	*join(char *s1, char *s2, int s1len, int s2len)
-{
-	unsigned int	i;
-	unsigned int	l;
-	char			*s3;
-
-	if (!s1 || !s2)
-		return (NULL);
-	i = s1len + s2len;
-	s3 = (char *)malloc((i + 1) * sizeof(char));
-	if (!s3)
-		return (NULL);
-	s3[i] = '\0';
-	i = 0;
-	while (i <= s1len)
-	{
-		s3[i] = s1[i];
-		i++;
-	}
-	l = 0;
-	while (i <= s2len)
-	{
-		s3[i++] = (char)s2[l];
-		l++;
-	}
-	return (s3);
 }
 
 
 Response Server::handleRequest(Request req, int client_fd)
 {
-	updateLocationConfig("/" + req.getUrl());
+	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
+	// if (contentLength > 0)
+	// {
+	// 	if (req.getContentBody().size() < contentLength)
+	// 	{
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "ContentLength:" << req.getContentBody().size()  << std::endl;
+	// std::cout << "-------------------------------------\n";
+	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
+	if (it == unCompletedRequests.end() && req.getContentBody().size() < contentLength)
+	{
+		// Check if the request body size doesnt exceed
+		// the max client body size
+		// if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+		// {
+		// 	Response res(req, client_fd, _locConfig);
+		// 	res.send(HttpStatus::PayloadTooLarge);
+		// 	return (res);
+		// }
+		unCompletedRequests[client_fd] = req;
+		return Response();
+	}
+	else if (it != unCompletedRequests.end())
+	{
+		for (int i = 0; i < req._buffSize; i++)
+			(it->second)._content_body.push_back(req._buffer[i]);
+		req = it->second;
+		int contentLength = atoi(req.getHeader("Content-Length").c_str());
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout << "-------------------------------------\n";
+		unCompletedRequests[client_fd] = req;
+		if (req.getContentBody().size() < contentLength)
+			return Response();
+		unCompletedRequests.erase(it);
+	}
+	std::string locationPath = updateLocationConfig("/" + req.getUrl());
+	// req.setUrl((req.getUrl()).erase(0, locationPath.size()));
 	// Check if the request body is valid
-	int isRequestValid = req.getStatus() == 0;
 	Response res(req, client_fd, _locConfig);
-	// if (!isRequestValid)
+	// if (req.getStatus() != HttpStatus::OK) // TODO FIX
 	// {
 	// 	res.send(req.getStatus());
 	// 	return (res);
 	// }
+	
 	// Check if the request body size doesnt exceed
-	// the  max client body size
-	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
-	// if (_locConfig.get_client_max_body_size() < contentLength)
+	// the max client body size
+	// if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
 	// {
 	// 	res.send(HttpStatus::PayloadTooLarge);
 	// 	return (res);
 	// }
-	std::cout << "Content-Length: " << contentLength << std::endl;
-	char buffer[1025];
-	int nbytes;
-	std::cout << "\n-------------------------------------\n";
-	std::cout << "BODY SIZE|||m " << req.getContentBody().size() << std::endl;
-	std::cout << "\n-------------------------------------\n";
-	int bytes_read = req.getContentBody().size();
-	std::cout << req.getContentBody();
-	while (bytes_read < contentLength)
-	{
-		// nbytes = read(client_fd, buffer, 1024);//std::min(1024, bytes_read - nbytes));
-		nbytes = read(client_fd, buffer, std::min(1024, contentLength - bytes_read));
-		if (nbytes <= 0) break;
-		buffer[nbytes] = '\0';
-		req._content_body += buffer;
-		std::cout << buffer;
-		bytes_read += nbytes;
-		// std::cout << "read: " << bytes_read << "| bodySize : " << contentLength << std::endl;
-	}
-	std::cout << "\n-------------------------------------\n";
-	std::cout << "done reading" << std::endl;
-	std::cout << "\n-------------------------------------\n";
-	// req._content_body = complete_body;
-	int methodINdex = getMethodIndex(req.getMethod());
+
+	int methodIndex = getMethodIndex(req.getMethod());
 	std::string location = "/" + req.getUrl();
 
 	// Check if there is a redirection
 	std::pair<int, std::string> redirection = _locConfig.get_redirectionPath();
-	// std::cout << redirection.first << std::endl;
 	if (redirection.first != 0)
 	{
 		int status_code = redirection.first;
@@ -311,21 +294,21 @@ Response Server::handleRequest(Request req, int client_fd)
 				// execute the file using approriate cgi
 				std::cout <<"filename : " << filename << std::endl;
 				std::cout <<"content" << cgiOutput << std::endl;
-				std::cout << "zbi rah\n";
 				cgiOutput = CGI::exec_file(filename.c_str(), req);
-				std::cout << cgiOutput << std::endl;
+				// std::cout << cgiOutput << std::endl;
 				res.sendContent(HttpStatus::OK, cgiOutput);
-			return (res);
+				return (res);
 			}
-			catch (const std::exception)
+			catch (const std::exception e)
 			{
+				std::cout << "Exception " << e.what() << std::endl;
 				// some went wrong while executing the file
 				res.send(HttpStatus::InternalServerError);
-			return (res);
+				return (res);
 			}
 		}
 	}
-	(this->*handleMethod(methodINdex))(req, res);
+	(this->*handleMethod(methodIndex))(req, res);
 	return (res);
 }
 
@@ -339,7 +322,6 @@ bool	Server::checkPermissions(std::string method)
 
 	if (allowedMethods.size() > 0)
 	{
-		/// std::cout << "allowed methods: " << allowedMethods[0] << std::endl;
 		std::vector<std::string>::iterator it;
 		it = find(allowedMethods.begin(), allowedMethods.end(), method);
 		if (it == allowedMethods.end())
@@ -362,13 +344,8 @@ methodType Server::handleMethod(int methodIndex)
 void Server::getHandler(Request req, Response res)
 {
 	std::string filename = _locConfig.getRoot() + req.getUrl();
-    // std::cout << filename << std::endl;
 	int status = FileSystem::getFileStatus(filename.c_str());
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "Status"<< status << std::endl;
-	// std::cout << "-------------------------------------\n";
 	// check the file requested is a directory
-	// DBG("HELLO");
 	if (status == IS_DIRECTORY)
 	{
 		if (filename[filename.length() - 1] != '/')
@@ -396,48 +373,6 @@ void Server::getHandler(Request req, Response res)
 	}
 	else if (status != HttpStatus::OK)
 		return res.send(status);
-	
-	// check if the requested file isnt a static file
-	// if so then pass it to CGI
-	// std::string fileExtension = util::GetFileExtension(filename.c_str());
-
-	// std::map<std::string, std::string> cgis = _locConfig.getCGI();
-	// std::map<std::string, std::string>::iterator cgi;
-	// std::string cgiOutput;
-	// for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
-	// {
-	// 	std::string cgiType = cgi->first;
-	// 	std::string cgiPath = cgi->second;
-	// 	// std::cout <<"filename" << cgiType << std::endl;
-	// 	if (fileExtension == cgiType)
-	// 	{
-	// 		try {
-	// 			// execute the file using approriate cgi
-	// 			std::cout <<"filename : " << filename << std::endl;
-	// 			std::cout <<"content" << cgiOutput << std::endl;
-	// 			std::cout << "zbi rah\n";
-	// 			// if (req.getMethod() == "POST")
-	// 			// {
-	// 			// 	std::cout << "POST\n";
-	// 			std::cout << "trying query " << req.getQuery() << std::endl;
-	// 			cgiOutput = CGI::exec_file(filename.c_str(), req);
-	// 			// }
-	// 			// else
-	// 			// {
-	// 			// 	std::cout << "GET\n";
-	// 				// cgiOutput = CGI::exec_file(filename.c_str());
-	// 			//}
-	// 			std::cout << cgiOutput << std::endl;
-	// 			return res.sendContent(HttpStatus::OK, cgiOutput);
-	// 		}
-	// 		catch (const std::exception)
-	// 		{
-	// 			// some went wrong while executing the file
-	// 			return res.send(HttpStatus::InternalServerError);
-	// 		}
-	// 	}
-	// }
-	// otherwise jst read it
 	return res.send(HttpStatus::OK, filename);
 }
 
@@ -450,7 +385,7 @@ void Server::postHandler(Request req, Response res)
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {
 			FileSystem::uploadFile(uploadLocation, req.getContentBody());
-			return res.sendContent(HttpStatus::OK, "file uploaded succefully!");
+			return res.send(HttpStatus::Created);
 		}
 		catch (std::exception& e)
 		{
@@ -531,7 +466,6 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 {
 	// set of socket descriptors
 	fd_set readfds;
-	std::vector<Socket> clients;
 	// Socket				new_socket;
 	int max_sd;
 	int addrlen, activity;
@@ -562,6 +496,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		Server::RecvAndSend(clients, readfds, servers);
 	}
 }
+std::vector<Socket> clients;
 	std::vector<Socket> serversSockets;
 
 void Server::setup(ParseConfig GlobalConfig)
@@ -579,24 +514,15 @@ void Server::setup(ParseConfig GlobalConfig)
 		Server newServer(*serverConfig);
 
 		std::vector<u_int32_t> ports = serverConfig->getPorts();
-		if (ports.size() == 0)
-		{
-			if (usedPorts.find(DEFAULT_PORT) == usedPorts.end())
-			{
-				new_socket = newServer.addPort(DEFAULT_PORT);
-				serversSockets.push_back(new_socket);
-				usedPorts.insert(DEFAULT_PORT);
-			}
-		}
 		for (port = ports.begin(); port != ports.end(); port++)
 		{
 			if (usedPorts.find(*port) == usedPorts.end())
 			{
-				new_socket = newServer.addPort(*port);
+				new_socket = newServer.addPort(*port);//, "127.0.0.1");// serverConfig->host);
 				serversSockets.push_back(new_socket);
 				usedPorts.insert(*port);
 			}
-		}	
+		}
 		servers.push_back(newServer);
 	}
 	// this is where magic happens :wink:

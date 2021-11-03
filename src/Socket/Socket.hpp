@@ -11,7 +11,7 @@ private:
     int _socket_fd;
     int _domain;    
     int _type;
-    int _host;
+    std::string _host;
     int _protocol;
 
     void    init_address();
@@ -21,7 +21,7 @@ public:
     // constructors
     // Socket(int socket_fd);
     Socket();
-    Socket(int port, int host = INADDR_ANY, int domain = AF_INET, int type = SOCK_STREAM, int protocol = 0);
+    Socket(int port, std::string &host, int domain = AF_INET, int type = SOCK_STREAM, int protocol = 0);
     
     // methods
     static void testConnection(int connection_ret, std::string customErrMsg = "Connection failed");

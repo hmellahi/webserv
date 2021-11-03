@@ -73,8 +73,8 @@ int     FileSystem::getFileStatus(std::string filename)
     //     }
     // F_OK
     // Tests whether the file exists.
-    // R_OK
     // Tests whether the file can be accessed for reading.
+    // R_OK
     // X_OK — for a directory, test for search permission. Otherwise, test for execute permission. 
     // const char file[] = filename.c_;   
     // if (access(filename.c_str(), F_OK) == -1)
@@ -87,7 +87,7 @@ int     FileSystem::getFileStatus(std::string filename)
     return HttpStatus::OK;
 }
 
-void    FileSystem::uploadFile(std::string uploadLocation, std::string content)
+void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> content)
 {
     std::fstream new_file;
 
@@ -96,6 +96,6 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::string content)
     if (!new_file.is_open())
         throw std::runtime_error("couldnt open the file for writing");
     
-    new_file.write(content.c_str(), content.size());
+    new_file.write(content.data(), content.size());
     new_file.close();
 }

@@ -6,7 +6,6 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     _headers["url"] = req.getUrl();
     _serverConfig = serverConfig;
     _headers["http-version"] = req.getHttpVersion();
-    // _headers = req.getHeaders();
     _headers["Connection"] = req.getHeader("Connection");
     _headers["Date"] = util::getCurrentDate(); 
 }
@@ -84,7 +83,6 @@ void    Response::send( int statusCode, std::string filename)
     // std::cout << extension << std::endl;
     if (!extension.empty())
     {
-        std::cout << "extension: " << extension << std::endl;
         std::string type  = MediaTypes::getType(extension.c_str());
         _headers["Content-Type"] = type.empty() ? "text/plain" : MediaTypes::getType(extension.c_str());
     }
@@ -167,6 +165,7 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     if (bytes_written <= 0)
     {
         perror("couldnt send the msg"); // todo should exit?
+        return -1;
     }
     return 0;
 }

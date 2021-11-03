@@ -4,11 +4,9 @@ Request::Request(void)
 {
 }
 
-Request::Request(std::string &buffer): _buffer(buffer), _status(0)
+Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpStatus::OK)
 {
-	std::cout << "-------------------------------------\n";
-	std::cout << buffer << std::endl;
-	std::cout << "-------------------------------------\n";
+	_buffSize = buffSize;
 	parse();
 }
 
@@ -30,6 +28,7 @@ Request & Request::operator=(Request const &rhs)
 		_content_body = rhs._content_body;
 		_status = rhs._status;
 		_query_map = rhs._query_map;
+		_buffSize = rhs._buffSize;
 	}
 	return (*this);
 }
@@ -72,10 +71,10 @@ void Request::ParseFirstLine(std::string line)
 		_url.erase(0, 1); // erase "/" at the start
 		if (!_query.empty())
 			parse_query(_query);
-		_http_version = tokens[2];
+		_http_version = util::trim(tokens[2]);
 		if (util::is_valid_method(_method) == false)
 			_status = HttpStatus::NotImplemented; // server not support this method
-		else if (util::is_valid_version(util::trim(_http_version)) == false)
+		else if (util::is_valid_version(_http_version) == false)
 			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else
@@ -141,20 +140,25 @@ void Request::ParseBody(std::string &buffer)
 {
 	//  Each heading is followed by a line feed character \r\n.
 	int i  = buffer.find("\r\n\r\n");
+	// _buffSize -= i;
 	int count = 0;
-	if (i != std::string::npos)
+	if (i != _buffSize)
 	{
 		if (_headers.find("Content-Length") != _headers.end())
 		{
 			i += 4;
-			while (buffer[i] && count < atoi(_headers["Content-Length"].c_str()))
+			while (i != _buffSize && count < atoi(_headers["Content-Length"].c_str()))
 			{
-				_content_body += buffer[i];
+				// _content_body += buffer[i];
+				_content_body.push_back(buffer[i]);
 				i++;
 				count++;
 			}
 		}
 	}
+	// std::cout << "-------------------------------------\n";
+	// std::cout << "reqsize" << i << std::endl;
+	// std::cout << "-------------------------------------\n";
 }
 
 void Request::ParseChunkBody(std::string &buffer)
@@ -171,7 +175,7 @@ void Request::ParseChunkBody(std::string &buffer)
 	while (size)
 	{
 		i = body.find("\r\n", i) + 2;
-		_content_body += body.substr(i, size);
+		// _content_body += body.substr(i, size);
 		i += size + 2;
 		hex = body.substr(i, body.size());
 		size = util::to_hex(hex);
@@ -209,9 +213,14 @@ std::string Request::getHttpVersion(void) const
 	return (_http_version); 
 }
 
-std::string Request::getContentBody(void) const
+std::vector<char>  Request::getContentBody(void) const
 {
 	return (_content_body);
+}
+
+void	Request::setUrl(std::string url)
+{
+	_url = url;
 }
 
 int Request::getStatus(void) const

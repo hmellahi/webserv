@@ -13,7 +13,7 @@ class Request
 {
 	public:
 		Request();
-		Request(std::string &buffer);
+		Request(std::string buffer, int buffSize);
 		Request(Request const &src);
 		Request &operator=(Request const &rhs);
 		~Request();
@@ -27,14 +27,16 @@ class Request
 		std::map<std::string, std::string> getHeaders(void) const;
 		std::string getMethod(void) const;
 		std::string getUrl(void) const;
+		void	setUrl(std::string url);
 		std::string getHttpVersion(void) const;
-		std::string getContentBody(void) const;
+		std::vector<char> getContentBody(void) const;
 		int getStatus(void) const;
 		std::string getQuery() const;
 		void ParseChunkBody(std::string &buffer);
-		std::string _content_body;
-	private:
+		std::vector<char> _content_body;
 		std::string _buffer;
+		int			_buffSize;
+	private:
 		std::map<std::string, std::string> _headers;
 		std::string _method;
 		std::string _url;

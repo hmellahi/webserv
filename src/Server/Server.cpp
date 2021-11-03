@@ -126,7 +126,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
 {
 	int sd;
-	char requestBody[1025];
+	char requestBody[200025];
 	int valread;
 	int requestSize;
 	Response res;
@@ -138,7 +138,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		sd = clients[i];
 		if (FD_ISSET(sd, &readfds))
 		{
-			valread = read(sd, requestBody, 1024);
+			valread = read(sd, requestBody, 200024);
 			// valread = 1;
 			// j = -1;
 			// while (valread > 0)
@@ -214,8 +214,10 @@ Response Server::handleRequest(Request req, int client_fd)
 		// the max client body size
 		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
 		{
+			std::cout << "given" << _locConfig.get_client_max_body_size() << "limit :" << (contentLength / 1e6) << std::endl;
 			Response res(req, client_fd, _locConfig);
 			res.send(HttpStatus::PayloadTooLarge);
+			res.setHeader("Connection", "close");
 			return (res);
 		}
 		unCompletedRequests[client_fd] = req;
@@ -227,9 +229,9 @@ Response Server::handleRequest(Request req, int client_fd)
 			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
-		// std::cout << "-------------------------------------\n";
-		// std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
-		// std::cout << "-------------------------------------\n";
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
 			return Response();
@@ -252,6 +254,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
 	{
 		res.send(HttpStatus::PayloadTooLarge);
+		res.setHeader("Connection", "close");
 		return (res);
 	}
 
@@ -276,6 +279,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (!isAllowed)
 	{
 		res.send(HttpStatus::MethodNotAllowed);
+		res.setHeader("Connection", "close");
 		return (res);
 	}
 	std::string filename = _locConfig.getRoot() + req.getUrl();

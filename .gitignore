@@ -8,3 +8,5 @@ webserv.dSYM
 #docker
 docker
 webserv.dSYM/
+
+.DS_Store

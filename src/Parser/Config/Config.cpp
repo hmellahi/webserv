@@ -34,7 +34,7 @@ void Config::init_map_loc()
 Config::Config()
 {
 	_isAutoIndexOn = false;
-	_client_max_body_size = 1;
+	_client_max_body_size = 500;
 	init_map_attr();
 	init_map_loc();
 }

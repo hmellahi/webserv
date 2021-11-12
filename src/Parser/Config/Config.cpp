@@ -34,7 +34,8 @@ void Config::init_map_loc()
 Config::Config()
 {
 	_isAutoIndexOn = false;
-	_client_max_body_size = 1;
+	_client_max_body_size = 1000000; //1m
+	_root = "/";
 	init_map_attr();
 	init_map_loc();
 }
@@ -76,8 +77,56 @@ void Config::check_server(std::vector<std::string>::iterator &it)
 		else
 			throw std::runtime_error("Error: Something Wrong in the config File");
 	}
+	if (_listen.empty())
+		_listen.push_back(8080);
+	if (_server_name.empty())
+		_server_name.push_back("127.0.0.1");
+	check_locations();
+	// std::map<u_int32_t, std::string>::iterator it2;
+	// for (it2 = _hostPort.begin(); it2 != _hostPort.end(); it2++)
+	// {
+	// 	std::cout << it2->first << " " << it2->second << std::endl;
+	// }
 }
-
+void 	Config::check_locations()
+{
+	// std::map<std::string, Config>::iterator it;
+	// std::vector<std::string> founded;
+	// std::vector<std::string>::iterator it2;
+	// Config loc;
+	// for (it = _locations.begin(); it != _locations.end(); it++)
+	// {
+	// 	founded = _fillLocations.find(it->first)->second;
+	// 	if (!founded.empty())
+	// 	{
+	// 		for (it2 = founded.begin(); it2 != founded.end(); it2++)
+	// 		{
+	// 			if (*it2 == "root")
+	// 				loc._root = it->second._root;
+	// 			else if (*it2 == "page_error")
+	// 				loc._error_pages = it->second._error_pages;
+	// 			else if (*it2 == "client_max_body_size")
+	// 				loc._client_max_body_size = it->second._client_max_body_size;
+	// 			else if (*it2 == "auto_index")
+	// 				loc._isAutoIndexOn = it->second._isAutoIndexOn;
+	// 			else if (*it2 == "redirection")
+	// 				loc._redirectionPath = it->second._redirectionPath;
+	// 			else if (*it2 == "allow_methods")
+	// 				loc._allowedMethods = it->second._allowedMethods;
+	// 			else if (*it2 == "upload_path")
+	// 				loc._uploadPath = it->second._uploadPath;
+	// 			else if (*it2 == "cgi")
+	// 				loc._cgi = it->second._cgi;
+	// 			else if (*it2 == "index")
+	// 				loc._index = it->second._index;
+	// 		}
+	// 		loc = *this;
+	// 	}
+	// 	std::cout << "before:" << it->second._isAutoIndexOn << std::endl;
+	// 	it->second = loc;
+	// 	std::cout << "after:" << it->second._isAutoIndexOn << std::endl;
+	// }
+}
 void Config::root(std::vector<std::string>::iterator &it)
 {
 	_root = *it;
@@ -190,10 +239,22 @@ void Config::listen(std::vector<std::string>::iterator &it)
 	u_int32_t port = 8000;
 	int count = 0;
 	const char *str;
+	std::string ip = "127.0.0.1";
+	std::vector<std::string> ipPort;
 	while (*it != ";")
 	{
 		str = (*it).c_str();
-		if (util::is_number(*it))
+		if ((*it).find(":") != std::string::npos)
+		{
+			ipPort = util::split(*it, ":");
+			if (ipPort.size() != 2)
+				throw std::runtime_error("Invalid Port: " + *it);
+			ip = ipPort[0];
+			port = atoi(ipPort[1].c_str());
+			if (port < 0 || port > 65535)
+				throw std::runtime_error("Invalid Port: " + *it + ". Sould be between 0 and 65535");
+		}
+		else if (util::is_number(*it))
 		{
 			port = atoi(str);
 			if (port < 0 || port > 65535)
@@ -202,6 +263,7 @@ void Config::listen(std::vector<std::string>::iterator &it)
 		else
 			throw std::runtime_error("Invalid Port: " + *it);
 		_listen.push_back(port);
+		_hostPort[port] = ip;
 		it++;
 		count++;
 	}
@@ -213,8 +275,9 @@ void Config::locations(std::vector<std::string>::iterator &it)
 {
 	Config loc;
 
-	loc = *this;
+	// loc = *this;
 	std::string path = *it;
+	std::vector<std::string> founded;
 	if (path.empty())
 		throw std::runtime_error("Error: Something wrong with Location");
 	it++;
@@ -223,11 +286,15 @@ void Config::locations(std::vector<std::string>::iterator &it)
 	while (*(++it) != "}")
 	{
 		if (attribute_locations[*it])
+		{
+			founded.push_back(*it);
 			(loc.*attribute_locations[*it])(++it);
+		}
 		else
 			throw std::runtime_error("Error: Something Wrong in the config File");
 	}
 	_locations[path] = loc;
+	_fillLocations[path] = founded;
 }
 
 void Config::index(std::vector<std::string>::iterator &it)

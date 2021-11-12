@@ -57,7 +57,7 @@ class Config
 		void	setIndex(std::vector<std::string> indexFiles);
 		void	setRoot(std::string root);
 		void	setAllowedMethods(std::vector<std::string> allowedMethods);
-	
+		void 	check_locations();
 //	private:
 	   	std::string	_root;
 		std::map<int, std::string>	_error_pages;
@@ -71,5 +71,7 @@ class Config
 		std::vector<std::string>	_server_name;
 		std::vector<u_int32_t>	_listen;
 		std::map<std::string, Config>	_locations;
+		std::map<std::string, std::vector<std::string>>	_fillLocations;
+		std::map<u_int32_t, std::string> _hostPort;
 };
 #endif

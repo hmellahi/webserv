@@ -30,7 +30,7 @@ class Socket;
 extern std::vector<Socket> serversSockets;
 extern std::vector<Socket> clients;
 #define TRUE 1
-#define BUFSIZE 100
+#define BUFSIZE 100000
 #define DEFAULT_PORT 80
 #define FALSE 0
 #define MAX_CLIENTS FD_SETSIZE

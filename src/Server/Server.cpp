@@ -1,5 +1,5 @@
 #include "Server.hpp"
-
+// fd_set &writefds;
 Server::Server(){
 
 };
@@ -167,6 +167,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					closeConnection(clients, readfds, i, sd);
 			}
 		}
+		// else if (FD_ISSET(sd, &writefds))
+		// {
+			
+		// }
 	}
 }
 
@@ -504,21 +508,29 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 	while (TRUE)
 	{
 		// clear the sockets set
+		std::cout << "test 0" << std::endl;
 		FD_ZERO(&readfds);
 		// add all servers sockets to the sockets set  [readfds]
+
 		Server::addServers(serversSockets, max_sd, readfds);
+
 		// add child sockets to the sockets set
 		Server::addClients(clients, max_sd, readfds);
+
 		// wait for an activity on one of the client sockets , timeout is NULL ,
 		// so wait indefinitely	
 		Server::waitingForConnections(activity, readfds);
+
 		// If something happened on the servers sockets ,
 		// then its an incoming connection
 		Server::acceptNewConnection(clients, serversSockets, address, addrlen, readfds);
+
 		// otherwise its some IO operation on some other socket
 		// recieve Client Request And Send Back A Response();
 		Server::RecvAndSend(clients, readfds, servers);
+
 	}
+	std::cout << "test" << std::endl;
 }
 std::vector<Socket> clients;
 	std::vector<Socket> serversSockets;

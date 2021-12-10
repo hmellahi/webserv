@@ -111,12 +111,13 @@ void    Response::send( int statusCode, std::string filename)
         }
     
 	// std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
-    
     // send it to the client
     sendMessage(_client_fd, msg.str());
     
+    std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     // open file and read it by chunks
     readRaw(filename, fileLength);
+    std::cout << "aa" << std::endl;
 }
 
 void    Response::sendContent( int statusCode, std::string content)
@@ -147,11 +148,17 @@ void    Response::readRaw(std::string filename, int fileLength)
     char buf[BUFSIZE];
     int bytes_read, bytes_written;
     while (fileLength > 0) {
+            std::cout << "fileLength: " << fileLength << std::endl;
+
         bytes_read = read(fd, buf, BUFSIZE);//std::min((int)fileLength, BUFSIZE));
+        std::cout << "raed" << std::endl;
+
         if (bytes_read <= 0) break;
         if (sendRaw(_client_fd, buf, bytes_read) == -1) break;
+        std::cout << "sen" << std::endl;
         fileLength -= bytes_read;
     }
+    std::cout << "++fileLength: " << fileLength << std::endl;
     close(fd);
 }
 
@@ -159,19 +166,20 @@ int Response::sendMessage(int fd, const std::string &s)
 {
     return sendRaw(fd, s.c_str(), s.length());
 }
-
+void a(int a){
+    std::cout << "a" << std::endl;
+}
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);
     int bytes_written;
 
-    // while (buflen > 0) {
-    //     bytes_written = write(fd, pbuf, buflen);
-    //     if (bytes_written == -1) return -1;
-    //     pbuf += bytes_written; 
-    //     buflen -= bytes_written;
-    // }
+    signal(SIGPIPE, a);
+    std::cout << fd << std::endl;
     bytes_written = write(fd, pbuf, buflen);
+    signal(SIGPIPE, SIG_DFL);
+    
+    std::cout << "send" << std::endl;
     if (bytes_written <= 0)
     {
         perror("couldnt send the msg"); // todo should exit?

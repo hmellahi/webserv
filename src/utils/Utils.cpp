@@ -118,6 +118,7 @@ void	util::signal_handler(int signal)
 void	util::ft_exit(int status)
 {
 	closeAllListeners();
+	std::cout << "sss" << std::endl;
 	exit(status);
 }
 

@@ -101,20 +101,12 @@ void    Response::send( int statusCode, std::string filename)
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
 
-        if (getHeader("Location") != "") {
-
-            msg << "Location" << getHeader("Location") << "\r\n";
-        }
-        else if (getHeader("Status") != "") {
-
-            msg << "Status" << getHeader("Status") << "\r\n";
-        }
     
 	// std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     // send it to the client
+    std::cout << "response"<<  msg.str() << std::endl; // debug
     sendMessage(_client_fd, msg.str());
     
-    std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     // open file and read it by chunks
     readRaw(filename, fileLength);
     std::cout << "aa" << std::endl;
@@ -131,9 +123,17 @@ void    Response::sendContent( int statusCode, std::string content)
         << "Content-Type: " << _headers["Content-Type"] << "\r\n"
         << "Content-Length: " << fileLength << "\r\n"
         << "Connection: " << _headers["Connection"] << "\r\n"
-        << "Date: " << _headers["Date"] << "\r\n"
+        << "Date: " << _headers["Date"] << "\r\n";
+        if (getHeader("Location") != "") {
+
+            msg << "Location: " << getHeader("Location") << "\r\n";
+        }
+        else if (getHeader("Status") != "") {
+
+            msg << "Status: " << getHeader("Status") << "\r\n";
+        }
         //<< "Server: " << _serverConfig.getServerName()[0] << "\r\n"
-        << "\r\n"
+        msg<< "\r\n"
         << content;
     
 	// std::cout <<  msg.str() << std::endl; // debug
@@ -195,7 +195,7 @@ std::string Response::getHeader(std::string header_name)
 
 void Response::setHeader(std::string header_name, std::string value)
 {
-    std::cout << header_name << " : " << value << std::endl;
+    //std::cout << header_name << " : " << value << std::endl;
     _headers[header_name] = value;
 }
 

@@ -307,7 +307,6 @@ Response Server::handleRequest(Request req, int client_fd)
 				// 	res.setHeader(it->first.c_str(), it->second.c_str());
 				// }
 				headers = cgiRes.second;
-				res.sendContent(HttpStatus::OK, cgiOutput);
 				std::map<std::string, std::string>::iterator it;
 
 				it = headers.begin();
@@ -320,9 +319,12 @@ Response Server::handleRequest(Request req, int client_fd)
 					else if (it->first == "Location") {
 						std::cout << "redirection is true " << std::endl;
 						res.setHeader(it->first, it->second);
+						std::cout << res.getHeader("Location") << std::endl;
 					}
 					it++;
 				}
+				res.sendContent(std::stoi(headers["Status"]), cgiOutput);
+				return res;
 			}
 			catch (const std::exception e)
 			{
@@ -333,6 +335,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			}
 		}
 	}
+	
 	(this->*handleMethod(methodIndex))(req, res);
 	return (res);
 }
@@ -370,7 +373,6 @@ void Server::getHandler(Request req, Response res)
 {
 	std::string filename  = "";
 	filename = _locConfig.getRoot() + req.getUrl();
-	std::cout << filename << " segfault lol\n";	
 	int status = FileSystem::getFileStatus(filename.c_str());
 	
 	// check the file requested is a directory
@@ -563,4 +565,5 @@ void Server::setup(ParseConfig GlobalConfig)
 	}
 	// this is where magic happens :wink:
 	loop(serversSockets, servers);
+
 }

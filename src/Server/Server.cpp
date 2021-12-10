@@ -59,6 +59,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 	for (it = serversSockets.begin(); it != serversSockets.end(); it++)
 	{
 		socketDescriptor = *it;
+		// new connection
 		if (FD_ISSET(socketDescriptor, &readfds))
 		{
 			std::cout << "Connection started" << std::endl;
@@ -126,7 +127,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
 {
 	int sd;
-	char requestBody[1025];
+	char requestBody[10025];
 	int valread;
 	int requestSize;
 	Response res;
@@ -134,22 +135,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int j;
 	for (int i = 0; i < clients.size(); i++)
 	{
-		// sd : socket descriptor
 		sd = clients[i];
+		// check if sd is ready to read
 		if (FD_ISSET(sd, &readfds))
 		{
-			valread = read(sd, requestBody, 1024);
-			// valread = 1;
-			// j = -1;
-			// while (valread > 0)
-			// {
-			// 	valread = read(sd, requestBody, 1024);
-			// 	j++;
-			// 	DBG("reading");
-			// }
-			// DBG("done");
-			// Check if it was for closing
-			// c += valread;
+			valread = read(sd, requestBody, 10024);
 			// 	std::cout << "-------------------------------------\n";
 			// std::cout << "buffer: " << c << std::endl;
 			// 	std::cout << "-------------------------------------\n";
@@ -552,7 +542,7 @@ void Server::setup(ParseConfig GlobalConfig)
 		{
 			if (usedPorts.find(*port) == usedPorts.end())
 			{
-				new_socket = newServer.addPort(*port);//, "127.0.0.1");// serverConfig->host);
+				new_socket = newServer.addPort(*port, "0.0.0.0");// serverConfig->host);
 				serversSockets.push_back(new_socket);
 				usedPorts.insert(*port);
 			}

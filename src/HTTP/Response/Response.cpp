@@ -84,8 +84,8 @@ void    Response::send( int statusCode, std::string filename)
     if (!extension.empty())
     {
         std::cout << "extension: " << extension << std::endl;
-        std::string type  = MediaTypes::getType(extension.c_str());
-        _headers["Content-Type"] = type.empty() ? "text/plain" : MediaTypes::getType(extension.c_str());
+        std::string type = MediaTypes::getType(extension.c_str());
+        _headers["Content-Type"] =type.empty() ? "text/plain" : type;
     }
     else
         _headers["Content-Type"] = "text/plain"; // todo fix seg

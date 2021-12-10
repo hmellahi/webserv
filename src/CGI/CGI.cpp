@@ -2,10 +2,11 @@
 
 extern char** environ;
 
-char        **fill_args(std::string path) {
+char        **fill_args(std::string cgiPath, std::string path) {
 
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
+	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
 	args[0] = strdup("./cgi-bin/php-cgi");
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
@@ -136,7 +137,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req) {
 
     int fd[2];
-    char    **args = fill_args(path);
+    char    **args = fill_args("", path);
 
     char    **envp;
 

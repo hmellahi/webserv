@@ -212,12 +212,12 @@ Response Server::handleRequest(Request req, int client_fd)
 	{
 		// Check if the request body size doesnt exceed
 		// the max client body size
-		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
-		{
-			Response res(req, client_fd, _locConfig);
-			res.send(HttpStatus::PayloadTooLarge);
-			return (res);
-		}
+		// if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+		// {
+		// 	Response res(req, client_fd, _locConfig);
+		// 	res.send(HttpStatus::PayloadTooLarge);
+		// 	return (res);
+		// }
 		unCompletedRequests[client_fd] = req;
 		return Response();
 	}
@@ -227,18 +227,16 @@ Response Server::handleRequest(Request req, int client_fd)
 			(it->second)._content_body.push_back(req._buffer[i]);
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
-		// std::cout << "-------------------------------------\n";
-		// std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
-		// std::cout << "-------------------------------------\n";
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
 			return Response();
 		unCompletedRequests.erase(it);
 	}
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
-	std::cout <<"root " << _locConfig._root << "locationPath :" << locationPath << ", old url:" << req.getUrl() << std::endl;
-	req.setUrl((req.getUrl()).erase(0, locationPath.size()));
-	std::cout << "new url:" << req.getUrl() << std::endl;
+	// req.setUrl((req.getUrl()).erase(0, locationPath.size()));
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
 	// if (req.getStatus() != HttpStatus::OK) // TODO FIX
@@ -249,11 +247,11 @@ Response Server::handleRequest(Request req, int client_fd)
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
-	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
-	{
-		res.send(HttpStatus::PayloadTooLarge);
-		return (res);
-	}
+	// if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+	// {
+	// 	res.send(HttpStatus::PayloadTooLarge);
+	// 	return (res);
+	// }
 
 	int methodIndex = getMethodIndex(req.getMethod());
 	std::string location = "/" + req.getUrl();
@@ -296,8 +294,22 @@ Response Server::handleRequest(Request req, int client_fd)
 				// execute the file using approriate cgi
 				std::cout <<"filename : " << filename << std::endl;
 				std::cout <<"content" << cgiOutput << std::endl;
-				cgiOutput = CGI::exec_file(filename.c_str(), req);
-				std::cout << cgiOutput << std::endl;
+				// cgiOutput = CGI::exec_file(filename.c_str(), req);
+				std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req);
+				// std::cout << cgiOutput << std::endl;
+				// map 
+				cgiOutput = cgiRes.first;
+				// std::map<std::string, std::string> cgiHeaders;
+				// std::map<std::string, std::string>::iterator it;
+				// cgiHeaders = cgiRes.second;
+				// cgiHeaders.erase(cgiHeaders.begin());
+				// cgiHeaders.erase(cgiHeaders.begin());
+
+				// for (it = cgiHeaders.begin();it!=cgiHeaders.end(); it++)
+				// {
+				// 	std::cout << "add :" << it->first.c_str() << " and " << it->second.c_str() << std::endl;
+				// 	res.setHeader(it->first.c_str(), it->second.c_str());
+				// }
 				res.sendContent(HttpStatus::OK, cgiOutput);
 				return (res);
 			}

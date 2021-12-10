@@ -71,7 +71,7 @@ class Config
 		std::vector<std::string>	_server_name;
 		std::vector<u_int32_t>	_listen;
 		std::map<std::string, Config>	_locations;
-		std::map<std::string, std::vector<std::string>>	_fillLocations;
+		std::map<std::string, std::vector<std::string> >	_fillLocations;
 		std::map<u_int32_t, std::string> _hostPort;
 };
 #endif

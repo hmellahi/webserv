@@ -283,6 +283,8 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string> cgis = _locConfig.getCGI();
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
+	std::map<std::string, std::string> headers;
+
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
 		std::string cgiType = cgi->first;
@@ -310,8 +312,23 @@ Response Server::handleRequest(Request req, int client_fd)
 				// 	std::cout << "add :" << it->first.c_str() << " and " << it->second.c_str() << std::endl;
 				// 	res.setHeader(it->first.c_str(), it->second.c_str());
 				// }
+				headers = cgiRes.second;
 				res.sendContent(HttpStatus::OK, cgiOutput);
-				return (res);
+				std::map<std::string, std::string>::iterator it;
+
+				it = headers.begin();
+			
+				while (it != headers.end())
+				{
+					if (it->first == "Status") {
+						res.setHeader(it->first, it->second);
+					}
+					else if (it->first == "Location") {
+						std::cout << "redirection is true " << std::endl;
+						res.setHeader(it->first, it->second);
+					}
+					it++;
+				}
 			}
 			catch (const std::exception e)
 			{
@@ -357,8 +374,11 @@ methodType Server::handleMethod(int methodIndex)
 
 void Server::getHandler(Request req, Response res)
 {
-	std::string filename = _locConfig.getRoot() + req.getUrl();
+	std::string filename  = "";
+	filename = _locConfig.getRoot() + req.getUrl();
+	std::cout << filename << " segfault lol\n";	
 	int status = FileSystem::getFileStatus(filename.c_str());
+	
 	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{

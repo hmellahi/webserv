@@ -38,11 +38,24 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
             // headers.push_back(line);
             tab = util::split(line, ": ");
             if (tab[0] == "Set-Cookie") {
+    
                 headers[tab[0]] = util::trim(tab[1]);
                 setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
             }
+            else if (tab[0] == "Status") {
+            
+                setenv("REDIRECT_STATUS", tab[1].c_str(), 0);
+                std::cout << "Status is " << tab[1].c_str() << std::endl;
+                headers[tab[0]] = util::trim(tab[1]);
+                // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
+            }
+            else if (tab[0] == "Location") {
+                std::cout << "testing location " << std::endl;
+                headers[tab[0]] = util::trim(tab[1]);
+                
+            }
             // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-            // std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+            std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
 
         }
         else
@@ -152,7 +165,6 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("HTTP_CACHE_CONTROL", "", 0);
     // setenv("HTTP_CONNECTION", "", 0);
     // setenv("HTTP_HOST", "", 0);
-    // setenv("REDIRECT_STATUS", "200", 0);
     // setenv("SERVER_NAME", "", 0);
     // setenv("SERVER_PORT", "",1);
     // setenv("SERVER_ADDR", "", 0);

@@ -100,6 +100,15 @@ void    Response::send( int statusCode, std::string filename)
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
+
+        if (getHeader("Location") != "") {
+
+            msg << "Location" << getHeader("Location") << "\r\n";
+        }
+        else if (getHeader("Status") != "") {
+
+            msg << "Status" << getHeader("Status") << "\r\n";
+        }
     
 	// std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
     
@@ -178,6 +187,7 @@ std::string Response::getHeader(std::string header_name)
 
 void Response::setHeader(std::string header_name, std::string value)
 {
+    std::cout << header_name << " : " << value << std::endl;
     _headers[header_name] = value;
 }
 

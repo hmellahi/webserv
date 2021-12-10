@@ -67,7 +67,7 @@ int MediaTypes::strcmpi(const char *s1, const char *s2) {
 }
 
 // Source: https://raw.githubusercontent.com/broofa/node-mime/master/types/standard.json
-MediaTypes::entry MediaTypes::types[347] =  {
+MediaTypes::entry MediaTypes::types[350] =  {
   {"*3gpp", "audio/3gpp"},
   {"*jpm", "video/jpm"},
   {"*mp3", "audio/mp3"},
@@ -415,4 +415,5 @@ MediaTypes::entry MediaTypes::types[347] =  {
   {"yin", "application/yin+xml"},
   {"yml", "text/yaml"},
   {"zip", "application/zip"},
+  {"php", "text/html; charset=UTF-8"},
 };

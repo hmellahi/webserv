@@ -12,7 +12,7 @@ class MediaTypes {
       const char* fileExtension;
       const char* mimeType;
     };
-    static MediaTypes::entry types[347];
+    static MediaTypes::entry types[350];
     static int strcmpi(const char *s1, const char *s2);
 };
 

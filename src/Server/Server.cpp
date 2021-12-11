@@ -1,5 +1,5 @@
 #include "Server.hpp"
-
+// fd_set &writefds;
 Server::Server(){
 
 };
@@ -59,6 +59,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 	for (it = serversSockets.begin(); it != serversSockets.end(); it++)
 	{
 		socketDescriptor = *it;
+		// new connection
 		if (FD_ISSET(socketDescriptor, &readfds))
 		{
 			std::cout << "Connection started" << std::endl;
@@ -126,7 +127,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
 {
 	int sd;
-	char requestBody[1025];
+	char requestBody[10025];
 	int valread;
 	int requestSize;
 	Response res;
@@ -134,22 +135,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int j;
 	for (int i = 0; i < clients.size(); i++)
 	{
-		// sd : socket descriptor
 		sd = clients[i];
+		// check if sd is ready to read
 		if (FD_ISSET(sd, &readfds))
 		{
-			valread = read(sd, requestBody, 1024);
-			// valread = 1;
-			// j = -1;
-			// while (valread > 0)
-			// {
-			// 	valread = read(sd, requestBody, 1024);
-			// 	j++;
-			// 	DBG("reading");
-			// }
-			// DBG("done");
-			// Check if it was for closing
-			// c += valread;
+			valread = read(sd, requestBody, 10024);
 			// 	std::cout << "-------------------------------------\n";
 			// std::cout << "buffer: " << c << std::endl;
 			// 	std::cout << "-------------------------------------\n";
@@ -177,6 +167,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					closeConnection(clients, readfds, i, sd);
 			}
 		}
+		// else if (FD_ISSET(sd, &writefds))
+		// {
+			
+		// }
 	}
 }
 
@@ -283,6 +277,8 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string> cgis = _locConfig.getCGI();
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
+	std::map<std::string, std::string> headers;
+
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
 		std::string cgiType = cgi->first;
@@ -295,7 +291,7 @@ Response Server::handleRequest(Request req, int client_fd)
 				std::cout <<"filename : " << filename << std::endl;
 				std::cout <<"content" << cgiOutput << std::endl;
 				// cgiOutput = CGI::exec_file(filename.c_str(), req);
-				std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req);
+				std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 				// std::cout << cgiOutput << std::endl;
 				// map 
 				cgiOutput = cgiRes.first;
@@ -310,10 +306,27 @@ Response Server::handleRequest(Request req, int client_fd)
 				// 	std::cout << "add :" << it->first.c_str() << " and " << it->second.c_str() << std::endl;
 				// 	res.setHeader(it->first.c_str(), it->second.c_str());
 				// }
-				res.sendContent(HttpStatus::OK, cgiOutput);
-				return (res);
+				headers = cgiRes.second;
+				std::map<std::string, std::string>::iterator it;
+
+				it = headers.begin();
+			
+				while (it != headers.end())
+				{
+					if (it->first == "Status") {
+						res.setHeader(it->first, it->second);
+					}
+					else if (it->first == "Location") {
+						std::cout << "redirection is true " << std::endl;
+						res.setHeader(it->first, it->second);
+						std::cout << res.getHeader("Location") << std::endl;
+					}
+					it++;
+				}
+				res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
+				return res;
 			}
-			catch (const std::exception e)
+			catch (const std::exception e) 
 			{
 				std::cout << "Exception " << e.what() << std::endl;
 				// some went wrong while executing the file
@@ -322,6 +335,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			}
 		}
 	}
+	
 	(this->*handleMethod(methodIndex))(req, res);
 	return (res);
 }
@@ -357,8 +371,10 @@ methodType Server::handleMethod(int methodIndex)
 
 void Server::getHandler(Request req, Response res)
 {
-	std::string filename = _locConfig.getRoot() + req.getUrl();
+	std::string filename  = "";
+	filename = _locConfig.getRoot() + req.getUrl();
 	int status = FileSystem::getFileStatus(filename.c_str());
+	
 	// check the file requested is a directory
 	if (status == IS_DIRECTORY)
 	{
@@ -494,21 +510,29 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 	while (TRUE)
 	{
 		// clear the sockets set
+		std::cout << "test 0" << std::endl;
 		FD_ZERO(&readfds);
 		// add all servers sockets to the sockets set  [readfds]
+
 		Server::addServers(serversSockets, max_sd, readfds);
+
 		// add child sockets to the sockets set
 		Server::addClients(clients, max_sd, readfds);
+
 		// wait for an activity on one of the client sockets , timeout is NULL ,
 		// so wait indefinitely	
 		Server::waitingForConnections(activity, readfds);
+
 		// If something happened on the servers sockets ,
 		// then its an incoming connection
 		Server::acceptNewConnection(clients, serversSockets, address, addrlen, readfds);
+
 		// otherwise its some IO operation on some other socket
 		// recieve Client Request And Send Back A Response();
 		Server::RecvAndSend(clients, readfds, servers);
+
 	}
+	std::cout << "test" << std::endl;
 }
 std::vector<Socket> clients;
 	std::vector<Socket> serversSockets;
@@ -532,7 +556,7 @@ void Server::setup(ParseConfig GlobalConfig)
 		{
 			if (usedPorts.find(*port) == usedPorts.end())
 			{
-				new_socket = newServer.addPort(*port);//, "127.0.0.1");// serverConfig->host);
+				new_socket = newServer.addPort(*port, "0.0.0.0");// serverConfig->host);
 				serversSockets.push_back(new_socket);
 				usedPorts.insert(*port);
 			}
@@ -541,4 +565,5 @@ void Server::setup(ParseConfig GlobalConfig)
 	}
 	// this is where magic happens :wink:
 	loop(serversSockets, servers);
+
 }

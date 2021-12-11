@@ -2,11 +2,12 @@
 
 extern char** environ;
 
-char        **fill_args(std::string path) {
+char        **fill_args(std::string cgiPath, std::string path) {
 
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
-	args[0] = strdup("./cgi-bin/php-cgi");
+	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
+	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
     return (args);
@@ -38,11 +39,24 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
             // headers.push_back(line);
             tab = util::split(line, ": ");
             if (tab[0] == "Set-Cookie") {
+    
                 headers[tab[0]] = util::trim(tab[1]);
                 setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
             }
+            else if (tab[0] == "Status") {
+            
+                setenv("REDIRECT_STATUS", tab[1].c_str(), 0);
+                std::cout << "Status is " << tab[1].c_str() << std::endl;
+                headers[tab[0]] = util::trim(tab[1]);
+                // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
+            }
+            else if (tab[0] == "Location") {
+                std::cout << "testing location " << std::endl;
+                headers[tab[0]] = util::trim(tab[1]);
+                
+            }
             // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-            // std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+            std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
 
         }
         else
@@ -120,10 +134,10 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
 
 
-std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req) {
+std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
     int fd[2];
-    char    **args = fill_args(path);
+    char    **args = fill_args(cgiPath, path);
 
     char    **envp;
 
@@ -152,7 +166,6 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("HTTP_CACHE_CONTROL", "", 0);
     // setenv("HTTP_CONNECTION", "", 0);
     // setenv("HTTP_HOST", "", 0);
-    // setenv("REDIRECT_STATUS", "200", 0);
     // setenv("SERVER_NAME", "", 0);
     // setenv("SERVER_PORT", "",1);
     // setenv("SERVER_ADDR", "", 0);

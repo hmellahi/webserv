@@ -1,15 +1,6 @@
 #include "MediaTypes.h"
 
 const char* MediaTypes::getType(const char * extension)  {
-  const char *dot = strrchr(extension, '.');
-  if (dot) {
-    if ( dot != extension) {
-      extension = dot;
-    }
-
-    extension++;
-  }
-
   int min = 0;
   int max = (sizeof(types) / sizeof(*types) - 1);
 
@@ -26,7 +17,7 @@ const char* MediaTypes::getType(const char * extension)  {
     }
   }
 
-  return NULL;
+  return "";
 }
 
 const char* MediaTypes::getExtension(const char * type, int skip)  {
@@ -66,8 +57,7 @@ int MediaTypes::strcmpi(const char *s1, const char *s2) {
   return 1;
 }
 
-// Source: https://raw.githubusercontent.com/broofa/node-mime/master/types/standard.json
-MediaTypes::entry MediaTypes::types[347] =  {
+MediaTypes::entry MediaTypes::types[350] =  {
   {"*3gpp", "audio/3gpp"},
   {"*jpm", "video/jpm"},
   {"*mp3", "audio/mp3"},
@@ -415,4 +405,5 @@ MediaTypes::entry MediaTypes::types[347] =  {
   {"yin", "application/yin+xml"},
   {"yml", "text/yaml"},
   {"zip", "application/zip"},
+  {"php", "text/html; charset=UTF-8"},
 };

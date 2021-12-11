@@ -270,7 +270,13 @@ Response Server::handleRequest(Request req, int client_fd)
 		res.send(HttpStatus::MethodNotAllowed);
 		return (res);
 	}
+
 	std::string filename = _locConfig.getRoot() + req.getUrl();
+    if (FileSystem::getFileStatus(filename) == HttpStatus::NotFound)
+	{
+		res.send(HttpStatus::NotFound);
+		return res;
+	}
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	std::string fileExtension = util::GetFileExtension(filename.c_str());
@@ -291,7 +297,7 @@ Response Server::handleRequest(Request req, int client_fd)
 				std::cout <<"filename : " << filename << std::endl;
 				std::cout <<"content" << cgiOutput << std::endl;
 				// cgiOutput = CGI::exec_file(filename.c_str(), req);
-				std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req);
+				std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 				// std::cout << cgiOutput << std::endl;
 				// map 
 				cgiOutput = cgiRes.first;
@@ -323,10 +329,10 @@ Response Server::handleRequest(Request req, int client_fd)
 					}
 					it++;
 				}
-				res.sendContent(std::stoi(headers["Status"]), cgiOutput);
+				res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
 				return res;
 			}
-			catch (const std::exception e)
+			catch (const std::exception e) 
 			{
 				std::cout << "Exception " << e.what() << std::endl;
 				// some went wrong while executing the file

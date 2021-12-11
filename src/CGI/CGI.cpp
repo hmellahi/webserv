@@ -7,7 +7,8 @@ char        **fill_args(std::string cgiPath, std::string path) {
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
 	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
-	args[0] = strdup("./cgi-bin/php-cgi");
+    std::cout << "cgi" << cgiPath.c_str() << std::endl;
+	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
     return (args);
@@ -134,10 +135,10 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
 
 
-std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req) {
+std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
     int fd[2];
-    char    **args = fill_args("", path);
+    char    **args = fill_args(cgiPath, path);
 
     char    **envp;
 
@@ -171,6 +172,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("SERVER_ADDR", "", 0);
     // setenv("REMOTE_PORT", "", 0);
     // setenv("REMOTE_ADDR", "", 0);
+    setenv("PATH_INFO", "/cgi-bin", 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);

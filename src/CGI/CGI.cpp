@@ -7,7 +7,6 @@ char        **fill_args(std::string cgiPath, std::string path) {
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
 	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
-    std::cout << "cgi" << cgiPath.c_str() << std::endl;
 	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;

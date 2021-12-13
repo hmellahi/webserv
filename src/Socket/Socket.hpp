@@ -18,13 +18,15 @@ private:
     void    create_socket();
 
 public:
+    int type;
     // constructors
     // Socket(int socket_fd);
     Socket();
+    Socket(int socket_fd);
     Socket(int port, std::string &host, int domain = AF_INET, int type = SOCK_STREAM, int protocol = 0);
     
     // methods
-    static void testConnection(int connection_ret, std::string customErrMsg = "Connection failed");
+    static void testConnection(int connection_ret, std::string customErrMsg = "Connection failed", bool suspend = true);
     static Socket    acceptConnection(int socket, struct sockaddr_in address, int addrlen);
     
     // Getters

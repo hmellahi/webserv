@@ -51,7 +51,7 @@ void Request::parse()
 			ParseChunkBody(_buffer);
 		else
 			ParseBody(_buffer);
-		// std::cout << "|" << _content_body << "|" << std::endl;
+		// std::cerr << "|" << _content_body << "|" << std::endl;
 	}
 	else
 		_status = HttpStatus::BadRequest; // Bad request
@@ -115,7 +115,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 	int pos;
 	for (int i = 1; i < lines.size() && !lines[i].empty(); i++)
 	{
-		// std::cout << "[" << lines[i] << "] " << std::endl;
+		// std::cerr << "[" << lines[i] << "] " << std::endl;
 		if (util::trim(lines[i]).empty())
 			continue;
 		pos = lines[i].find(":");
@@ -130,7 +130,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		key = util::trim(key);
 		value = util::trim(value);
 		_headers[key] = value;
-		// std::cout << lines[i] << std::endl;
+		// std::cerr << lines[i] << std::endl;
 	}
 	if (_headers.find("Host") == _headers.end())
 		_status = HttpStatus::BadRequest;
@@ -156,9 +156,9 @@ void Request::ParseBody(std::string &buffer)
 			}
 		}
 	}
-	// std::cout << "-------------------------------------\n";
-	// std::cout << "reqsize" << i << std::endl;
-	// std::cout << "-------------------------------------\n";
+	// std::cerr << "-------------------------------------\n";
+	// std::cerr << "reqsize" << i << std::endl;
+	// std::cerr << "-------------------------------------\n";
 }
 
 void Request::ParseChunkBody(std::string &buffer)

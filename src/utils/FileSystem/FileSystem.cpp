@@ -22,8 +22,8 @@ std::string  FileSystem::getIndexFile(const std::string & path, const std::vecto
 
     for (int i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
     {
-        // std::cout << "[" << path << "]" << std::endl;
-        // std::cout << "path" << path + indexFiles[i] << std::endl;
+        // std::cerr << "[" << path << "]" << std::endl;
+        // std::cerr << "path" << path + indexFiles[i] << std::endl;
     
         status = FileSystem::getFileStatus(path + indexFiles[i]);
         if (status == HttpStatus::OK)
@@ -91,7 +91,7 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 {
     std::fstream new_file;
 
-    // std::cout << "location: " << uploadLocation << std::endl;
+    // std::cerr << "location: " << uploadLocation << std::endl;
     new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!new_file.is_open())
         throw std::runtime_error("couldnt open the file for writing");

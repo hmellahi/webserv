@@ -81,7 +81,7 @@ std::string util::getCurrentDate()
 
 std::string util::GetFileExtension(const std::string& fileName)
 {
-	std::cout << fileName << std::endl;
+	std::cerr << fileName << std::endl;
 	if (fileName[0] == '.')
 		return "";
 	size_t index = fileName.find_last_of(".");
@@ -102,10 +102,10 @@ int util::getFileLength(const std::string& filename)
 
 void	util::closeAllListeners()
 {
-	std::cout << clients.size() << std::endl;
+	std::cerr << clients.size() << std::endl;
 	for (int i = 0; i < clients.size();i++)
 		close(clients[i]);
-	std::cout << serversSockets.size() << std::endl;
+	std::cerr << serversSockets.size() << std::endl;
 	for (int i = 0; i < serversSockets.size();i++)
 		close(serversSockets[i]);
 }
@@ -118,7 +118,6 @@ void	util::signal_handler(int signal)
 void	util::ft_exit(int status)
 {
 	closeAllListeners();
-	std::cout << "sss" << std::endl;
 	exit(status);
 }
 

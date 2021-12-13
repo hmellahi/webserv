@@ -8,11 +8,14 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     _headers["http-version"] = req.getHttpVersion();
     _headers["Connection"] = req.getHeader("Connection");
     _headers["Date"] = util::getCurrentDate(); 
+    file_to_send=-1;
+    nbytes_left = 0;
 }
 
 Response::Response()
 {
-
+    nbytes_left = 0;
+    file_to_send=0;
 }
 
 Response::Response(const Response& src)
@@ -20,6 +23,9 @@ Response::Response(const Response& src)
     _headers = src.getHeaders();
     _client_fd = src.getClientFd();
     _serverConfig = src.getServerConfig();
+    file_to_send = src.file_to_send;
+    nbytes_left = src.nbytes_left;
+
 }
 
 std::string     Response::CraftRedirectionPage(int statusCode)
@@ -36,7 +42,7 @@ std::string     Response::CraftRedirectionPage(int statusCode)
     return html.str();
 }
 
-void    Response::sendRedirect(int statusCode, const std::string &location)
+Response    Response::sendRedirect(int statusCode, const std::string &location)
 {
     std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
@@ -51,12 +57,13 @@ void    Response::sendRedirect(int statusCode, const std::string &location)
         << "Content-Length: " << redirectPageContent.size() << "\r\n"
         << "\r\n"
         << redirectPageContent;
-	// std::cout <<  "res: " << msg.str() << std::endl; // debug
+	// std::cerr <<  "res: " << msg.str() << std::endl; // debug
     
     sendMessage(_client_fd, msg.str());
+    return *this;
 }
 
-void    Response::send( int statusCode)
+Response    Response::send( int statusCode)
 {
     std::string errorPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
@@ -72,18 +79,19 @@ void    Response::send( int statusCode)
         << "\r\n"
         << errorPageContent;
     sendMessage(_client_fd, msg.str());
+    return *this;
 }
 
-void    Response::send( int statusCode, std::string filename)
+Response    Response::send( int statusCode, std::string filename)
 {
     std::string extension;
 
     extension = util::GetFileExtension(filename);
-    // std::cout << filename << std::endl;
-    // std::cout << extension << std::endl;
+    // std::cerr << filename << std::endl;
+    // std::cerr << extension << std::endl;
     if (!extension.empty())
     {
-        std::cout << "extension: " << extension << std::endl;
+        std::cerr << "extension: " << extension << std::endl;
         std::string type = MediaTypes::getType(extension.c_str());
         _headers["Content-Type"] =type.empty() ? "text/plain" : type;
     }
@@ -102,17 +110,17 @@ void    Response::send( int statusCode, std::string filename)
         << "\r\n";
 
     
-	// std::cout << "in rsponse"<<  msg.str() << std::endl; // debug
+	// std::cerr << "in rsponse"<<  msg.str() << std::endl; // debug
     // send it to the client
-    std::cout << "response"<<  msg.str() << std::endl; // debug
+    // std::cerr << "response"<<  msg.str() << std::endl; // debug
     sendMessage(_client_fd, msg.str());
     
     // open file and read it by chunks
     readRaw(filename, fileLength);
-    std::cout << "aa" << std::endl;
+    return *this;
 }
 
-void    Response::sendContent( int statusCode, std::string content)
+Response    Response::sendContent( int statusCode, std::string content)
 {
     _headers["Content-Type"] = "text/html";
     // craft a response 
@@ -136,50 +144,58 @@ void    Response::sendContent( int statusCode, std::string content)
         msg<< "\r\n"
         << content;
     
-	// std::cout <<  msg.str() << std::endl; // debug
+	// std::cerr <<  msg.str() << std::endl; // debug
     
     // send it to the client
-    sendMessage(_client_fd, msg.str());    
+    sendMessage(_client_fd, msg.str()); 
+
+    return *this;
 }
 
 void    Response::readRaw(std::string filename, int fileLength)
 {
+    //  int fd = open(filename.c_str(), O_RDONLY);
+    // char buf[BUFSIZE];
+    // int bytes_read, bytes_written;
+    // while (fileLength > 0) {
+    //         std::cerr << "fileLength: " << fileLength << std::endl;
+
+    //     bytes_read = read(fd, buf, BUFSIZE);//std::min((int)fileLength, BUFSIZE));
+    //     std::cerr << "raed" << std::endl;
+
+    //     if (bytes_read <= 0) break;
+    //     if (sendRaw(_client_fd, buf, bytes_read) == -1) break;
+    //     std::cerr << "sen" << std::endl;
+    //     fileLength -= bytes_read;
+    // }
+    // std::cerr << "++fileLength: " << fileLength << std::endl;
+    // close(fd);
     int fd = open(filename.c_str(), O_RDONLY);
     char buf[BUFSIZE];
-    int bytes_read, bytes_written;
-    while (fileLength > 0) {
-            std::cout << "fileLength: " << fileLength << std::endl;
-
-        bytes_read = read(fd, buf, BUFSIZE);//std::min((int)fileLength, BUFSIZE));
-        std::cout << "raed" << std::endl;
-
-        if (bytes_read <= 0) break;
-        if (sendRaw(_client_fd, buf, bytes_read) == -1) break;
-        std::cout << "sen" << std::endl;
-        fileLength -= bytes_read;
-    }
-    std::cout << "++fileLength: " << fileLength << std::endl;
-    close(fd);
+    int bytes_read = read(fd, buf, std::min(BUFSIZE, fileLength));
+    sendRaw(_client_fd, buf, bytes_read);
+    nbytes_left = fileLength - bytes_read;
+    file_to_send = fd;
+    std::cout << "nbytes: " <<  nbytes_left << std::endl;
+    // if (bytes_read >= fileLength)
+        // return;
+    // res unCompletedResponse = {fd, fileLength - bytes_read};
 }
 
 int Response::sendMessage(int fd, const std::string &s)
 {
     return sendRaw(fd, s.c_str(), s.length());
 }
-void a(int a){
-    std::cout << "a" << std::endl;
-}
+void a(int a){}
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);
     int bytes_written;
 
     signal(SIGPIPE, a);
-    std::cout << fd << std::endl;
     bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
     
-    std::cout << "send" << std::endl;
     if (bytes_written <= 0)
     {
         perror("couldnt send the msg"); // todo should exit?
@@ -195,7 +211,7 @@ std::string Response::getHeader(std::string header_name)
 
 void Response::setHeader(std::string header_name, std::string value)
 {
-    //std::cout << header_name << " : " << value << std::endl;
+    //std::cerr << header_name << " : " << value << std::endl;
     _headers[header_name] = value;
 }
 

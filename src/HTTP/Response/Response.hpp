@@ -11,15 +11,18 @@ private:
     std::map<std::string, std::string> _headers;
 
 public:
+    int nbytes_left;
+    int file_to_send;
     Response();
     int _client_fd;
+
     Response(const Response& src);
     Response(Request req, int client_fd, Config serverConfig );
      
-    void    send( int statusCode);
-    void    send( int status_code, std::string filename);
-    void    sendContent( int status_code, std::string content);
-    void    sendRedirect(int statusCode, const std::string & location);
+    Response    send( int statusCode);
+    Response    send( int status_code, std::string filename);
+    Response    sendContent( int status_code, std::string content);
+    Response    sendRedirect(int statusCode, const std::string & location);
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);
     void    readRaw(std::string buffer, int FileLength);
@@ -31,3 +34,4 @@ public:
     Config  getServerConfig() const;
     void setHeader(std::string header_name, std::string value);
 };
+ 

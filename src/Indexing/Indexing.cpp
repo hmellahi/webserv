@@ -76,7 +76,7 @@ std::string Indexing::last_modified(std::string path)
 	char buffer[100];
 
 	path = _root + path;
-	// std::cout << "path: " << path << std::endl;
+	// std::cerr << "path: " << path << std::endl;
 	if (stat(path.c_str(), &buff) == 0)
 	{
 		clock = gmtime(&(buff.st_mtime));
@@ -92,7 +92,7 @@ std::string Indexing::SizeFile(std::string path)
 	std::stringstream ss;
 
 	path = _root + path;
-	// std::cout << "path: " << path << std::endl;
+	// std::cerr << "path: " << path << std::endl;
 	if (stat(path.c_str(), &buff) == 0)
 	{
 		ss << buff.st_size;    

@@ -85,7 +85,7 @@ void Config::check_server(std::vector<std::string>::iterator &it)
 	// std::map<u_int32_t, std::string>::iterator it2;
 	// for (it2 = _hostPort.begin(); it2 != _hostPort.end(); it2++)
 	// {
-	// 	std::cout << it2->first << " " << it2->second << std::endl;
+	// 	std::cerr << it2->first << " " << it2->second << std::endl;
 	// }
 }
 void 	Config::check_locations()
@@ -122,9 +122,9 @@ void 	Config::check_locations()
 	// 		}
 	// 		loc = *this;
 	// 	}
-	// 	std::cout << "before:" << it->second._isAutoIndexOn << std::endl;
+	// 	std::cerr << "before:" << it->second._isAutoIndexOn << std::endl;
 	// 	it->second = loc;
-	// 	std::cout << "after:" << it->second._isAutoIndexOn << std::endl;
+	// 	std::cerr << "after:" << it->second._isAutoIndexOn << std::endl;
 	// }
 }
 void Config::root(std::vector<std::string>::iterator &it)

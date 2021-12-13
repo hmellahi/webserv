@@ -29,10 +29,9 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     line = "";
     while (ss.good())
     {
-
         getline(ss, line, '\n');
         line = util::trim(line);
-        // std::cout << "line :" << line << "|" << std::endl;
+        // std::cerr << "line :" << line << "|" << std::endl;
         // if (line.find("<html>") == std::string::npos && line.length() > 0)
         if (line.length() > 0)
         {
@@ -46,17 +45,17 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
             else if (tab[0] == "Status") {
             
                 setenv("REDIRECT_STATUS", tab[1].c_str(), 0);
-                std::cout << "Status is " << tab[1].c_str() << std::endl;
+                std::cerr << "Status is " << tab[1].c_str() << std::endl;
                 headers[tab[0]] = util::trim(tab[1]);
                 // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
             }
             else if (tab[0] == "Location") {
-                std::cout << "testing location " << std::endl;
+                std::cerr << "testing location " << std::endl;
                 headers[tab[0]] = util::trim(tab[1]);
                 
             }
             // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-            std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+            std::cerr << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
 
         }
         else
@@ -185,12 +184,12 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("FCGI_ROLE", "RESPONDER", 0);
 
 
-    std::cout << "------------------------------------" << std::endl;
-    //std::cout << "Query :: "<< req.getContentBody().data() << std::endl;
-    std::cout << "------------------------------------" << std::endl;
+    std::cerr << "------------------------------------" << std::endl;
+    //std::cerr << "Query :: "<< req.getContentBody().data() << std::endl;
+    std::cerr << "------------------------------------" << std::endl;
 
 
-    std::cout << std::to_string(req.getContentBody().size()).c_str() << std::endl;
+    std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;
     
     return exec_cgi( req, args, path);
 }

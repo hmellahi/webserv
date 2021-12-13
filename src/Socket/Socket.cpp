@@ -2,13 +2,14 @@
 
 Socket::Socket()
 {
-
+    type=0;
 }
 
-// Socket::Socket(int socket_fd)
-// {
-//     _socket_fd = socket_fd;
-// }
+Socket::Socket(int socket_fd)
+{
+    type=0;
+    _socket_fd = socket_fd;
+}
 // Socket::Socket(const Socket &src)
 // {
 //     _socket_fd = ;
@@ -21,6 +22,7 @@ Socket::Socket()
 
 Socket::Socket(int port, std::string &host, int domain, int type, int protocol)
 {
+    this->type=0;
     _port = port;
     _domain = domain;    
     _type = type;
@@ -60,12 +62,13 @@ void    Socket::create_socket()
     testConnection(connection, "couldnt listen");
 }
 
-void    Socket::testConnection(int connection_ret, std::string customErrMsg)
+void    Socket::testConnection(int connection_ret, std::string customErrMsg, bool suspend)
 {
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
-        util::ft_exit(EXIT_FAILURE);
+        if (suspend)
+            util::ft_exit(EXIT_FAILURE);
     }
 }
 
@@ -75,7 +78,7 @@ Socket     Socket::acceptConnection(int socket, struct sockaddr_in address, int 
     int new_connection;
 
     new_connection = accept(socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-    testConnection(new_connection, "couldnt accept new connection");
+    testConnection(new_connection, "couldnt accept new connection", false);
     
     new_socket.setSocketFd(new_connection);
     

@@ -13,7 +13,7 @@
 class Server;
 class Response;
 
-typedef void  (Server::*methodType)(Request, Response);
+typedef Response (Server::*methodType)(Request, Response);
 
 class Server
 {
@@ -51,10 +51,10 @@ public:
 
     // --------- Methods Handlers ------------------------- //
     methodType    handleMethod(int methodIndex);
-    void    getHandler(Request req, Response res);
-    void    postHandler(Request req, Response res);
-    void    deleteHandler(Request req, Response res);
-    void    methodNotFoundHandler(Request req, Response res);
+    Response    getHandler(Request req, Response res);
+    Response    postHandler(Request req, Response res);
+    Response    deleteHandler(Request req, Response res);
+    Response    methodNotFoundHandler(Request req, Response res);
     int     getMethodIndex(std::string method_name);
     // ----------------------------------------------------- //
 
@@ -68,4 +68,4 @@ public:
     // ----------------------------------------------------- //
 };
 
-// std::map<int, Request> unCompletedRequests = std::map<int, Request>();
+// std::map<int, Response> Server::unCompletedResponses;

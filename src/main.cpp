@@ -4,8 +4,10 @@
 #include <csignal>
 
 void	handle(int a){
-	std::cout << "quited with signal : " << a << std::endl;
-	util::signal_handler(a);
+	std::cerr << "quited with signal : " << a << std::endl;
+	// util::signal_handler(a);
+	// system("leaks webserv");
+	util::ft_exit(0);
 }
 int main(int ac , char *av[])
 {
@@ -36,6 +38,6 @@ int main(int ac , char *av[])
 		std::cerr << "error [" << e.what() << "]: " << '\n';
 		util::ft_exit(EXIT_FAILURE);
 	}
-
+	// system("leaks webserv");
 	return 0;
 }

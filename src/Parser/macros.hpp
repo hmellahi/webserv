@@ -25,7 +25,7 @@
 
 // #define MY_TRACE(msg, ...) \
     MyTrace(__LINE__, __FILE__, msg)
-#define DBG(msg) std::cout << "line : " << __LINE__ << ",file : " << __FILE__ << ", msg:" << msg << "\n"  << std::endl;
+#define DBG(msg) std::cerr << "line : " << __LINE__ << ",file : " << __FILE__ << ", msg:" << msg << "\n"  << std::endl;
 class Socket;
 extern std::vector<Socket> serversSockets;
 extern std::vector<Socket> clients;

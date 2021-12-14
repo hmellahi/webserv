@@ -58,7 +58,7 @@ void    Socket::create_socket()
     testConnection(connection, "the port is already in Use...");
 
     //  specify maximum of 10 pending connections for this socket
-    connection = listen(_socket_fd, 10);
+    connection = listen(_socket_fd, 1017);
     testConnection(connection, "couldnt listen");
 }
 

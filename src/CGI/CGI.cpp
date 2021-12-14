@@ -106,8 +106,8 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     }
     else if (pid == 0)
     {
-
-        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) == -1)
+        // todo check 
+        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) <= 0)
             throw std::runtime_error("write error");
 
         dup2(nfd[1], 1);

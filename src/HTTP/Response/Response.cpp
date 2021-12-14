@@ -57,7 +57,6 @@ Response    Response::sendRedirect(int statusCode, const std::string &location)
         << "Content-Length: " << redirectPageContent.size() << "\r\n"
         << "\r\n"
         << redirectPageContent;
-	// std::cerr <<  "res: " << msg.str() << std::endl; // debug
     
     sendMessage(_client_fd, msg.str());
     return *this;
@@ -87,8 +86,6 @@ Response    Response::send( int statusCode, std::string filename)
     std::string extension;
 
     extension = util::GetFileExtension(filename);
-    // std::cerr << filename << std::endl;
-    // std::cerr << extension << std::endl;
     if (!extension.empty())
     {
         std::cerr << "extension: " << extension << std::endl;
@@ -96,10 +93,13 @@ Response    Response::send( int statusCode, std::string filename)
         _headers["Content-Type"] =type.empty() ? "text/plain" : type;
     }
     else
-        _headers["Content-Type"] = "text/plain"; // todo fix seg
+        _headers["Content-Type"] = "text/plain";
 
     // craft a response 
     int fileLength = util::getFileLength(filename);
+    file_to_send = open(filename.c_str(), O_RDONLY);
+    int nbytes;
+    nbytes_left = fileLength;
     std::ostringstream msg;
     msg << _headers["http-version"] << " " << statusCode << " " 
         << HttpStatus::reasonPhrase(statusCode) << "\r\n"
@@ -108,15 +108,14 @@ Response    Response::send( int statusCode, std::string filename)
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
+        // << readRaw(file_to_send, BUFSIZE, nbytes)
+        // << readRaw(file_to_send, fileLength);
 
     
-	// std::cerr << "in rsponse"<<  msg.str() << std::endl; // debug
     // send it to the client
-    // std::cerr << "response"<<  msg.str() << std::endl; // debug
     sendMessage(_client_fd, msg.str());
     
-    // open file and read it by chunks
-    readRaw(filename, fileLength);
+    // open file
     return *this;
 }
 
@@ -132,19 +131,13 @@ Response    Response::sendContent( int statusCode, std::string content)
         << "Content-Length: " << fileLength << "\r\n"
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n";
-        if (getHeader("Location") != "") {
-
+        if (getHeader("Location") != "")
             msg << "Location: " << getHeader("Location") << "\r\n";
-        }
-        else if (getHeader("Status") != "") {
-
+        else if (getHeader("Status") != "")
             msg << "Status: " << getHeader("Status") << "\r\n";
-        }
-        //<< "Server: " << _serverConfig.getServerName()[0] << "\r\n"
         msg<< "\r\n"
         << content;
     
-	// std::cerr <<  msg.str() << std::endl; // debug
     
     // send it to the client
     sendMessage(_client_fd, msg.str()); 
@@ -152,55 +145,34 @@ Response    Response::sendContent( int statusCode, std::string content)
     return *this;
 }
 
-void    Response::readRaw(std::string filename, int fileLength)
+std::string Response::readRaw(int fd, int fileLength, int &bytes_read)
 {
-    //  int fd = open(filename.c_str(), O_RDONLY);
-    // char buf[BUFSIZE];
-    // int bytes_read, bytes_written;
-    // while (fileLength > 0) {
-    //         std::cerr << "fileLength: " << fileLength << std::endl;
-
-    //     bytes_read = read(fd, buf, BUFSIZE);//std::min((int)fileLength, BUFSIZE));
-    //     std::cerr << "raed" << std::endl;
-
-    //     if (bytes_read <= 0) break;
-    //     if (sendRaw(_client_fd, buf, bytes_read) == -1) break;
-    //     std::cerr << "sen" << std::endl;
-    //     fileLength -= bytes_read;
-    // }
-    // std::cerr << "++fileLength: " << fileLength << std::endl;
-    // close(fd);
-    int fd = open(filename.c_str(), O_RDONLY);
     char buf[BUFSIZE];
-    int bytes_read = read(fd, buf, std::min(BUFSIZE, fileLength));
-    sendRaw(_client_fd, buf, bytes_read);
-    nbytes_left = fileLength - bytes_read;
-    file_to_send = fd;
-    std::cout << "nbytes: " <<  nbytes_left << std::endl;
-    // if (bytes_read >= fileLength)
-        // return;
-    // res unCompletedResponse = {fd, fileLength - bytes_read};
+    bytes_read = read(fd, buf, std::min(BUFSIZE, fileLength));
+    nbytes_left -= bytes_read;
+    // std::cout << "nbytes: " <<  nbytes_left << std::endl;
+    // return std::string(buf, bytes_read);
+    return std::string(buf, bytes_read);
 }
+
 
 int Response::sendMessage(int fd, const std::string &s)
 {
     return sendRaw(fd, s.c_str(), s.length());
 }
+
 void a(int a){}
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);
-    int bytes_written;
 
     signal(SIGPIPE, a);
-    bytes_written = write(fd, pbuf, buflen);
+    int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
     
+    //todo right?
     if (bytes_written <= 0)
-    {
-        perror("couldnt send the msg"); // todo should exit?
-        return -1;
-    }
+        throw std::runtime_error("Could not write to client");
     return 0;
 }
 

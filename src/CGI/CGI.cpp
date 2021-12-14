@@ -131,11 +131,23 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     return parseOutput(cgiOutput);
 }
 
+bool exists(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
+}
+
 
 
 std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
     int fd[2];
+    if (!exists(path)) {
+       throw std::runtime_error("File Not Found");
+    }
     std::pair<std::string, std::map<std::string , std::string> >  ret;
     
     char    **args = fill_args(cgiPath, path);

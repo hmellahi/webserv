@@ -45,14 +45,6 @@ void Server::waitingForConnections(int &activity, fd_set &readfds)//, fd_set &wr
 	Socket::testConnection(activity, "select error");
 }
 
-bool exists(const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }   
-}
 
 void Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
 {
@@ -349,7 +341,10 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
 	std::map<std::string, std::string> headers;
-
+	// if (!exists(filename) ) {
+	// 	return res.send(HttpStatus::NotFound);
+	// 	// return res;
+	// }
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
 		std::string cgiType = cgi->first;
@@ -358,10 +353,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (fileExtension != cgiType) continue;
 		try {
 
-			if (!exists(filename)) {
-				res.send(HttpStatus::NotFound);
-				return res;
-			}
+
 			std::cerr <<"filename : " << filename << std::endl;
 			std::cerr <<"content" << cgiOutput << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
@@ -378,15 +370,15 @@ Response Server::handleRequest(Request req, int client_fd)
 					res.setHeader(it->first, it->second);
 				it++;
 			}
-			res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
-			return res;
+			return res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
 		}
 		catch (const std::exception& e)
 		{
 			std::cout << "Exception " << e.what() << std::endl;
+			if (!strncmp(e.what(), "File Not Found", 14))
+				return res.send(HttpStatus::NotFound);
 			// some went wrong while executing the file
-			res.send(HttpStatus::InternalServerError);
-			return (res);
+			return res.send(HttpStatus::InternalServerError);
 		}
 	}
 	return (this->*handleMethod(methodIndex))(req, res);

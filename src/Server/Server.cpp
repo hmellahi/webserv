@@ -456,7 +456,12 @@ Response Server::postHandler(Request req, Response res)
 		return res.send(HttpStatus::Forbidden);
 	std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 	std::string filename = tokens[tokens.size() - 1];
-	if (!filename.empty())
+	std::cout  << "|" << filename << "|\ntokens" <<  std::endl;
+	for (int i= 0; i < tokens.size(); i++) {
+	
+		std::cout << tokens[i] << " ";
+	}
+	if (!filename.empty()) 
 	{
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {

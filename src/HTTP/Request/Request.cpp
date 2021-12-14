@@ -175,6 +175,8 @@ void Request::ParseChunkBody(std::string &buffer)
 	while (size)
 	{
 		i = body.find("\r\n", i) + 2;
+		std::cout << "assigning " << body.substr(i, size) << std::endl;
+		_content_body.assign( body.substr(i, size).c_str(),  body.substr(i, size).c_str() + size);
 		// _content_body += body.substr(i, size);
 		i += size + 2;
 		hex = body.substr(i, body.size());

@@ -10,6 +10,11 @@ Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpS
 	parse();
 }
 
+int	Request::getBufferSize( void )  const {
+
+
+	return _buffSize;
+}
 Request::Request(Request const &src)
 {
 	*this = src;
@@ -43,14 +48,19 @@ void Request::parse()
 	std::vector<std::string> lines;
 	
 	lines = util::split(_buffer, "\n");
+	for (int i = 0; i < lines.size(); i++) {
+		std::cout << lines[i] << std::endl;
+	}
 	if (lines.size() > 1)
 	{
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
+		std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
 		if (_headers.find("	-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
 			ParseChunkBody(_buffer);
-		else
+		else if (atoi(_headers["Content-Length"].c_str()) < _buffSize)
 			ParseBody(_buffer);
+
 		// std::cerr << "|" << _content_body << "|" << std::endl;
 	}
 	else
@@ -189,6 +199,8 @@ std::string Request::getHeader(std::string header_name)
 {
 	return _headers[header_name];
 }
+
+
 
 void Request::setHeader(std::string header_name, std::string value)
 {

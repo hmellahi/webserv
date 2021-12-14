@@ -7,6 +7,7 @@ char        **fill_args(std::string cgiPath, std::string path) {
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
 	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
+    // std::cout << "executing " <<  cgiPath.c_str() << std::endl;
 	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
@@ -17,7 +18,6 @@ char        **fill_args(std::string cgiPath, std::string path) {
 std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::string out  ) {
 
 
-    // std::vector<std::string> headers;
     std::pair<std::string, std::map<std::string , std::string> >  ret;
     std::map<std::string, std::string> headers;
     std::stringstream ss(out);
@@ -30,6 +30,7 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     while (ss.good())
     {
         getline(ss, line, '\n');
+        std::cout << line << std::endl;
         line = util::trim(line);
         // std::cerr << "line :" << line << "|" << std::endl;
         // if (line.find("<html>") == std::string::npos && line.length() > 0)
@@ -55,7 +56,7 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
                 
             }
             // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-            std::cerr << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+           // std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
 
         }
         else
@@ -107,7 +108,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     else if (pid == 0)
     {
         // todo check 
-        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) <= 0)
+        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
             throw std::runtime_error("write error");
 
         dup2(nfd[1], 1);
@@ -128,7 +129,6 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
     // remove cgi useless headers
     return parseOutput(cgiOutput);
-    // return cgiOutput;
 }
 
 
@@ -136,10 +136,11 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
     int fd[2];
+    std::pair<std::string, std::map<std::string , std::string> >  ret;
+    
     char    **args = fill_args(cgiPath, path);
 
     char    **envp;
-
     if (req.getMethod() == "POST")
     {
         if (!req.getHeader("Content-Type").empty())
@@ -189,7 +190,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     std::cerr << "------------------------------------" << std::endl;
 
 
-    std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;
+    // std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;
     
     return exec_cgi( req, args, path);
 }

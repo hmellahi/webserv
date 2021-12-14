@@ -36,6 +36,7 @@ class Request
 		std::vector<char> _content_body;
 		std::string _buffer;
 		int			_buffSize;
+		int getBufferSize(void) const;
 	private:
 		std::map<std::string, std::string> _headers;
 		std::string _method;

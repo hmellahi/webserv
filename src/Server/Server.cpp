@@ -45,6 +45,15 @@ void Server::waitingForConnections(int &activity, fd_set &readfds)//, fd_set &wr
 	Socket::testConnection(activity, "select error");
 }
 
+bool exists(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
+}
+
 void Server::addServers(std::vector<Socket> &sockets, int &max_sd, fd_set &readfds)
 {
 	std::vector<Socket>::iterator it = sockets.begin();
@@ -172,7 +181,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				requestBodyStr = std::string(requestBody, valread);
 				// handle connection and store response
 				requestSize = valread;
-				try
+				try 
 				{
 					res = handleConnection(requestBodyStr, requestSize, sd, servers);
     			}
@@ -257,7 +266,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		req = it->second;
 		int contentLength = atoi(req.getHeader("Content-Length").c_str());
 		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.getContentBody().size() < contentLength)
@@ -281,12 +290,12 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cout << "-------------------------------------\n";
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
-	if (req.getStatus() != HttpStatus::OK) // TODO FIX
-	{
-		// todo close connection
-		res.send(req.getStatus());
-		return (res);
-	}
+	// if (req.getStatus() != HttpStatus::OK) // TODO FIX
+	// {
+	// 	// todo close connection
+	// 	res.send(req.getStatus());
+	// 	return (res);
+	// }
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
@@ -327,12 +336,13 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cerr << "-------------------------------------\n";
 	std::cerr << _locConfig.getIndex().size() << "|" << filename << "|" << std::endl;
 	std::cerr << "-------------------------------------\n";
-    if (FileSystem::getFileStatus(filename) == HttpStatus::NotFound)
-	{
-		res.send(HttpStatus::NotFound);
-		// todo close connection
-		return res;
-	}
+	// todo
+    // if (FileSystem::getFileStatus(filename) == HttpStatus::NotFound)
+	// {
+	// 	res.send(HttpStatus::NotFound);
+	// 	// todo close connection
+	// 	return res;
+	// }
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	std::string fileExtension = util::GetFileExtension(filename.c_str());
@@ -348,6 +358,11 @@ Response Server::handleRequest(Request req, int client_fd)
 		// execute the file using approriate cgi
 		if (fileExtension != cgiType) continue;
 		try {
+
+			if (!exists(filename)) {
+				res.send(HttpStatus::NotFound);
+				return res;
+			}
 			std::cerr <<"filename : " << filename << std::endl;
 			std::cerr <<"content" << cgiOutput << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
@@ -356,7 +371,6 @@ Response Server::handleRequest(Request req, int client_fd)
 			std::map<std::string, std::string>::iterator it;
 
 			it = headers.begin();
-		
 			while (it != headers.end())
 			{
 				if (it->first == "Status")
@@ -368,9 +382,9 @@ Response Server::handleRequest(Request req, int client_fd)
 			res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
 			return res;
 		}
-		catch (const std::exception e)
+		catch (const std::exception& e)
 		{
-			std::cerr << "Exception " << e.what() << std::endl;
+			std::cout << "Exception " << e.what() << std::endl;
 			// some went wrong while executing the file
 			res.send(HttpStatus::InternalServerError);
 			return (res);
@@ -452,16 +466,18 @@ Response Server::postHandler(Request req, Response res)
 		return res.send(HttpStatus::Forbidden);
 	std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 	std::string filename = tokens[tokens.size() - 1];
-	std::cout  << "|" << filename << "|\ntokens" <<  std::endl;
-	for (int i= 0; i < tokens.size(); i++) {
-	
-		std::cout << tokens[i] << " ";
-	}
+	std::cout << "Posthandler check : " << req.getBufferSize() << "\n";
 	if (!filename.empty()) 
 	{
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {
-			FileSystem::uploadFile(uploadLocation, req.getContentBody());
+
+			if (atoi(req.getHeaders()["Content-Length"].c_str()) < req.getBufferSize())
+				FileSystem::uploadFile(uploadLocation, req.getContentBody());
+			else {
+			
+				FileSystem::uploadChunkedFile(uploadLocation, req);
+			}
 			return res.send(HttpStatus::Created);
 		}
 		catch (std::exception& e)

@@ -25,7 +25,7 @@ public:
     Response    sendRedirect(int statusCode, const std::string & location);
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);
-    void    readRaw(std::string buffer, int FileLength);
+    std::string readRaw(int fd, int fileLength, int &bytes_read);
     std::string     CraftRedirectionPage(int statusCode);
 
     std::string getHeader(std::string header_name);

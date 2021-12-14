@@ -90,42 +90,42 @@ void Config::check_server(std::vector<std::string>::iterator &it)
 }
 void 	Config::check_locations()
 {
-	// std::map<std::string, Config>::iterator it;
-	// std::vector<std::string> founded;
-	// std::vector<std::string>::iterator it2;
-	// Config loc;
-	// for (it = _locations.begin(); it != _locations.end(); it++)
-	// {
-	// 	founded = _fillLocations.find(it->first)->second;
-	// 	if (!founded.empty())
-	// 	{
-	// 		for (it2 = founded.begin(); it2 != founded.end(); it2++)
-	// 		{
-	// 			if (*it2 == "root")
-	// 				loc._root = it->second._root;
-	// 			else if (*it2 == "page_error")
-	// 				loc._error_pages = it->second._error_pages;
-	// 			else if (*it2 == "client_max_body_size")
-	// 				loc._client_max_body_size = it->second._client_max_body_size;
-	// 			else if (*it2 == "auto_index")
-	// 				loc._isAutoIndexOn = it->second._isAutoIndexOn;
-	// 			else if (*it2 == "redirection")
-	// 				loc._redirectionPath = it->second._redirectionPath;
-	// 			else if (*it2 == "allow_methods")
-	// 				loc._allowedMethods = it->second._allowedMethods;
-	// 			else if (*it2 == "upload_path")
-	// 				loc._uploadPath = it->second._uploadPath;
-	// 			else if (*it2 == "cgi")
-	// 				loc._cgi = it->second._cgi;
-	// 			else if (*it2 == "index")
-	// 				loc._index = it->second._index;
-	// 		}
-	// 		loc = *this;
-	// 	}
-	// 	std::cerr << "before:" << it->second._isAutoIndexOn << std::endl;
-	// 	it->second = loc;
-	// 	std::cerr << "after:" << it->second._isAutoIndexOn << std::endl;
-	// }
+	std::map<std::string, Config>::iterator it;
+	std::vector<std::string> founded;
+	std::vector<std::string>::iterator it2;
+	Config loc;
+	for (it = _locations.begin(); it != _locations.end(); it++)
+	{
+		founded = _fillLocations.find(it->first)->second;
+		if (!founded.empty())
+		{
+			loc = *this;
+			for (it2 = founded.begin(); it2 != founded.end(); it2++)
+			{
+				if (*it2 == "root")
+					loc._root = it->second._root;
+				else if (*it2 == "page_error")
+					loc._error_pages = it->second._error_pages;
+				else if (*it2 == "client_max_body_size")
+					loc._client_max_body_size = it->second._client_max_body_size;
+				else if (*it2 == "auto_index")
+					loc._isAutoIndexOn = it->second._isAutoIndexOn;
+				else if (*it2 == "redirection")
+					loc._redirectionPath = it->second._redirectionPath;
+				else if (*it2 == "allow_methods")
+					loc._allowedMethods = it->second._allowedMethods;
+				else if (*it2 == "upload_path")
+					loc._uploadPath = it->second._uploadPath;
+				else if (*it2 == "cgi")
+					loc._cgi = it->second._cgi;
+				else if (*it2 == "index")
+					loc._index = it->second._index;
+			}
+		}
+		std::cout << "before:" << it->second._isAutoIndexOn << std::endl;
+		it->second = loc;
+		std::cout << "after:" << it->second._isAutoIndexOn << std::endl;
+	}
 }
 void Config::root(std::vector<std::string>::iterator &it)
 {

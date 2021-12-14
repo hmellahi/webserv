@@ -34,7 +34,6 @@ const char* MediaTypes::getExtension(const char * type, int skip)  {
   return NULL;
 }
 
-// https://www.geeksforgeeks.org/write-your-own-strcmp-which-ignores-cases/
 int MediaTypes::strcmpi(const char *s1, const char *s2) {
   int i;
 

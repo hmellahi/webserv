@@ -281,20 +281,16 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cout << "-------------------------------------\n";
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
-	// if (req.getStatus() != HttpStatus::OK) // TODO FIX
-	// {
-	// 	// todo close connection
-	// 	res.send(req.getStatus());
-	// 	return (res);
-	// }
+	// todo close connection
+	if (req.getStatus() != HttpStatus::OK) // TODO FIX
+		return res.send(req.getStatus());
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
 	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
 	{
 		// todo close connection
-		res.send(HttpStatus::PayloadTooLarge);
-		return (res);
+		return res.send(HttpStatus::PayloadTooLarge);
 	}
 
 	int methodIndex = getMethodIndex(req.getMethod());
@@ -309,8 +305,8 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!location.empty() && location[0] == '/')
 			location = util::getFullUrl(req.getUrl(), req.getHeader("Host"));
 		std::cerr << "redirection happened to " << location << std::endl;
-		res.sendRedirect(status_code, location);
-		return res;
+		// todo close?
+		return res.sendRedirect(status_code, location);
 	}
 
 	/// check if method is allowed

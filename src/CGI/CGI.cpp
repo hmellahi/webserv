@@ -157,7 +157,6 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     {
         if (!req.getHeader("Content-Type").empty())
             setenv("CONTENT_TYPE", req.getHeader("Content-Type").c_str(), 1);
-
     }
     if (!req.getContentBody().empty())
         setenv("CONTENT_LENGTH", std::to_string(req.getContentBody().size()).c_str(), 1);
@@ -168,7 +167,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("QUERY_STRING", req.getQuery().c_str(), 1);
 
-    setenv("HTTP_ACCEPT_LANGUAGE", "en-US,en;q=0.9", 0);
+    setenv("HTTP_ACCEPT_LANGU© ÏAGE", "en-US,en;q=0.9", 0);
     setenv("HTTP_ACCEPT_ENCODING", "", 0);
     setenv("HTTP_ACCEPT", "" , 0);
     if (!req.getHeader("cookie").empty())

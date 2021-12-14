@@ -132,8 +132,9 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		// todo: check with nginx if its neccesary
 		if (pos == std::string::npos)
 		{
-			_status = HttpStatus::BadRequest;
-			return ;
+			// _status = HttpStatus::BadRequest;
+			std::cout << "line: " << lines[i] << ", "<< lines[i].size() << std::endl;
+			// return ;
 		}
 		key = lines[i].substr(0, pos);
 		value = lines[i].substr(pos + 1, lines[i].length());

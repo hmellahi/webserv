@@ -55,10 +55,10 @@ void Request::parse()
 	{
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
+		// std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
 		if (_headers.find("	-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
 			ParseChunkBody(_buffer);
-		else if (atoi(_headers["Content-Length"].c_str()) < _buffSize)
+		else
 			ParseBody(_buffer);
 
 		// std::cerr << "|" << _content_body << "|" << std::endl;

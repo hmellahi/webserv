@@ -239,7 +239,6 @@ Socket Server::addPort(int port, std::string host)
 	return new_socket;
 }
 
-
 Response Server::handleRequest(Request req, int client_fd)
 {
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
@@ -466,18 +465,14 @@ Response Server::postHandler(Request req, Response res)
 		return res.send(HttpStatus::Forbidden);
 	std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 	std::string filename = tokens[tokens.size() - 1];
-	std::cout << "Posthandler check : " << req.getBufferSize() << "\n";
-	if (!filename.empty()) 
+	std::cout << filename << "|\n";
+
+	if (!filename.empty())
 	{
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {
-
 			if (atoi(req.getHeaders()["Content-Length"].c_str()) < req.getBufferSize())
 				FileSystem::uploadFile(uploadLocation, req.getContentBody());
-			else {
-			
-				FileSystem::uploadChunkedFile(uploadLocation, req);
-			}
 			return res.send(HttpStatus::Created);
 		}
 		catch (std::exception& e)

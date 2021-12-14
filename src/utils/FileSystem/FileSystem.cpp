@@ -103,6 +103,8 @@ void    FileSystem::uploadChunkedFile(std::string uploadLocation, Request req)
 	int count = 0;
     std::fstream new_file;
     new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
+    if (!new_file.is_open())
+        throw std::runtime_error("couldnt open the file for writing");
 	if (i != bufferSize)
 	{
 		if (headers.find("Content-Length") != headers.end())

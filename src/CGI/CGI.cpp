@@ -171,7 +171,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("SERVER_ADDR", "", 0);
     // setenv("REMOTE_PORT", "", 0);
     // setenv("REMOTE_ADDR", "", 0);
-    setenv("PATH_INFO", "/cgi-bin", 0);
+    setenv("PATH_INFO", "./cgi-bin", 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);
@@ -185,9 +185,9 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     // setenv("FCGI_ROLE", "RESPONDER", 0);
 
 
-    std::cerr << "------------------------------------" << std::endl;
-    //std::cerr << "Query :: "<< req.getContentBody().data() << std::endl;
-    std::cerr << "------------------------------------" << std::endl;
+    // std::cerr << "------------------------------------" << std::endl;
+    // //std::cerr << "Query :: "<< req.getContentBody().data() << std::endl;
+    // std::cerr << "------------------------------------" << std::endl;
 
 
     // std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;

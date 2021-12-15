@@ -172,10 +172,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// convert requestBody to a string
 				requestBodyStr = std::string(requestBody, valread);
 				// handle connection and store response
-				requestSize = valread;
 				try 
 				{
-					res = handleConnection(requestBodyStr, requestSize, sd, servers);
+					res = handleConnection(requestBodyStr, valread, sd, servers);
     			}
 				catch(std::exception &e)
 				{
@@ -185,6 +184,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// std::cout << "nbytes: " <<  res.nbytes_left << std::endl;
 				if (res.nbytes_left > 0)
 				{
+					std::cerr << "Wsup" << std::endl;
 					unCompletedResponses[res._client_fd] = res;
 					clients[i].type= WRITE_SOCKET;
 				}
@@ -233,8 +233,11 @@ Socket Server::addPort(int port, std::string host)
 
 Response Server::handleRequest(Request req, int client_fd)
 {
+	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
+	// Check if the request body is valid
+	Response res(req, client_fd, _locConfig);
 	if (it == unCompletedRequests.end() && req.getContentBody().size() < contentLength)
 	{
 		// Check if the request body size doesnt exceed
@@ -242,29 +245,61 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
 		{
 			std::cerr << "given" << _locConfig.get_client_max_body_size() << "limit :" << (contentLength / 1e6) << std::endl;
-			Response res(req, client_fd, _locConfig);
+			// Response res(req, client_fd, _locConfig);
 			res.send(HttpStatus::PayloadTooLarge);
 			res.setHeader("Connection", "close");
 			return (res);
+		}
+
+		// check for upload
+		// if (_locConfig.getUploadPath().empty())
+		// return res.send(HttpStatus::Forbidden);
+		// std::vector<std::string> tokens = util::split(req.getUrl(), "/");
+		// std::string filename = tokens[tokens.size() - 1];
+		if (req.getMethod()=="POST" && !_locConfig.getUploadPath().empty())
+		{
+			std::vector<std::string> tokens = util::split(req.getUrl(), "/");
+			std::string filename = tokens[tokens.size() - 1];
+			if (filename.empty())
+				return res.send(HttpStatus::BadRequest);
+			std::string uploadLocation = _locConfig.getUploadPath() + filename;
+			req.fd = open(uploadLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+			std::cout << "file " << uploadLocation << " " << req.fd << std::endl;
+			char buff[req.getContentBody().size()+1];
+			buff[req.getContentBody().size()] = 0;
+			for (int i = 0; i < req.getContentBody().size(); i++)
+				buff[i] = req.getContentBody()[i];
+			req.nbytes_left = contentLength - write(req.fd, buff, req.getContentBody().size());
+			std::cerr << "-------------------------------------\n";
+			std::cout << "arecieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+			std::cerr << "-------------------------------------\n";
 		}
 		unCompletedRequests[client_fd] = req;
 		return Response();
 	}
 	else if (it != unCompletedRequests.end())
 	{
+		// for (int i = 0; i < req._buffSize; i++)
+		// 	(it->second)._content_body.push_back(req._buffer[i]);
+		// std::string buff = std::string(req._buffer, req._buffSize);
+		int _buffSize = req._buffSize;
+		char buff[req._buffSize+1];
+		buff[req._buffSize] = 0;
 		for (int i = 0; i < req._buffSize; i++)
-			(it->second)._content_body.push_back(req._buffer[i]);
+			buff[i] = req._buffer[i];
 		req = it->second;
-		int contentLength = atoi(req.getHeader("Content-Length").c_str());
+		req.nbytes_left -= write(req.fd,buff, _buffSize);
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" << req.getContentBody().size() << "| max: " << contentLength << std::endl;
+		std::cout <<"fd" << req.fd << std::endl;
+		std::cout << _buffSize << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		if (req.getContentBody().size() < contentLength)
-			return Response();
+		if (req.nbytes_left > 0)
+			return Response();	
 		unCompletedRequests.erase(it);
+		close(req.fd);
+		return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
 	}
-	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	std::cout << "-------------------------------------\n";
 	// std::cout << "before |" << req.getUrl() << "|" << std::endl;
 	// int x = req.getUrl()[(req.getUrl()).length() - 1] == '/' ? 0 : 1;
@@ -279,8 +314,6 @@ Response Server::handleRequest(Request req, int client_fd)
 	// check the file requested is a directory
 	std::cout << "after |" << req.getUrl() << "|" << std::endl;
 	std::cout << "-------------------------------------\n";
-	// Check if the request body is valid
-	Response res(req, client_fd, _locConfig);
 	// todo close connection
 	if (req.getStatus() != HttpStatus::OK) // TODO FIX
 		return res.send(req.getStatus());

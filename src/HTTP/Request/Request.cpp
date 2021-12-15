@@ -25,6 +25,7 @@ Request & Request::operator=(Request const &rhs)
 	if (this != &rhs)
 	{
 		_buffer = rhs._buffer;
+		// _buffer = std::string(rhs._buffer, rhs._buffSize);
 		_headers = rhs._headers;
 		_method = rhs._method;
 		_url = rhs._url;
@@ -34,6 +35,8 @@ Request & Request::operator=(Request const &rhs)
 		_status = rhs._status;
 		_query_map = rhs._query_map;
 		_buffSize = rhs._buffSize;
+		fd = rhs.fd;
+		nbytes_left= rhs.nbytes_left;
 	}
 	return (*this);
 }
@@ -48,9 +51,9 @@ void Request::parse()
 	std::vector<std::string> lines;
 	
 	lines = util::split(_buffer, "\n");
-	for (int i = 0; i < lines.size(); i++) {
-		std::cout << lines[i] << std::endl;
-	}
+	// for (int i = 0; i < lines.size(); i++) {
+	// 	std::cout << lines[i] << std::endl;
+	// }
 	if (lines.size() > 1)
 	{
 		ParseFirstLine(lines[0]);
@@ -133,7 +136,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 		if (pos == std::string::npos)
 		{
 			// _status = HttpStatus::BadRequest;
-			std::cout << "line: " << lines[i] << ", "<< lines[i].size() << std::endl;
+			// std::cout << "line: " << lines[i] << ", "<< lines[i].size() << std::endl;
 			// return ;
 		}
 		key = lines[i].substr(0, pos);

@@ -91,7 +91,6 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     int status;
 
     if (pid > 0) {
-
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);

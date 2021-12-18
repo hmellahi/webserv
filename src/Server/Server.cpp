@@ -178,8 +178,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
     			}
 				catch(std::exception &e)
 				{
-					std::cerr << "Error: " << e.what() << std::endl;
+					std::cout << "Error: " << e.what() << std::endl;
 					closeConnection(clients, readfds, i, sd);
+					std::cout << "hey" << std::endl;
+					continue;
 				}
 				// std::cout << "nbytes: " <<  res.nbytes_left << std::endl;
 				if (res.nbytes_left > 0)
@@ -194,20 +196,31 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		}
 		else if (FD_ISSET(sd, &writefds))
 		{
+			std::cerr << "Wsup" << std::endl;
 			if (unCompletedResponses.find(sd) != unCompletedResponses.end())
 			{
 				res = unCompletedResponses[sd];
 				if (res.nbytes_left > 0)
 				{
 					std::string to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
-					res.sendRaw(sd, to_send.c_str(), nbytes);
+					try {
+						res.sendRaw(sd, to_send.c_str(), nbytes);
+					}
+					catch(std::exception &e)
+					{
+						closeConnection(clients, readfds, i, sd);
+						unCompletedResponses.erase(sd);
+						std::cout << "Error: " << e.what() << std::endl;
+						continue;
+					}
 					unCompletedResponses[sd] = res;
 					if (res.nbytes_left == 0)
 					{
 						unCompletedResponses.erase(sd);
-						clients[i].type = READ_SOCKET;
 						if (res.getHeader("Connection") == "close")
 							closeConnection(clients, readfds, i, sd);
+						else
+							clients[i].type = READ_SOCKET;
 					}
 				}
 			}
@@ -246,9 +259,8 @@ Response Server::handleRequest(Request req, int client_fd)
 		{
 			std::cerr << "given" << _locConfig.get_client_max_body_size() << "limit :" << (contentLength / 1e6) << std::endl;
 			// Response res(req, client_fd, _locConfig);
-			res.send(HttpStatus::PayloadTooLarge);
 			res.setHeader("Connection", "close");
-			return (res);
+			return res.send(HttpStatus::PayloadTooLarge);
 		}
 
 		// check for upload
@@ -269,7 +281,10 @@ Response Server::handleRequest(Request req, int client_fd)
 			buff[req.getContentBody().size()] = 0;
 			for (int i = 0; i < req.getContentBody().size(); i++)
 				buff[i] = req.getContentBody()[i];
-			req.nbytes_left = contentLength - write(req.fd, buff, req.getContentBody().size());
+			int nbytes_wrote = write(req.fd, buff, req.getContentBody().size());
+			// todo wt todo
+			if (nbytes_wrote > 0)
+				req.nbytes_left = contentLength - nbytes_wrote;
 			std::cerr << "-------------------------------------\n";
 			std::cout << "arecieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 			std::cerr << "-------------------------------------\n";
@@ -288,14 +303,17 @@ Response Server::handleRequest(Request req, int client_fd)
 		for (int i = 0; i < req._buffSize; i++)
 			buff[i] = req._buffer[i];
 		req = it->second;
-		req.nbytes_left -= write(req.fd,buff, _buffSize);
+		int nbytes_wrote = write(req.fd, buff, _buffSize);
+		// todo wt to todo
+		if (nbytes_wrote > 0)
+			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
 		std::cout <<"fd" << req.fd << std::endl;
 		std::cout << _buffSize << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.nbytes_left > 0)
-			return Response();	
+			return Response();
 		unCompletedRequests.erase(it);
 		close(req.fd);
 		return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
@@ -348,8 +366,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (!isAllowed)
 	{
 		// todo close connection
-		res.send(HttpStatus::MethodNotAllowed);
-		return (res);
+		return res.send(HttpStatus::MethodNotAllowed);
 	}
 
 	// std::string filename = _locConfig.getRoot() + req.getUrl();
@@ -614,32 +631,35 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 
 	}
 }
+
 std::vector<Socket> clients;
-	std::vector<Socket> serversSockets;
+std::vector<Socket> serversSockets;
 
 void Server::setup(ParseConfig GlobalConfig)
 {
 	std::vector<Config> serversConfigs = GlobalConfig.getServers();
 	std::vector<Config>::iterator serverConfig;
-	std::vector<u_int32_t>::iterator port;
+	std::map<u_int32_t, std::string>::iterator address;
 	std::vector<Server> servers;
-	std::set<u_int32_t> usedPorts;
-	std::vector<u_int32_t> socets;
-	Socket new_socket;
+	// std::set<u_int32_t> usedPorts;
 
 	for (serverConfig = serversConfigs.begin(); serverConfig != serversConfigs.end(); serverConfig++)
 	{
 		Server newServer(*serverConfig);
 
-		std::vector<u_int32_t> ports = serverConfig->getPorts();
-		for (port = ports.begin(); port != ports.end(); port++)
+		std::map<u_int32_t, std::string> addresses = serverConfig->getHostPort();
+		std::cout << "server configs size: " << addresses.size() << std::endl;
+		// for (port = ports.begin(); port != ports.end(); port++)
+		for (address = addresses.begin(); address!= addresses.end(); address++)
 		{
-			if (usedPorts.find(*port) == usedPorts.end())
-			{
-				new_socket = newServer.addPort(*port, "0.0.0.0");// serverConfig->host);
-				serversSockets.push_back(new_socket);
-				usedPorts.insert(*port);
-			}
+			u_int32_t port = address->first;
+			std::string host = address->second;
+			// if (usedPorts.find(port) == usedPorts.end())
+			// {
+			std::cout << "port" << port << std::endl;
+			serversSockets.push_back(newServer.addPort(port, host));
+				// 	usedPorts.insert(port);
+			// }
 		}
 		servers.push_back(newServer);
 	}

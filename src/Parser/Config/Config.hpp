@@ -46,6 +46,7 @@ class Config
 		std::map<std::string, Config> getLocation(void) const;	
 
 		Config		getConfig(std::string path) const;
+		std::map<u_int32_t, std::string> getHostPort(void) const;
 		std::string getRoot(std::string path) const;
 		std::string getUploadPath(std::string path) const;
 		std::vector<std::string> getAllowedMethods(std::string path) const;

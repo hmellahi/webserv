@@ -112,6 +112,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
         dup2(nfd[1], 1);
         dup2(fd[0], 0);
+        
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);

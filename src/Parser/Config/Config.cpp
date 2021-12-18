@@ -59,6 +59,7 @@ Config &Config::operator=(Config const &rhs)
 		_server_name = rhs._server_name;
 		_listen = rhs._listen;
 		_locations = rhs._locations;
+		_hostPort = rhs._hostPort;
 	}
 	return (*this);
 }
@@ -77,16 +78,11 @@ void Config::check_server(std::vector<std::string>::iterator &it)
 		else
 			throw std::runtime_error("Error: Something Wrong in the config File");
 	}
-	if (_listen.empty())
-		_listen.push_back(8080);
+	if (_hostPort.empty())
+		_hostPort[8080] =  "127.0.0.1";
 	if (_server_name.empty())
 		_server_name.push_back("127.0.0.1");
 	check_locations();
-	// std::map<u_int32_t, std::string>::iterator it2;
-	// for (it2 = _hostPort.begin(); it2 != _hostPort.end(); it2++)
-	// {
-	// 	std::cerr << it2->first << " " << it2->second << std::endl;
-	// }
 }
 void 	Config::check_locations()
 {
@@ -271,6 +267,7 @@ void Config::listen(std::vector<std::string>::iterator &it)
 		throw std::runtime_error("Error: Bad in port .");
 }
 
+
 void Config::locations(std::vector<std::string>::iterator &it)
 {
 	Config loc;
@@ -361,6 +358,11 @@ std::vector<u_int32_t> Config::getPorts(void) const
 	return (_listen);
 }
 
+std::map<u_int32_t, std::string> Config::getHostPort(void) const
+{
+	return (_hostPort);
+}
+
 bool Config::get_isAutoIndexOn(void) const
 {
 	return (_isAutoIndexOn);
@@ -380,54 +382,3 @@ void	Config::setRoot(std::string root)
 {
 	_root = root;
 }
-
-// template<typename T>
-// T	Request::getAttribute(std::string attributeName, std::string location) const
-// {
-// 	return (_attributes[attributeName]);
-// }
-
-		// template <typename T>
-		// T	getAttribute(std::string attributeName, std::string location) const;
-
-// Config Config::getConfig(std::string path) const
-// {
-// 	if (location != _locations.end())
-// 		return location->second;
-// 	return (*this);
-// }
-
-// std::string Config::getRoot(std::string path) const
-// {
-// 	return (getConfig(path).getRoot());
-// }
-
-// std::string Config::getUploadPath(std::string path) const
-// {
-// 	return (getConfig(path).getRoot());
-// }
-
-// int Config::getClientMaxBodySize(std::string path) const
-// {
-// 	return (getConfig(path).get_client_max_body_size());
-// }
-
-// std::vector<std::string> Config::getAllowedMethods(std::string path) const
-// {
-// 	return (getConfig(path).get_allowedMethods());
-// }
-
-// std::pair<int, std::string> Config::getRedirectionPath(std::string path) const
-// {
-// 	return (getConfig(path).get_redirectionPath());
-// }
-
-// std::vector<std::string> Config::getIndex(std::string path) const
-// {
-// 	return (getConfig(path).getIndex());
-// }
-
-// bool Config::isAutoIndexOn(std::string path) const
-// {
-// 	return (getConfig(path).get_isAutoIndexOn());
-// }

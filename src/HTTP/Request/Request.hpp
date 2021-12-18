@@ -37,7 +37,7 @@ class Request
 		std::string _buffer;
 		int fd;
 		int			_buffSize;
-		int nbytes_left = 0;
+		int nbytes_left;
 		int getBufferSize(void) const;
 	private:
 		std::map<std::string, std::string> _headers;

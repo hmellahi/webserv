@@ -100,6 +100,14 @@ int util::getFileLength(const std::string& filename)
 	return fileLength;
 }
 
+int util::getFileLength(int fd)
+{
+	off_t fsize;
+
+	fsize = lseek(fd, 0, SEEK_END);
+	return fsize;
+}
+
 void	util::closeAllListeners()
 {
 	std::cerr << clients.size() << std::endl;
@@ -137,4 +145,94 @@ size_t  util::to_hex(std::string &str)
 	ss >> hex;
 
 	return hex;
+}
+
+std::string util::DecimalToHex(int decimal_value)
+{
+	std::stringstream ss;
+	ss<< std::hex << decimal_value;
+	std::string res ( ss.str() );
+	return (res);
+}
+size_t util::HexToDecimal(std::string &str)
+{
+	std::stringstream ss;
+	size_t hex;
+
+	ss << std::hex << str;
+	ss >> hex;
+
+	return hex;
+}
+
+std::string util::ft_chunked(std::vector<std::string> strings, bool flag)
+{
+	std::string chunkedBody;
+
+	chunkedBody.assign("");
+	for (std::vector<std::string>::iterator it = strings.begin(); it != strings.end(); it++)
+	{
+		chunkedBody.insert(chunkedBody.size(), DecimalToHex((*it).size()));
+		chunkedBody.insert(chunkedBody.size(), "\\r\\n");
+		chunkedBody.insert(chunkedBody.size(), *it);
+		chunkedBody.insert(chunkedBody.size(), "\\r\\n");
+	}
+	if (flag)
+		chunkedBody.insert(chunkedBody.size(), "0\\r\\n\\r\\n");
+	return (chunkedBody);
+}
+//Split a string into smaller chunks cpp
+/*
+String lengths that are a multiple of the chunk size.
+String lengths that are NOT a multiple of the chunk size.
+String lengths that are smaller than the chunk size.
+NULL and empty strings (throws an exception).
+Chunk sizes smaller than 1 (throws an exception).
+*/
+std::vector<std::string> util::ChunkStrings(std::string &str, int chunkSize)
+{
+	std::vector<std::string> chunks;
+	int i = 0;
+	if (str.empty() || chunkSize < 1)
+		return std::vector<std::string>();
+	//div() function : Returns the integral quotient and remainder of the division of number by denom 
+	div_t divResult = div(str.size(), chunkSize); // Quotient: the number multiple  / Remainder :  what rest
+	int numberOfChunks = divResult.rem > 0 ? divResult.quot + 1 : divResult.quot; // here if we have a rest lets add new chunk for it
+	for(i = 0; i < numberOfChunks - 1; i++)
+		chunks.push_back(str.substr(i * chunkSize, chunkSize));
+	int lastChunkSize = divResult.rem > 0 ? divResult.rem : chunkSize;
+	chunks.push_back(str.substr(i * chunkSize, lastChunkSize));
+	return (chunks);
+}
+
+
+std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bool &flag)
+{
+	std::string chunked;
+	std::string hex;
+	int size;
+	int i = 0;
+
+	if (!unchunked.empty())
+		buffer.insert(0, unchunked);
+	unchunked.assign("");
+	chunked.assign("");
+	hex = buffer.substr(0, buffer.size());
+	size = HexToDecimal(hex);
+	while (size)
+	{
+		i = buffer.find("\\r\\n", i) + 4; // todo : changed
+		if (buffer.substr(i, size).size() >= size)
+			chunked.insert(chunked.size(), buffer.substr(i, size));
+		i += size + 4;
+		if (i < buffer.size())
+			hex = buffer.substr(i, buffer.size());
+		else
+			break;
+		size = HexToDecimal(hex);
+	}
+	if (!size)	flag = 1;
+	if (flag == 0)
+		unchunked.assign(hex);
+	return (chunked);
 }

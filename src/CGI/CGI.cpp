@@ -91,6 +91,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     int status;
 
     if (pid > 0) {
+        wait(NULL);
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);
@@ -107,18 +108,29 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     else if (pid == 0)
     {
         // todo check 
-        if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
-            throw std::runtime_error("write error");
+        if (req.isChunked)
+        {
+            std::cout << "file size" << util::getFileLength(req.fd) << std::endl;
+            dup2(req.fd, 0);
+            
+        }
+        else
+        {
+            if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
+                throw std::runtime_error("write error");
+            dup2(fd[0], 0);
+            // std::cout << "file size" << util::getFileLength(fd[1]) << std::endl;
+        }
 
         dup2(nfd[1], 1);
-        dup2(fd[0], 0);
         
         close(fd[1]);
         close(fd[0]);
+        close(req.fd);
         close(nfd[1]);
         close(nfd[0]);
 
-        if ((status = execve(args[0], args, environ)) == - 1)
+        if ((status = execve(args[0], args, environ)) == -1)
             throw std::runtime_error("execve error");
 
     }
@@ -158,8 +170,12 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
         if (!req.getHeader("Content-Type").empty())
             setenv("CONTENT_TYPE", req.getHeader("Content-Type").c_str(), 1);
     }
-    if (!req.getContentBody().empty())
+    if (req.isChunked)
+        // setenv("Transfer-Encoding", "chunked", 1);
+        setenv("CONTENT_LENGTH", std::to_string(util::getFileLength(req.fd)).c_str(), 1);
+    else if (!req.getContentBody().empty())
         setenv("CONTENT_LENGTH", std::to_string(req.getContentBody().size()).c_str(), 1);
+    
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);

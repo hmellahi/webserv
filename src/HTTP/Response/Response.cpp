@@ -125,7 +125,8 @@ Response    Response::sendContent( int statusCode, std::string content)
     // craft a response 
     int fileLength = content.length();
     std::ostringstream msg;
-    msg << _headers["http-version"] << " " << statusCode << " " 
+    msg //<< _headers["http-version"] 
+    << "HTTP/1.1 " << statusCode << " " 
         << HttpStatus::reasonPhrase(statusCode) << "\r\n"
         << "Content-Type: " << _headers["Content-Type"] << "\r\n"
         << "Content-Length: " << fileLength << "\r\n"
@@ -168,6 +169,7 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
 
     signal(SIGPIPE, a);
     std::cout << "written: " << 0 << std::endl;
+    std::cout << pbuf << std::endl;
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
     std::cout << "written: " << bytes_written << std::endl;

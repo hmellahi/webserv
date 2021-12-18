@@ -37,8 +37,13 @@ class Request
 		std::string _buffer;
 		int fd;
 		int			_buffSize;
+		std::string unchunked;
+		bool isChunkedBodyEnd;
+		bool isChunkedBody;
 		int nbytes_left;
 		int getBufferSize(void) const;
+		bool isUpload;
+		bool isChunked;
 	private:
 		std::map<std::string, std::string> _headers;
 		std::string _method;

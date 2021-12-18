@@ -7,6 +7,7 @@ Request::Request(void)
 Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpStatus::OK)
 {
 	_buffSize = buffSize;
+	nbytes_left= 0;
 	parse();
 }
 
@@ -27,6 +28,8 @@ Request & Request::operator=(Request const &rhs)
 		_buffer = rhs._buffer;
 		// _buffer = std::string(rhs._buffer, rhs._buffSize);
 		_headers = rhs._headers;
+		isUpload = rhs.isUpload;
+		isChunked = rhs.isChunked;
 		_method = rhs._method;
 		_url = rhs._url;
 		_http_version = rhs._http_version;
@@ -36,6 +39,7 @@ Request & Request::operator=(Request const &rhs)
 		_query_map = rhs._query_map;
 		_buffSize = rhs._buffSize;
 		fd = rhs.fd;
+		isChunkedBody = rhs.isChunkedBody;
 		nbytes_left= rhs.nbytes_left;
 	}
 	return (*this);
@@ -54,13 +58,19 @@ void Request::parse()
 	// for (int i = 0; i < lines.size(); i++) {
 	// 	std::cout << lines[i] << std::endl;
 	// }
+	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
 		// std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
 		if (_headers.find("	-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
-			ParseChunkBody(_buffer);
+			// ParseChunkBody(_buffer);
+		{
+			isChunkedBody = true;
+			std::string out = util::ParseChunkBody(unchunked, _buffer, isChunkedBodyEnd);
+			_content_body.assign(out.begin(), out.end());
+		}
 		else
 			ParseBody(_buffer);
 

@@ -22,10 +22,17 @@ namespace util
     std::string     getCurrentDate();
     std::string     GetFileExtension(const std::string& fileName);
     int             getFileLength(const std::string& fileName);
+    int             getFileLength(int fd);
     void            closeAllListeners();
     void            signal_handler(int signal);
     void            ft_exit(int status);
     std::string     getFullUrl(std::string location, std::string host);
     size_t          to_hex(std::string &str);
+    size_t          HexToDecimal(std::string &str);
+    std::string     DecimalToHex(int decimal_value);
+    std::string     ParseChunkBody(std::string &unchunked, std::string &buffer, bool &flag);
+    std::string     ft_chunked(std::vector<std::string> strings, bool flag);
+    std::vector<std::string>    ChunkStrings(std::string &str, int chunkSize);
+
 }
 #endif

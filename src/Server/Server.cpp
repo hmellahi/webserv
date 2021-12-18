@@ -251,11 +251,12 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
-	if (it == unCompletedRequests.end() && req.getContentBody().size() < contentLength)
+	bool isNotCompletedYet = (req.getContentBody().size() < contentLength) || (req.isChunkedBody && !req.isChunkedBodyEnd);
+	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		// Check if the request body size doesnt exceed
 		// the max client body size
-		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
+		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // toddo check for chunked
 		{
 			std::cerr << "given" << _locConfig.get_client_max_body_size() << "limit :" << (contentLength / 1e6) << std::endl;
 			// Response res(req, client_fd, _locConfig);
@@ -263,60 +264,68 @@ Response Server::handleRequest(Request req, int client_fd)
 			return res.send(HttpStatus::PayloadTooLarge);
 		}
 
+		req.isChunked = true;
+
 		// check for upload
 		// if (_locConfig.getUploadPath().empty())
 		// return res.send(HttpStatus::Forbidden);
 		// std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 		// std::string filename = tokens[tokens.size() - 1];
+		static int i;
+		std::string uploadLocation = "/tmp/cgi" + std::to_string(i++);
 		if (req.getMethod()=="POST" && !_locConfig.getUploadPath().empty())
 		{
+			req.isUpload = true;
 			std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 			std::string filename = tokens[tokens.size() - 1];
 			if (filename.empty())
 				return res.send(HttpStatus::BadRequest);
-			std::string uploadLocation = _locConfig.getUploadPath() + filename;
-			req.fd = open(uploadLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-			std::cout << "file " << uploadLocation << " " << req.fd << std::endl;
-			char buff[req.getContentBody().size()+1];
-			buff[req.getContentBody().size()] = 0;
-			for (int i = 0; i < req.getContentBody().size(); i++)
-				buff[i] = req.getContentBody()[i];
-			int nbytes_wrote = write(req.fd, buff, req.getContentBody().size());
-			// todo wt todo
-			if (nbytes_wrote > 0)
-				req.nbytes_left = contentLength - nbytes_wrote;
-			std::cerr << "-------------------------------------\n";
-			std::cout << "arecieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
-			std::cerr << "-------------------------------------\n";
+			uploadLocation = _locConfig.getUploadPath() + filename;
 		}
+		req.fd = open(uploadLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+		std::cout << "file " << uploadLocation << " " << req.fd << std::endl;
+		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
+		// todo:  wt todo
+		if (!req.isChunkedBody && nbytes_wrote > 0)
+			req.nbytes_left = contentLength - nbytes_wrote;
+		std::cerr << "-------------------------------------\n";
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return Response();
 	}
 	else if (it != unCompletedRequests.end())
 	{
-		// for (int i = 0; i < req._buffSize; i++)
-		// 	(it->second)._content_body.push_back(req._buffer[i]);
-		// std::string buff = std::string(req._buffer, req._buffSize);
 		int _buffSize = req._buffSize;
-		char buff[req._buffSize+1];
-		buff[req._buffSize] = 0;
-		for (int i = 0; i < req._buffSize; i++)
-			buff[i] = req._buffer[i];
+		std::string buff;
+		if (req.isChunkedBody)
+		{
+			buff = util::ParseChunkBody(req.unchunked, req._buffer, req.isChunkedBodyEnd);
+			_buffSize = buff.size();
+		}
+		else
+			buff = std::string(req._buffer, _buffSize);
+
 		req = it->second;
-		int nbytes_wrote = write(req.fd, buff, _buffSize);
-		// todo wt to todo
-		if (nbytes_wrote > 0)
+		// if (isChunkedBody)
+		int nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
+		// todo wt to todo if writing failed
+		if (!req.isChunkedBody && nbytes_wrote > 0)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout <<"fd" << req.fd << std::endl;
+		// std::cout <<"fd" << req.fd << std::endl;
 		std::cout << _buffSize << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		if (req.nbytes_left > 0)
+		if (req.nbytes_left > 0 || (req.isChunkedBody && !req.isChunkedBodyEnd))
 			return Response();
 		unCompletedRequests.erase(it);
-		close(req.fd);
-		return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
+		if (req.isUpload)
+		{
+			std::cout << "uploaded" << std::endl;
+			close(req.fd);
+			return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
+		}
 	}
 	std::cout << "-------------------------------------\n";
 	// std::cout << "before |" << req.getUrl() << "|" << std::endl;

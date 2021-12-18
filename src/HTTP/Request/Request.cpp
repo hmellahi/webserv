@@ -69,7 +69,7 @@ void Request::parse()
 		{
 			isChunkedBody = true;
 			std::string out = util::ParseChunkBody(unchunked, _buffer, isChunkedBodyEnd);
-			_content_body.assign(out.begin(), out.end());
+			_content_body.assign(out.begin(), out.end()); // optimize
 		}
 		else
 			ParseBody(_buffer);

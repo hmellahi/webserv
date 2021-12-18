@@ -285,7 +285,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		req.fd = open(uploadLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
 		std::cout << "file " << uploadLocation << " " << req.fd << std::endl;
 		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
-		// todo:  wt todo
+		// todo:  failed?
 		if (!req.isChunkedBody && nbytes_wrote > 0)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
@@ -309,7 +309,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		req = it->second;
 		// if (isChunkedBody)
 		int nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
-		// todo wt to todo if writing failed
+		// todo wt else if writing failed
 		if (!req.isChunkedBody && nbytes_wrote > 0)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
@@ -382,13 +382,6 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cerr << "-------------------------------------\n";
 	std::cerr << _locConfig.getIndex().size() << "|" << filename << "|" << std::endl;
 	std::cerr << "-------------------------------------\n";
-	// todo
-    // if (FileSystem::getFileStatus(filename) == HttpStatus::NotFound)
-	// {
-	// 	res.send(HttpStatus::NotFound);
-	// 	// todo close connection
-	// 	return res;
-	// }
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	std::string fileExtension = util::GetFileExtension(filename.c_str());
@@ -538,6 +531,7 @@ Response Server::deleteHandler(Request req, Response res)
 	int status = FileSystem::getFileStatus(path);
 	if (status == HttpStatus::OK)
 	{
+		// todo does delete request can delete a folder
 		if (remove(path.c_str()) == 0)
 			res.send(HttpStatus::NoContent);
 		else

@@ -233,6 +233,19 @@ std::vector<Socket> Server::getSockets()
 	return _serverSockets;
 }
 
+// std::string combine(std::string s1, std::string s2) {
+
+// 	std::string ret;
+
+// 	if (s1.size() > s2.size()) {
+	
+// 		for (int i = 0; i < s2.size(); i++) {
+		
+// 			if ()
+// 		}
+// 	}
+// }
+
 Socket Server::addPort(int port, std::string host)
 {
 	// create new socket on the given port
@@ -246,7 +259,13 @@ Socket Server::addPort(int port, std::string host)
 
 Response Server::handleRequest(Request req, int client_fd)
 {
+// 	if (req.getHeader("Referer") != "" && req.getHeader("Referer")[req.getHeader("Referer").size()-1] != '/' && req.getHeader("Referer").find('.') ==  std::string::npos) {
+// 		std::string refer = req.getHeader("Referer").erase(0, util::getFullUrl("", req.getHeader("Host")).size()) + "/"+ req.getUrl();
+// 		req.setUrl(refer);
+// 		std::cout << refer << std::endl;
+// 	}
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
+
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Check if the request body is valid
@@ -321,10 +340,28 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cout << "-------------------------------------\n";
 	// std::cout << "before |" << req.getUrl() << "|" << std::endl;
 	// int x = req.getUrl()[(req.getUrl()).length() - 1] == '/' ? 0 : 1;
-	std::cout << locationPath <<std::endl;
+	// std::cout << req.getUrl() <<  " haha " << locationPath.size() << " " << locationPath <<std::endl;
+	// std::cout << _locConfig.getRoot() <<  "   o   " << req.getUrl() << std::endl;
+	// std::cout << "old url " << req.getUrl() << std::endl;
+	std::string x = req.getUrl();
 	std::string newUrl = req.getUrl().erase(0, locationPath.size());
 	req.setUrl(newUrl);
-	std::string filename = _locConfig.getRoot() + req.getUrl();
+	// std::cout << "new url " << req.getUrl() << std::endl;
+	// std::cout << req.getUrl() << std::endl;
+	std::string filename;
+	// if (req.getHeader("Referer") != "") {
+	// 	// std::cout << _locConfig.getRoot() + req.getHeader("Referer").erase(0, util::getFullUrl("", req.getHeader("Host")).size() - 1) << std::endl;
+	// 	filename = _locConfig.getRoot() + req.getHeader("Referer").erase(0, util::getFullUrl("", req.getHeader("Host")).size()) + "/"+ req.getUrl();
+	// 	std::cout << filename << std::endl;
+	// }
+	// else
+	filename = _locConfig.getRoot() + req.getUrl();
+	if (FileSystem::getFileStatus(filename) == IS_DIRECTORY && x[x.size()-1] != '/')
+	{
+		std::string location = util::getFullUrl(x + "/", req.getHeader("Host"));
+		
+		return res.sendRedirect(301, location);
+	}
 	// if (locationPath[locationPath.size() - 1] == '/')
 	// {
 		// loc

@@ -49,11 +49,12 @@ void Request::parse()
 {
 	// here lets parse the request getted
 	std::vector<std::string> lines;
-	
+	std::cout << _buffer << std::endl;
 	lines = util::split(_buffer, "\n");
 	// for (int i = 0; i < lines.size(); i++) {
 	// 	std::cout << lines[i] << std::endl;
 	// }
+	
 	if (lines.size() > 1)
 	{
 		ParseFirstLine(lines[0]);
@@ -79,6 +80,7 @@ void Request::ParseFirstLine(std::string line)
 	{
 		_method = tokens[0];
 		url_token = util::split(tokens[1], "?");
+		
 		_url = url_token[0];
 		_query = url_token.size() == 2 ? url_token[1] : "";
 		_url.erase(0, 1); // erase "/" at the start

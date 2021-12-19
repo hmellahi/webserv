@@ -88,9 +88,9 @@ std::string	Server::updateLocationConfig(std::string path)
 {
 	_locConfig = _config;
 	std::map<std::string, Config> locations = _locConfig.getLocation();
-	std::map<std::string, Config>::iterator location;
+	std::map<std::string, Config>::reverse_iterator location;
 	std::cout << "path " << path << std::endl;
-	for (location = locations.begin(); location != locations.end(); location++)
+	for (location = locations.rbegin(); location != locations.rend(); location++)
 	{
 		std::string locationPath = location->first;
 		std::cout << "location " << locationPath << std::endl;
@@ -277,6 +277,7 @@ Socket Server::addPort(int port, std::string host)
 Response Server::handleRequest(Request req, int client_fd)
 {
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
+	std::cout << "match" << locationPath << std::endl;
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Check if the request body is valid

@@ -89,12 +89,13 @@ std::string	Server::updateLocationConfig(std::string path)
 	_locConfig = _config;
 	std::map<std::string, Config> locations = _locConfig.getLocation();
 	std::map<std::string, Config>::iterator location;
+	int max;
 	std::cout << "path " << path << std::endl;
 	for (location = locations.begin(); location != locations.end(); location++)
 	{
 		std::string locationPath = location->first;
 		std::cout << "location " << locationPath << std::endl;
-		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
+		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()) && (locationPath.size() ==))
 		{
 			_locConfig = location->second;
 			return locationPath;

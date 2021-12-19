@@ -65,7 +65,7 @@ void Request::parse()
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
 		// std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
-		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
+		if (_headers["Transfer-Encoding"] == "chunked")
 			// ParseChunkBody(_buffer);
 		{
 			isChunkedBody = true;
@@ -142,16 +142,17 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 	int pos;
 	for (int i = 1; i < lines.size() && !lines[i].empty(); i++)
 	{
-		// std::cerr << "[" << lines[i] << "] " << std::endl;
+		if (lines[i] == "\r")
+            break;
 		if (util::trim(lines[i]).empty())
 			continue;
 		pos = lines[i].find(":");
 		// todo: check with nginx if its neccesary
 		if (pos == std::string::npos)
 		{
-			// _status = HttpStatus::BadRequest;
+			_status = HttpStatus::BadRequest;
 			// std::cout << "line: " << lines[i] << ", "<< lines[i].size() << std::endl;
-			// return ;
+			return ;
 		}
 		key = lines[i].substr(0, pos);
 		value = lines[i].substr(pos + 1, lines[i].length());

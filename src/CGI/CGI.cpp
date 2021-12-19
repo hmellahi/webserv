@@ -112,7 +112,6 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         {
             std::cout << "file size" << util::getFileLength(req.fd) << std::endl;
             dup2(req.fd, 0);
-            
         }
         else
         {
@@ -172,9 +171,9 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     }
     if (req.isChunked)
         // setenv("Transfer-Encoding", "chunked", 1);
-        setenv("CONTENT_LENGTH", std::to_string(util::getFileLength(req.fd)).c_str(), 1);
+        setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
     else if (!req.getContentBody().empty())
-        setenv("CONTENT_LENGTH", std::to_string(req.getContentBody().size()).c_str(), 1);
+        setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
     
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);

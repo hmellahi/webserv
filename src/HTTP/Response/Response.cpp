@@ -66,11 +66,14 @@ Response    Response::send( int statusCode)
 {
     std::string errorPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
-
+    if (HttpStatus::isError(statusCode))
+        _headers["Connection"]="close";
+    else
+        _headers["Connection"]="keep-alive";
     // clean this shityy code
     msg << _headers["http-version"] << " " << statusCode << " " 
         << HttpStatus::reasonPhrase(statusCode) << "\r\n"
-        << "Connection: close" << "\r\n"
+        << "Connection: " <<_headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "Content-Type: text/html\r\n"
         << "Server: server dyal lah y7sn l3wan" << "\r\n"
@@ -173,7 +176,6 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
     std::cout << "written: " << bytes_written << std::endl;
-    //todo right?
     if (bytes_written <= 0)
         throw std::runtime_error("Could not write to client");
     return 0;

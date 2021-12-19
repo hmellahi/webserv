@@ -26,6 +26,13 @@ bool    util::is_number(std::string str)
 	return (true);
 }
 
+std::string	util::ft_itos(int nb)
+{
+	std::ostringstream convert;   // stream used for the conversion
+	convert << nb;
+	return convert.str();
+}
+
 std::vector<std::string> util::split(const std::string& str, const std::string& delimiter) 
 {
     std::vector<std::string> strings;
@@ -173,12 +180,12 @@ std::string util::ft_chunked(std::vector<std::string> strings, bool flag)
 	for (std::vector<std::string>::iterator it = strings.begin(); it != strings.end(); it++)
 	{
 		chunkedBody.insert(chunkedBody.size(), DecimalToHex((*it).size()));
-		chunkedBody.insert(chunkedBody.size(), "\\r\\n");
+		chunkedBody.insert(chunkedBody.size(), "\r\n");
 		chunkedBody.insert(chunkedBody.size(), *it);
-		chunkedBody.insert(chunkedBody.size(), "\\r\\n");
+		chunkedBody.insert(chunkedBody.size(), "\r\n");
 	}
 	if (flag)
-		chunkedBody.insert(chunkedBody.size(), "0\\r\\n\\r\\n");
+		chunkedBody.insert(chunkedBody.size(), "0\r\n\r\n");
 	return (chunkedBody);
 }
 //Split a string into smaller chunks cpp
@@ -221,10 +228,10 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bo
 	size = HexToDecimal(hex);
 	while (size)
 	{
-		i = buffer.find("\\r\\n", i) + 4; // todo : changed
+		i = buffer.find("\r\n", i) + 2;
 		if (buffer.substr(i, size).size() >= size)
 			chunked.insert(chunked.size(), buffer.substr(i, size));
-		i += size + 4;
+		i += size + 2;
 		if (i < buffer.size())
 			hex = buffer.substr(i, buffer.size());
 		else

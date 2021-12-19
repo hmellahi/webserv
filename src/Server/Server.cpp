@@ -257,12 +257,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// Check if the request body size doesnt exceed
 		// the max client body size
 		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // toddo check for chunked
-		{
-			std::cerr << "given" << _locConfig.get_client_max_body_size() << "limit :" << (contentLength / 1e6) << std::endl;
-			// Response res(req, client_fd, _locConfig);
-			res.setHeader("Connection", "close");
 			return res.send(HttpStatus::PayloadTooLarge);
-		}
 
 		req.isChunked = true;
 
@@ -272,7 +267,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 		// std::string filename = tokens[tokens.size() - 1];
 		static int i;
-		std::string uploadLocation = "/tmp/cgi" + std::to_string(i++);
+		std::string uploadLocation = "/tmp/cgi" + util::ft_itos(i++);
 		if (req.getMethod()=="POST" && !_locConfig.getUploadPath().empty())
 		{
 			req.isUpload = true;
@@ -341,17 +336,13 @@ Response Server::handleRequest(Request req, int client_fd)
 	// check the file requested is a directory
 	std::cout << "after |" << req.getUrl() << "|" << std::endl;
 	std::cout << "-------------------------------------\n";
-	// todo close connection
-	if (req.getStatus() != HttpStatus::OK) // TODO FIX
+	if (req.getStatus() != HttpStatus::OK) // CHECK
 		return res.send(req.getStatus());
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
-	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6))
-	{
-		// todo close connection
+	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // CHECK
 		return res.send(HttpStatus::PayloadTooLarge);
-	}
 
 	int methodIndex = getMethodIndex(req.getMethod());
 	std::string location = "/" + req.getUrl();
@@ -364,8 +355,6 @@ Response Server::handleRequest(Request req, int client_fd)
 		std::string location = redirection.second;
 		if (!location.empty() && location[0] == '/')
 			location = util::getFullUrl(req.getUrl(), req.getHeader("Host"));
-		std::cerr << "redirection happened to " << location << std::endl;
-		// todo close?
 		return res.sendRedirect(status_code, location);
 	}
 
@@ -373,10 +362,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	bool isAllowed = checkPermissions(req.getMethod());
 	
 	if (!isAllowed)
-	{
-		// todo close connection
-		return res.send(HttpStatus::MethodNotAllowed);
-	}
+		return res.send(HttpStatus::MethodNotAllowed); // CHECK	
 
 	// std::string filename = _locConfig.getRoot() + req.getUrl();
 	std::cerr << "-------------------------------------\n";
@@ -418,7 +404,9 @@ Response Server::handleRequest(Request req, int client_fd)
 					res.setHeader(it->first, it->second);
 				it++;
 			}
-			return res.sendContent( headers.find("Status") != headers.end() ? std::stoi(headers["Status"]) : HttpStatus::OK, cgiOutput);
+			int statusCode;
+			std::istringstream(headers["Status"]) >> statusCode;
+			return res.sendContent( headers.find("Status") != headers.end() ? statusCode : HttpStatus::OK, cgiOutput);
 		}
 		catch (const std::exception& e)
 		{
@@ -457,8 +445,8 @@ methodType Server::handleMethod(int methodIndex)
 	methodsHandler[GET] = &Server::getHandler;
 	methodsHandler[POST] = &Server::postHandler;
 	methodsHandler[DELETE] = &Server::deleteHandler;
-
-	return (methodsHandler[methodIndex] ? methodsHandler[methodIndex] : &Server::methodNotFoundHandler); // todo clean
+	methodsHandler[4] = &Server::methodNotFoundHandler;
+	return (methodsHandler[methodIndex]);
 }
 
 Response Server::getHandler(Request req, Response res)
@@ -589,7 +577,7 @@ int Server::getMethodIndex(std::string method_name)
 		return POST;
 	else if (method_name == "DELETE")
 		return DELETE;
-	return GET;
+	return 4;
 }
 
 void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &servers)

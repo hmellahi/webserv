@@ -29,6 +29,7 @@ namespace util
     std::string     getFullUrl(std::string location, std::string host);
     size_t          to_hex(std::string &str);
     size_t          HexToDecimal(std::string &str);
+    std::string     ft_itos(int nb);
     std::string     DecimalToHex(int decimal_value);
     std::string     ParseChunkBody(std::string &unchunked, std::string &buffer, bool &flag);
     std::string     ft_chunked(std::vector<std::string> strings, bool flag);

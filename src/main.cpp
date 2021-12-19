@@ -11,6 +11,7 @@ void	handle(int a){
 }
 int main(int ac , char *av[])
 {
+	const char* configFilePath;
 	std::signal(SIGINT, handle);
 	std::signal(SIGKILL, handle);
 	std::signal(SIGBUS, handle);
@@ -18,7 +19,7 @@ int main(int ac , char *av[])
 	const char *file;
 	if (ac <= 2)
 	{
-		file = av[1] ? av[1] : DEFAULT_CONFIG_PATH;
+		configFilePath = av[1] ? av[1] : DEFAULT_CONFIG_PATH;
 	}
 	else
 	{
@@ -29,7 +30,7 @@ int main(int ac , char *av[])
 	try
 	{
 		// parse the config file
-		ParseConfig GlobalConfig(file);
+		ParseConfig GlobalConfig(configFilePath);
 		// then setup servers
 		Server::setup(GlobalConfig);
 	}

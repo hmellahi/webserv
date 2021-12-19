@@ -128,11 +128,9 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 {
     std::fstream new_file;
 
-    // std::cerr << "location: " << uploadLocation << std::endl;
     new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!new_file.is_open())
         throw std::runtime_error("couldnt open the file for writing");
-    // todo check
     new_file.write(content.data(), content.size());
     new_file.close();
 }
@@ -146,10 +144,9 @@ bool    FileSystem::isReadyFD(int fd, int mode)
         select(fd+1, &readfds, NULL,NULL,0);
         if (!Socket::testConnection(fd))
             return false;
-        std::cout << "is ready " << FD_ISSET(fd, &readfds) << std::endl;
         return (FD_ISSET(fd, &readfds));
     }
-    else
+    else if (mode == WRITE)
     {
         fd_set writefds;
         FD_SET(fd, &writefds);
@@ -158,4 +155,5 @@ bool    FileSystem::isReadyFD(int fd, int mode)
             return false;
         return (FD_ISSET(fd, &writefds));
     }
+    return true;
 }

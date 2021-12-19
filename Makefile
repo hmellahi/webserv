@@ -44,7 +44,7 @@ all: $(NAME)
 $(NAME): $(SRC)
 	$(CC) ${FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)
 	# rm -rf webserv*
-	./webserv 2>/dev/null
+	#./webserv 2>/dev/null
 
 san : $(SRC)
 	$(CC) ${FLAGS} ${DEBUG_FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)

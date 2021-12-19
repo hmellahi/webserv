@@ -28,9 +28,9 @@ void Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfd
 		// if valid socket descriptor then add to read list
 		if (fd > 0)
 		{
-			if (clients[i].type == READ_SOCKET)
+			// if (clients[i].type == READ_SOCKET)
 				FD_SET(fd, &readfds);
-			else
+			// else
 				FD_SET(fd, &writefds);
 		}
 		// highest file descriptor number, need it for the select function
@@ -180,15 +180,17 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					std::cout << "Error: " << e.what() << std::endl;
 					closeConnection(clients, readfds, i, sd);
-					std::cout << "hey" << std::endl;
 					continue;
 				}
 				// std::cout << "nbytes: " <<  res.nbytes_left << std::endl;
 				// if (res.nbytes_left > 0)
 				// {
-				// 	std::cerr << "Wsup" << std::endl;
-				unCompletedResponses[res._client_fd] = res;
-				clients[i].type= WRITE_SOCKET;
+				std::cout << "new request hehe" << std::endl;
+				if (res._msg != "")
+				{
+					unCompletedResponses[res._client_fd] = res;
+					clients[i].type = WRITE_SOCKET;
+				}
 				// }
 				// else if (res.getHeader("Connection") == "close")
 				// 	closeConnection(clients, readfds, i, sd);
@@ -196,31 +198,33 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		}
 		else if (FD_ISSET(sd, &writefds))
 		{
-			std::cerr << "Wsup" << std::endl;
-			if (unCompletedResponses.find(sd) != unCompletedResponses.end())
+			// check if doesnt have uncompleted response with this client
+			if (unCompletedResponses.find(sd) == unCompletedResponses.end())
+				continue;
+			res = unCompletedResponses[sd];
+			if (res._msg != "")
 			{
-				res = unCompletedResponses[sd];
-				if (res._msg != "")
-				{
-					try {
-						res.sendRaw(sd, res._msg.c_str(), res._msg.size());
-					}
-					catch(std::exception &e)
-					{
-						closeConnection(clients, readfds, i, sd);
-						unCompletedResponses.erase(sd);
-						std::cout << "Error: " << e.what() << std::endl;
-						continue;
-					}
-					res._msg = "";
-					unCompletedResponses[sd] = res;
+				try {
+					res.sendRaw(sd, res._msg.c_str(), res._msg.size());
 				}
-				else if (res.nbytes_left > 0)
+				catch(std::exception &e)
 				{
-					// CHECK
-					std::string to_send;
-					if (!FileSystem::isReadyFD(res.file_to_send, READ))
-						res.send(HttpStatus::InternalServerError); // this will set response to Internal server
+					closeConnection(clients, readfds, i, sd);
+					unCompletedResponses.erase(sd);
+					std::cout << "Error: " << e.what() << std::endl;
+					continue;
+				}	
+				res._msg = "";
+				unCompletedResponses[sd] = res;
+			}
+			else if (res.nbytes_left > 0)
+			{
+				std::string to_send;
+				// this will set response to Internal server
+				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
+					res.send(HttpStatus::InternalServerError);
+				else
+				{
 					try{
 						to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
 					}
@@ -228,26 +232,26 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					{
 						res.send(HttpStatus::InternalServerError); // this will set response to Internal server
 					}
-					try {
-						res.sendRaw(sd, to_send.c_str(), nbytes);
-					}
-					catch(std::exception &e)
-					{
+				}
+				try {
+					res.sendRaw(sd, to_send.c_str(), nbytes);
+				}
+				catch(std::exception &e)
+				{
+					closeConnection(clients, readfds, i, sd);
+					unCompletedResponses.erase(sd);
+					std::cout << "Error: " << e.what() << std::endl;
+					continue;
+				}
+				std::cout << "left: " << res.nbytes_left << std::endl;
+				unCompletedResponses[sd] = res;
+				if (res.nbytes_left == 0)
+				{
+					unCompletedResponses.erase(sd);
+					if (res.getHeader("Connection") == "close")
 						closeConnection(clients, readfds, i, sd);
-						unCompletedResponses.erase(sd);
-						std::cout << "Error: " << e.what() << std::endl;
-						continue;
-					}
-					std::cout << "left: " << res.nbytes_left << std::endl;
-					unCompletedResponses[sd] = res;
-					if (res.nbytes_left == 0)
-					{
-						unCompletedResponses.erase(sd);
-						if (res.getHeader("Connection") == "close")
-							closeConnection(clients, readfds, i, sd);
-						else
-							clients[i].type = READ_SOCKET;
-					}
+					else
+						clients[i].type = READ_SOCKET;
 				}
 			}
 		}
@@ -277,6 +281,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
+	std::cout << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = (req.getContentBody().size() < contentLength) || (req.isChunkedBody && !req.isChunkedBodyEnd);
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
@@ -294,7 +299,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// std::string filename = tokens[tokens.size() - 1];
 		static int i;
 		req._fileLocation = "/tmp/cgi" + util::ft_itos(i++);
-		if (req.getMethod()=="POST" && !_locConfig.getUploadPath().empty())
+		if (req.getMethod() == "POST" && !_locConfig.getUploadPath().empty())
 		{
 			req.isUpload = true;
 			std::vector<std::string> tokens = util::split(req.getUrl(), "/");
@@ -313,44 +318,45 @@ Response Server::handleRequest(Request req, int client_fd)
 			remove(req._fileLocation.c_str());
 			return res.send(HttpStatus::InternalServerError);
 		}
-		if (!req.isChunkedBody)
+		// if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
 		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		return Response();
+		return res;
 	}
 	else if (it != unCompletedRequests.end())
 	{
 		int _buffSize = req._buffSize;
 		std::string buff;
-		if (req.isChunkedBody)
-		{
-			buff = util::ParseChunkBody(req.unchunked, req._buffer, req.isChunkedBodyEnd);
-			_buffSize = buff.size();
-		}
-		else
-			buff = std::string(req._buffer, _buffSize);
+		// if (req.isChunkedBody)
+		// {
+		// 	buff = util::ParseChunkBody(req.unchunked, req._buffer, req.isChunkedBodyEnd);
+		// 	_buffSize = buff.size();
+		// }
+		// else
+		buff = std::string(req._buffer, _buffSize);
 
 		req = it->second;
 		int nbytes_wrote;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
 			return res.send(HttpStatus::InternalServerError);
 		nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
+
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
 			return res.send(HttpStatus::InternalServerError);
 		}
-		if (!req.isChunkedBody)
+		// if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << _buffSize << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		if (req.nbytes_left > 0 || (req.isChunkedBody && !req.isChunkedBodyEnd))
-			return Response();
+		if (req.nbytes_left > 0)// || (req.isChunkedBody && !req.isChunkedBodyEnd))
+			return res;
 		unCompletedRequests.erase(it);
 		if (req.isUpload)
 		{
@@ -537,8 +543,9 @@ Response Server::postHandler(Request req, Response res)
 	{
 		std::string uploadLocation = _locConfig.getUploadPath() + filename;
 		try {
-			if (atoi(req.getHeaders()["Content-Length"].c_str()) < req.getBufferSize())
+			// if (atoi(req.getHeaders()["Content-Length"].c_str()) < req.getBufferSize())
 				FileSystem::uploadFile(uploadLocation, req.getContentBody());
+			std::cout << "heey" << std::endl;
 			return res.send(HttpStatus::Created);
 		}
 		catch (std::exception& e)
@@ -633,10 +640,11 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
+	int a=0;
 	while (TRUE)
 	{
 		// clear the sockets set
-		std::cerr << "test 0" << std::endl;
+		// std::cout << "done" << ++a << std::endl;
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
 		// add all servers sockets to the sockets set  [readfds]
@@ -657,6 +665,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 		// otherwise its some IO operation on some other socket
 		// recieve Client Request And Send Back A Response();
 		Server::RecvAndSend(clients, readfds, servers);
+
 
 	}
 }

@@ -16,6 +16,7 @@ Response::Response()
 {
     nbytes_left = 0;
     file_to_send=0;
+    _headers["http-version"]= "HTTP/1.1";
 }
 
 Response::Response(const Response& src)

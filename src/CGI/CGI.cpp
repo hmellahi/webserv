@@ -104,22 +104,23 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             cgiOutput += c;
         fclose(result);
         close(nfd[0]);
+		remove(req._fileLocation.c_str());
     }
     else if (pid == 0)
     {
         // todo check 
-        if (req.isChunked)
-        {
-            std::cout << "file size" << util::getFileLength(req.fd) << std::endl;
-            dup2(req.fd, 0);
-        }
-        else
-        {
+        // if (req.isChunked)
+        // {
+        //     std::cout << "file size" << util::getFileLength(req.fd) << std::endl;
+        //     dup2(req.fd, 0);
+        // }
+        // else
+        // {
             if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
                 throw std::runtime_error("write error");
             dup2(fd[0], 0);
             // std::cout << "file size" << util::getFileLength(fd[1]) << std::endl;
-        }
+        // }
 
         dup2(nfd[1], 1);
         
@@ -169,10 +170,11 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
         if (!req.getHeader("Content-Type").empty())
             setenv("CONTENT_TYPE", req.getHeader("Content-Type").c_str(), 1);
     }
-    if (req.isChunked)
-        // setenv("Transfer-Encoding", "chunked", 1);
-        setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
-    else if (!req.getContentBody().empty())
+    // if (req.isChunked)
+    //     // setenv("Transfer-Encoding", "chunked", 1);
+    //     setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
+    // else 
+    if (!req.getContentBody().empty())
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
     
     if (!req.getMethod().empty())

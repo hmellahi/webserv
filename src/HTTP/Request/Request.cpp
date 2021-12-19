@@ -41,6 +41,7 @@ Request & Request::operator=(Request const &rhs)
 		fd = rhs.fd;
 		isChunkedBody = rhs.isChunkedBody;
 		nbytes_left= rhs.nbytes_left;
+		_fileLocation = rhs._fileLocation;
 	}
 	return (*this);
 }

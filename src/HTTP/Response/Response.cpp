@@ -25,7 +25,7 @@ Response::Response(const Response& src)
     _serverConfig = src.getServerConfig();
     file_to_send = src.file_to_send;
     nbytes_left = src.nbytes_left;
-
+    _msg = src._msg;
 }
 
 std::string     Response::CraftRedirectionPage(int statusCode)
@@ -153,16 +153,18 @@ std::string Response::readRaw(int fd, int fileLength, int &bytes_read)
 {
     char buf[BUFSIZE];
     bytes_read = read(fd, buf, std::min(BUFSIZE, fileLength));
+    if (bytes_read <= 0)
+        throw std::runtime_error("couldnt read");        
     nbytes_left -= bytes_read;
-    // std::cout << "nbytes: " <<  nbytes_left << std::endl;
-    // return std::string(buf, bytes_read);
     return std::string(buf, bytes_read);
 }
 
 
 int Response::sendMessage(int fd, const std::string &s)
 {
-    return sendRaw(fd, s.c_str(), s.length());
+    // return sendRaw(fd, s.c_str(), s.length());
+    _msg = s;
+    return 1;
 }
 
 void a(int a){}
@@ -178,6 +180,7 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     std::cout << "written: " << bytes_written << std::endl;
     if (bytes_written <= 0)
         throw std::runtime_error("Could not write to client");
+    // _msg = pbuf;
     return 0;
 }
 

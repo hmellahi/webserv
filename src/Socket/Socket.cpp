@@ -62,14 +62,16 @@ void    Socket::create_socket()
     testConnection(connection, "couldnt listen");
 }
 
-void    Socket::testConnection(int connection_ret, std::string customErrMsg, bool suspend)
+bool    Socket::testConnection(int connection_ret, std::string customErrMsg, bool suspend)
 {
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
         if (suspend)
             util::ft_exit(EXIT_FAILURE);
+        return false;
     }
+    return true;
 }
 
 Socket     Socket::acceptConnection(int socket, struct sockaddr_in address, int addrlen)

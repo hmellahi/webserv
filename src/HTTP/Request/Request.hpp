@@ -43,6 +43,7 @@ class Request
 		int nbytes_left;
 		int getBufferSize(void) const;
 		bool isUpload;
+		std::string _fileLocation;
 		bool isChunked;
 	private:
 		std::map<std::string, std::string> _headers;

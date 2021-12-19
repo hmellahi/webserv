@@ -184,14 +184,14 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					continue;
 				}
 				// std::cout << "nbytes: " <<  res.nbytes_left << std::endl;
-				if (res.nbytes_left > 0)
-				{
-					std::cerr << "Wsup" << std::endl;
-					unCompletedResponses[res._client_fd] = res;
-					clients[i].type= WRITE_SOCKET;
-				}
-				else if (res.getHeader("Connection") == "close")
-					closeConnection(clients, readfds, i, sd);
+				// if (res.nbytes_left > 0)
+				// {
+				// 	std::cerr << "Wsup" << std::endl;
+				unCompletedResponses[res._client_fd] = res;
+				clients[i].type= WRITE_SOCKET;
+				// }
+				// else if (res.getHeader("Connection") == "close")
+				// 	closeConnection(clients, readfds, i, sd);
 			}
 		}
 		else if (FD_ISSET(sd, &writefds))
@@ -200,9 +200,34 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			if (unCompletedResponses.find(sd) != unCompletedResponses.end())
 			{
 				res = unCompletedResponses[sd];
-				if (res.nbytes_left > 0)
+				if (res._msg != "")
 				{
-					std::string to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
+					try {
+						res.sendRaw(sd, res._msg.c_str(), res._msg.size());
+					}
+					catch(std::exception &e)
+					{
+						closeConnection(clients, readfds, i, sd);
+						unCompletedResponses.erase(sd);
+						std::cout << "Error: " << e.what() << std::endl;
+						continue;
+					}
+					res._msg = "";
+					unCompletedResponses[sd] = res;
+				}
+				else if (res.nbytes_left > 0)
+				{
+					// CHECK
+					std::string to_send;
+					if (!FileSystem::isReadyFD(res.file_to_send, READ))
+						res.send(HttpStatus::InternalServerError); // this will set response to Internal server
+					try{
+						to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
+					}
+					catch(std::exception &e)
+					{
+						res.send(HttpStatus::InternalServerError); // this will set response to Internal server
+					}
 					try {
 						res.sendRaw(sd, to_send.c_str(), nbytes);
 					}
@@ -213,6 +238,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 						std::cout << "Error: " << e.what() << std::endl;
 						continue;
 					}
+					std::cout << "left: " << res.nbytes_left << std::endl;
 					unCompletedResponses[sd] = res;
 					if (res.nbytes_left == 0)
 					{
@@ -267,7 +293,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 		// std::string filename = tokens[tokens.size() - 1];
 		static int i;
-		std::string uploadLocation = "/tmp/cgi" + util::ft_itos(i++);
+		req._fileLocation = "/tmp/cgi" + util::ft_itos(i++);
 		if (req.getMethod()=="POST" && !_locConfig.getUploadPath().empty())
 		{
 			req.isUpload = true;
@@ -275,13 +301,19 @@ Response Server::handleRequest(Request req, int client_fd)
 			std::string filename = tokens[tokens.size() - 1];
 			if (filename.empty())
 				return res.send(HttpStatus::BadRequest);
-			uploadLocation = _locConfig.getUploadPath() + filename;
+			req._fileLocation = _locConfig.getUploadPath() + filename;
 		}
-		req.fd = open(uploadLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-		std::cout << "file " << uploadLocation << " " << req.fd << std::endl;
+		req.fd = open(req._fileLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+		std::cout << "file " << req._fileLocation << " " << req.fd << std::endl;
+		if (!FileSystem::isReadyFD(req.fd, WRITE))
+			return res.send(HttpStatus::InternalServerError);
 		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
-		// todo:  failed?
-		if (!req.isChunkedBody && nbytes_wrote > 0)
+		if (nbytes_wrote <= 0)
+		{
+			remove(req._fileLocation.c_str());
+			return res.send(HttpStatus::InternalServerError);
+		}
+		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
 		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
@@ -302,13 +334,18 @@ Response Server::handleRequest(Request req, int client_fd)
 			buff = std::string(req._buffer, _buffSize);
 
 		req = it->second;
-		// if (isChunkedBody)
-		int nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
-		// todo wt else if writing failed
-		if (!req.isChunkedBody && nbytes_wrote > 0)
+		int nbytes_wrote;
+		if (!FileSystem::isReadyFD(req.fd, WRITE))
+			return res.send(HttpStatus::InternalServerError);
+		nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
+		if (nbytes_wrote <= 0)
+		{
+			remove(req._fileLocation.c_str());
+			return res.send(HttpStatus::InternalServerError);
+		}
+		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		// std::cout <<"fd" << req.fd << std::endl;
 		std::cout << _buffSize << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
@@ -389,9 +426,9 @@ Response Server::handleRequest(Request req, int client_fd)
 
 
 			std::cerr <<"filename : " << filename << std::endl;
-			std::cerr <<"content" << cgiOutput << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
+			std::cout <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
@@ -406,6 +443,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			}
 			int statusCode;
 			std::istringstream(headers["Status"]) >> statusCode;
+			res.nbytes_left = 0;
 			return res.sendContent( headers.find("Status") != headers.end() ? statusCode : HttpStatus::OK, cgiOutput);
 		}
 		catch (const std::exception& e)

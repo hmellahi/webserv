@@ -136,3 +136,26 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
     new_file.write(content.data(), content.size());
     new_file.close();
 }
+
+bool    FileSystem::isReadyFD(int fd, int mode)
+{
+    if (mode == READ)
+    {
+        fd_set readfds;
+        FD_SET(fd, &readfds);
+        select(fd+1, &readfds, NULL,NULL,0);
+        if (!Socket::testConnection(fd))
+            return false;
+        std::cout << "is ready " << FD_ISSET(fd, &readfds) << std::endl;
+        return (FD_ISSET(fd, &readfds));
+    }
+    else
+    {
+        fd_set writefds;
+        FD_SET(fd, &writefds);
+        select(fd+1, NULL, &writefds,NULL,0);
+         if (!Socket::testConnection(fd))
+            return false;
+        return (FD_ISSET(fd, &writefds));
+    }
+}

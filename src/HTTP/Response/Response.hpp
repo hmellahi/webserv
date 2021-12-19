@@ -9,8 +9,10 @@ private:
     int _method;
     Config _serverConfig;
     std::map<std::string, std::string> _headers;
+    
 
 public:
+    std::string _msg;
     int nbytes_left;
     int file_to_send;
     Response();

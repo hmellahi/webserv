@@ -172,7 +172,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				requestBody[valread] = '\0';
 				// convert requestBody to a string
 				requestBodyStr = std::string(requestBody, valread);
-				//std::cout << requestBody<<std::endl;
+				//std::cerr << requestBody<<std::endl;
 				// handle connection and store response
 				try 
 				{
@@ -274,7 +274,7 @@ Socket Server::addPort(int port, std::string host)
 	// save socker fd
 	_serverSockets.push_back(new_socket);
 	// debugging
-	std::cout << "Server started, go to " << host << ":" << port << std::endl;
+	std::cerr << "Server started, go to " << host << ":" << port << std::endl;
 	return new_socket;
 }
 
@@ -326,7 +326,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return res;
@@ -360,7 +360,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if (req.nbytes_left > 0)// || (req.isChunkedBody && !req.isChunkedBodyEnd))
@@ -432,7 +432,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		try {
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
-			std::cout <<"content" << cgiOutput << std::endl;
+			std::cerr <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
@@ -441,12 +441,12 @@ Response Server::handleRequest(Request req, int client_fd)
 			{
 				if (it->first == "Status") {
 					res.setHeader(it->first, it->second);
-					std::cout << "status header is set" << it->second << std::endl;
+					std::cerr << "status header is set" << it->second << std::endl;
 				}
 				else if (it->first == "Location")
 					res.setHeader(it->first, it->second);
 				it++;
-				
+
 			}
 			int statusCode;
 			std::istringstream(headers["Status"]) >> statusCode;

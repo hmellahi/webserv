@@ -38,39 +38,33 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
         line = util::trim(line);
         // std::cerr << "line :" << line << "|" << std::endl;
         // if (line.find("<html>") == std::string::npos && line.length() > 0)
-        if (line.length() > 0)
-        {
             // headers.push_back(line);
-            tab = util::split(line, ": ");
-            if (tab[0] == "Set-Cookie") {
-    
-                headers[tab[0]] = util::trim(tab[1]);
-                setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
-            }
-            else if (tab[0] == "Status") {
-            
-                setenv("REDIRECT_STATUS", tab[1].c_str(), 0);
-                // std::cerr << "Status is " << tab[1].c_str() << std::endl;
-                headers[tab[0]] = util::trim(tab[1]);
-                // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
-            }
-            else if (tab[0] == "Location") {
-                // std::cerr << "testing location " << std::endl;
-                headers[tab[0]] = util::trim(tab[1]);
-                
-            }
-            // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-           // std::cerr << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+        tab = util::split(line, ": ");
+        if (tab[0] == "Set-Cookie") {
 
+            headers[tab[0]] = util::trim(tab[1]);
+            setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
         }
-        else
-            break ;
+        else if (tab[0] == "Status") {
+        
+            setenv("REDIRECT_STATUS", tab[1].c_str(), 0);
+            // std::cerr << "Status is " << tab[1].c_str() << std::endl;
+            headers[tab[0]] = util::trim(tab[1]);
+            // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
+        }
+        else if (tab[0] == "Location") {
+            // std::cerr << "testing location " << std::endl;
+            headers[tab[0]] = util::trim(tab[1]);
+            
+        }
+        // else if (tab[0] != "X-Powered-By" && tab[0] != "")
+        // std::cerr << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
     }
     while (ss.good())
     {
         
         getline(ss, line, '\n');
-        std::cout <<  "adding this line " << line << "|\n"; 
+        std::cerr <<  "adding this line " << line << "|\n"; 
         outContent += line;
     }
     ret.first = outContent;
@@ -111,17 +105,17 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         close(fd[0]);
         close(nfd[1]);
         FILE *result;
-        std::cout << "Reading 2 : \n"; 
+        std::cerr << "Reading 2 : \n"; 
         result = fdopen(f_err[0], "r");
         char c;
         while((c = fgetc(result)) != EOF)
             cgiOutput += c;
         close(f_err[0]);
         fclose(result);
-        std::cout << "start \n"; 
+        std::cerr << "start \n"; 
 
-        std::cout << cgiOutput;
-        std::cout << "done \n"; 
+        std::cerr << cgiOutput;
+        std::cerr << "done \n"; 
 
         if (!FileSystem::isReadyFD(nfd[0], READ))
             throw std::runtime_error("fd not ready read");
@@ -196,7 +190,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     char    **args = fill_args(cgiPath, path);
 
     char    **envp;
-    // std::cout << " wnk " << std::string(req.getContentBody().data(),req.getContentBody().data()+req.getContentBody().size())<< std::endl;
+    // std::cerr << " wnk " << std::string(req.getContentBody().data(),req.getContentBody().data()+req.getContentBody().size())<< std::endl;
     if (req.getMethod() == "POST")
     {
         if (!req.getHeader("Content-Type").empty())
@@ -204,14 +198,15 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     }
     if (req.isChunked)
     {
-        std::cout << "a" << util::ft_itos(util::getFileLength(req.fd)).c_str()<< std::endl;
+        std::cerr << "a" << util::ft_itos(util::getFileLength(req.fd)).c_str()<< std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
     }
     else if (!req.getContentBody().empty() || req.getMethod() == "POST")
     {
-        std::cout << "b" << req.getContentBody().size() << std::endl;
+        std::cerr << "b" << req.getContentBody().size() << std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
     }
+    
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);

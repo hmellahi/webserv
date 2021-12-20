@@ -175,7 +175,9 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
 
     signal(SIGPIPE, a);
     // std::cerr << "written: " << 0 << std::endl;
+    std::cerr << "-------------" << std::endl;
     std::cerr << pbuf << std::endl;
+    std::cerr << "-------------" << std::endl;
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
     std::cerr << "written: " << bytes_written << std::endl;

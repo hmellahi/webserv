@@ -34,7 +34,7 @@ class ParseConfig
 		{
 			virtual const char *what() const throw()
 			{
-				return ("Unable to open the File.");
+				return ("invalid File.");
 			}
 		};		
 };

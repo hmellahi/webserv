@@ -1,5 +1,6 @@
 #include "Server.hpp"
 fd_set writefds;
+extern const char* configFilePath;
 std::map<int, Response> unCompletedResponses;
 
 Server::Server(){
@@ -447,10 +448,10 @@ Response Server::handleRequest(Request req, int client_fd)
 		try {
 
 
-			std::cerr <<"filename : " << filename << std::endl;
+			// std::cerr <<"filename : " << filename << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
-			std::cerr <<"content" << cgiOutput << std::endl;
+			std::cout <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
@@ -467,8 +468,9 @@ Response Server::handleRequest(Request req, int client_fd)
 			}
 			int statusCode;
 			std::istringstream(headers["Status"]) >> statusCode;
+			
 			res.nbytes_left = 0;
-			return res.sendContent( headers.find("Status") != headers.end() ? statusCode : HttpStatus::OK, cgiOutput);
+			return res.sendContent( (headers.find("Status") != headers.end() && statusCode) ? statusCode : HttpStatus::OK, cgiOutput);
 		}
 		catch (const std::exception& e)
 		{
@@ -559,7 +561,7 @@ Response Server::postHandler(Request req, Response res)
 			return res.send(HttpStatus::Forbidden);
 		return getHandler(req, res);
 	}
-	std::cerr << filename << "|\n";
+	// std::cerr << filename << "|\n";
 
 	if (!filename.empty())
 	{
@@ -619,7 +621,13 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		{
 			std::string filename = it->second;
 			// todo  will be changed to the server root path
-			return (FileSystem::readFile("src/Conf/" + filename, status));
+			std::string configPath = std::string(configFilePath,  configFilePath + strlen(configFilePath));
+			size_t index = configPath.rfind('/');
+			std::string errorPagePath = filename;
+			if (std::string::npos != index)
+				errorPagePath = configPath.substr(0, index) + "/" + errorPagePath;
+			std::cout << "rrr"<<errorPagePath << std::endl;
+			return (FileSystem::readFile(errorPagePath, status));
 		}
 		catch (const std::exception &e)
 		{

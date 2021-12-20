@@ -9,9 +9,9 @@ void	handle(int a){
 	// system("leaks webserv");
 	util::ft_exit(0);
 }
+const char* configFilePath;
 int main(int ac , char *av[])
 {
-	const char* configFilePath;
 	std::signal(SIGINT, handle);
 	std::signal(SIGKILL, handle);
 	std::signal(SIGBUS, handle);

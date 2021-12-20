@@ -1,6 +1,9 @@
-ghdfgh
+
+
 # Import modules for CGI handlitfdhfghdfgg gh
-import cgi, cgitb ad
+import cgi, cgitb
+import sys
+from time import sleep
 
 # Create instance of FieldStorage 
 form = cgi.FieldStorage() 
@@ -18,9 +21,9 @@ print "<body>"
 print "<h2>Hello %s %s</h2>" % (first_name, last_name)
 print "</body>"
 print "</html>"
-print "hello"
+print "j"
+# print("hey", file=sys.stderr)
 
-
-
+sys.stderr.write("sdhfgasdjfh ajsdjhgf jasdhgfjkasdhg fjkahgsdfja sdgfkjdsaghfjkadgf")
 
 

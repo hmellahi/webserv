@@ -1,4 +1,5 @@
 #include "ParseConfig.hpp"
+#include "../../utils/FileSystem/FileSystem.hpp"
 
 ParseConfig::ParseConfig()
 {
@@ -33,7 +34,7 @@ void ParseConfig::read_file()
 {
 	std::ifstream my_file(_file);
 
-	if (my_file.is_open())
+	if (my_file.is_open() && FileSystem::getFileStatus(_file) != IS_DIRECTORY)
 	{
 		parse_file(my_file);
 		my_file.close();

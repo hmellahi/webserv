@@ -72,10 +72,16 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 		if (FD_ISSET(socketDescriptor, &readfds))
 		{
 			std::cerr << "Connection started" << std::endl;
-			new_socket = Socket::acceptConnection(socketDescriptor, address, addrlen);
-			// if a position is empty
-			if (clients.size() < FD_SETSIZE)
-				clients.push_back(new_socket);
+			try{
+				new_socket = Socket::acceptConnection(socketDescriptor, address, addrlen);
+				// if a position is empty
+				if (new_socket < FD_SETSIZE)
+					clients.push_back(new_socket);
+			}
+			catch(std::exception& e)
+			{
+				std::cout << "wtf bro" << std::endl;
+			}
 		}
 	}
 }
@@ -149,6 +155,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	{
 		sd = clients[i];
 		// check if sd is ready to read
+				std::cout << "wtf bro " << sd << std::endl;
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			valread = read(sd, requestBody, BUFSIZE);

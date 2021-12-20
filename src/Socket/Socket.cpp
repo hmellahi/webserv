@@ -80,8 +80,8 @@ Socket     Socket::acceptConnection(int socket, struct sockaddr_in address, int 
     int new_connection;
 
     new_connection = accept(socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-    testConnection(new_connection, "couldnt accept new connection", false);
-    
+    if (!testConnection(new_connection, "couldnt accept new connection", false))
+        throw std::runtime_error("couldnt accept new connection");
     new_socket.setSocketFd(new_connection);
     
     return (new_socket);

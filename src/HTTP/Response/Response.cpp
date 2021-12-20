@@ -174,11 +174,11 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
     const char *pbuf = static_cast<const char*>(buf);
 
     signal(SIGPIPE, a);
-    std::cout << "written: " << 0 << std::endl;
-    std::cout << pbuf << std::endl;
+    // std::cerr << "written: " << 0 << std::endl;
+    std::cerr << pbuf << std::endl;
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
-    std::cout << "written: " << bytes_written << std::endl;
+    std::cerr << "written: " << bytes_written << std::endl;
     if (bytes_written <= 0)
         throw std::runtime_error("Could not write to client");
     // _msg = pbuf;

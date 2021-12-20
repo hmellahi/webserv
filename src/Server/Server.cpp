@@ -89,11 +89,11 @@ std::string	Server::updateLocationConfig(std::string path)
 	_locConfig = _config;
 	std::map<std::string, Config> locations = _locConfig.getLocation();
 	std::map<std::string, Config>::reverse_iterator location;
-	std::cout << "path " << path << std::endl;
+	std::cerr << "path " << path << std::endl;
 	for (location = locations.rbegin(); location != locations.rend(); location++)
 	{
 		std::string locationPath = location->first;
-		std::cout << "location " << locationPath << std::endl;
+		std::cerr << "location " << locationPath << std::endl;
 		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
 			_locConfig = location->second;
@@ -131,7 +131,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 	close(sd);
 	clients.erase(clients.begin() + clientIndex);
 	FD_CLR(sd, &readfds);
-	std::cout << "Connection closed" << std::endl;
+	std::cerr << "Connection closed" << std::endl;
 }
 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
@@ -171,6 +171,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				requestBody[valread] = '\0';
 				// convert requestBody to a string
 				requestBodyStr = std::string(requestBody, valread);
+				//std::cout << requestBody<<std::endl;
 				// handle connection and store response
 				try 
 				{
@@ -178,14 +179,14 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
     			}
 				catch(std::exception &e)
 				{
-					std::cout << "Error: " << e.what() << std::endl;
+					std::cerr << "Error: " << e.what() << std::endl;
 					closeConnection(clients, readfds, i, sd);
 					continue;
 				}
-				// std::cout << "nbytes: " <<  res.nbytes_left << std::endl;
+				// std::cerr << "nbytes: " <<  res.nbytes_left << std::endl;
 				// if (res.nbytes_left > 0)
 				// {
-				std::cout << "new request hehe" << std::endl;
+				std::cerr << "new request hehe" << std::endl;
 				if (res._msg != "")
 				{
 					unCompletedResponses[res._client_fd] = res;
@@ -204,6 +205,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			res = unCompletedResponses[sd];
 			if (res._msg != "")
 			{
+				std::cerr << "a writing to client: " << sd << std::endl;
 				try {
 					res.sendRaw(sd, res._msg.c_str(), res._msg.size());
 				}
@@ -211,7 +213,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
-					std::cout << "Error: " << e.what() << std::endl;
+					std::cerr << "Error: " << e.what() << std::endl;
 					continue;
 				}	
 				res._msg = "";
@@ -219,6 +221,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			}
 			else if (res.nbytes_left > 0)
 			{
+				std::cerr << "writing to client: " << sd << std::endl;
 				std::string to_send;
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
@@ -240,10 +243,10 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
-					std::cout << "Error: " << e.what() << std::endl;
+					std::cerr << "Error: " << e.what() << std::endl;
 					continue;
 				}
-				std::cout << "left: " << res.nbytes_left << std::endl;
+				std::cerr << "left: " << res.nbytes_left << std::endl;
 				unCompletedResponses[sd] = res;
 				if (res.nbytes_left == 0)
 				{
@@ -278,13 +281,13 @@ Response Server::handleRequest(Request req, int client_fd)
 {
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	if (locationPath=="/")locationPath ="";
-	std::cout << "match" << locationPath << std::endl;
+	std::cerr << "match" << locationPath << std::endl;
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
-	std::cout << "size"<< unCompletedRequests.size() << std::endl;
-	bool isNotCompletedYet = (req.getContentBody().size() < contentLength) || (req.isChunkedBody && !req.isChunkedBodyEnd);
+	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
+	bool isNotCompletedYet = (req.getContentBody().size() < contentLength);// || (req.isChunkedBody && !req.isChunkedBodyEnd);
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		// Check if the request body size doesnt exceed
@@ -307,13 +310,16 @@ Response Server::handleRequest(Request req, int client_fd)
 			req._fileLocation = _locConfig.getUploadPath() + filename;
 		}
 		req.fd = open(req._fileLocation.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-		std::cout << "file " << req._fileLocation << " " << req.fd << std::endl;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
+		{
+			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
+		}
 		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
+			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
 		}
 		// if (!req.isChunkedBody)
@@ -326,25 +332,28 @@ Response Server::handleRequest(Request req, int client_fd)
 	}
 	else if (it != unCompletedRequests.end())
 	{
-		int _buffSize = req._buffSize;
-		std::string buff;
+		Request oldRequest = req;
+		// int _buffSize = req._buffSize;
+		// std::string buff;
 		// if (req.isChunkedBody)
 		// {
 		// 	buff = util::ParseChunkBody(req.unchunked, req._buffer, req.isChunkedBodyEnd);
 		// 	_buffSize = buff.size();
 		// }
 		// else
-		buff = std::string(req._buffer, _buffSize);
+		// std::string buff = std::string(req._buffer, req._buffSize);
 
 		req = it->second;
 		int nbytes_wrote;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
 			return res.send(HttpStatus::InternalServerError);
-		nbytes_wrote = write(req.fd, buff.c_str(), _buffSize);
+		nbytes_wrote = write(req.fd, oldRequest._buffer.c_str(), oldRequest._buffSize);
 
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
+			unCompletedRequests.erase(it);
+			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
 		}
 		// if (!req.isChunkedBody)
@@ -358,15 +367,15 @@ Response Server::handleRequest(Request req, int client_fd)
 		unCompletedRequests.erase(it);
 		if (req.isUpload)
 		{
-			std::cout << "uploaded" << std::endl;
+			std::cerr << "uploaded" << std::endl;
 			close(req.fd);
 			return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
 		}
 	}
-	std::cout << "-------------------------------------\n";
-	// std::cout << "before |" << req.getUrl() << "|" << std::endl;
+	std::cerr << "-------------------------------------\n";
+	// std::cerr << "before |" << req.getUrl() << "|" << std::endl;
 	// int x = req.getUrl()[(req.getUrl()).length() - 1] == '/' ? 0 : 1;
-	// std::cout << locationPath <<std::endl;
+	// std::cerr << locationPath <<std::endl;
 	// std::string newUrl = req.getUrl().erase(0, locationPath.size());
 	// req.setUrl(newUrl);
 	// std::string filename = _locConfig.getRoot() + req.getUrl();
@@ -375,7 +384,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// loc
 	// }
 	// check the file requested is a directory
-	// std::cout << "after |" << req.getUrl() << "|" << std::endl;
+	// std::cerr << "after |" << req.getUrl() << "|" << std::endl;
 	std::string x = req.getUrl();
 	std::string newUrl = req.getUrl().erase(0, locationPath.size());
 	req.setUrl(newUrl);
@@ -383,9 +392,9 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (FileSystem::getFileStatus(filename) == IS_DIRECTORY && x[x.size()-1] != '/')
 	{
 		std::string location = util::getFullUrl(x + "/", req.getHeader("Host"));
-		return res.sendRedirect(301, location);
+		return res.sendRedirect(HttpStatus::MovedPermanently, location);
 	}
-	std::cout << "-------------------------------------\n";
+	std::cerr << "-------------------------------------\n";
 	if (req.getStatus() != HttpStatus::OK) // CHECK
 		return res.send(req.getStatus());
 	
@@ -441,15 +450,17 @@ Response Server::handleRequest(Request req, int client_fd)
 			std::cerr <<"filename : " << filename << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
-			std::cout <<"content" << cgiOutput << std::endl;
+			std::cerr <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
 			it = headers.begin();
 			while (it != headers.end())
 			{
-				if (it->first == "Status")
+				if (it->first == "Status") {
 					res.setHeader(it->first, it->second);
+					std::cout << "status header is set" << it->second << std::endl;
+				}
 				else if (it->first == "Location")
 					res.setHeader(it->first, it->second);
 				it++;
@@ -461,7 +472,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		catch (const std::exception& e)
 		{
-			std::cout << "Exception " << e.what() << std::endl;
+			std::cerr << "Exception " << e.what() << std::endl;
 			if (!strncmp(e.what(), "File Not Found", 14))
 				return res.send(HttpStatus::NotFound);
 			// some went wrong while executing the file
@@ -510,7 +521,7 @@ Response Server::getHandler(Request req, Response res)
 	if (status == IS_DIRECTORY)
 	{
 		if (filename[filename.length() - 1] != '/')
-			return res.sendRedirect(301, util::getFullUrl(req.getUrl() + "/", req.getHeader("Host")));
+			return res.sendRedirect(HttpStatus::MovedPermanently, util::getFullUrl(req.getUrl() + "/", req.getHeader("Host")));
 		// if so then check if there is any default pages in the current dir (index.html index ect..)
 		std::string indexFileName = FileSystem::getIndexFile(filename, _locConfig.getIndex());
 		// if indexfile is found then
@@ -548,7 +559,7 @@ Response Server::postHandler(Request req, Response res)
 			return res.send(HttpStatus::Forbidden);
 		return getHandler(req, res);
 	}
-	std::cout << filename << "|\n";
+	std::cerr << filename << "|\n";
 
 	if (!filename.empty())
 	{
@@ -556,7 +567,7 @@ Response Server::postHandler(Request req, Response res)
 		try {
 			// if (atoi(req.getHeaders()["Content-Length"].c_str()) < req.getBufferSize())
 				FileSystem::uploadFile(uploadLocation, req.getContentBody());
-			std::cout << "heey" << std::endl;
+			std::cerr << "heey" << std::endl;
 			return res.send(HttpStatus::Created);
 		}
 		catch (std::exception& e)
@@ -564,7 +575,7 @@ Response Server::postHandler(Request req, Response res)
 			return res.send(HttpStatus::InternalServerError);
 		}
 	}
-	std::cout << "couldnt" << std::endl;
+	std::cerr << "couldnt" << std::endl;
 	return res.send(HttpStatus::Forbidden);
 }
 
@@ -573,7 +584,7 @@ Response Server::deleteHandler(Request req, Response res)
 	// check if the file is founded and is a file 
 	// if its a directory so its forbidden to remove 
 	std::string path = _locConfig.getRoot() + req.getUrl();
-	std::cout << "couldnt delete" << std::endl;
+	std::cerr << "couldnt delete" << std::endl;
 	int status = FileSystem::getFileStatus(path);
 	if (status == HttpStatus::OK)
 	{
@@ -612,7 +623,7 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		}
 		catch (const std::exception &e)
 		{
-			std::cout << "exeception" << e.what() << std::endl;
+			std::cerr << "exeception" << e.what() << std::endl;
 		}	
 	}
 	// otherwise make one
@@ -657,7 +668,7 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 	while (TRUE)
 	{
 		// clear the sockets set
-		// std::cout << "done" << ++a << std::endl;
+		// std::cerr << "done" << ++a << std::endl;
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
 		// add all servers sockets to the sockets set  [readfds]
@@ -699,7 +710,7 @@ void Server::setup(ParseConfig GlobalConfig)
 		Server newServer(*serverConfig);
 
 		std::map<u_int32_t, std::string> addresses = serverConfig->getHostPort();
-		std::cout << "server configs size: " << addresses.size() << std::endl;
+		std::cerr << "server configs size: " << addresses.size() << std::endl;
 		// for (port = ports.begin(); port != ports.end(); port++)
 		for (address = addresses.begin(); address!= addresses.end(); address++)
 		{
@@ -707,7 +718,7 @@ void Server::setup(ParseConfig GlobalConfig)
 			std::string host = address->second;
 			// if (usedPorts.find(port) == usedPorts.end())
 			// {
-			std::cout << "port" << port << std::endl;
+			std::cerr << "port" << port << std::endl;
 			serversSockets.push_back(newServer.addPort(port, host));
 				// 	usedPorts.insert(port);
 			// }

@@ -8,6 +8,7 @@ Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpS
 {
 	_buffSize = buffSize;
 	nbytes_left= 0;
+	isChunked = false;
 	parse();
 }
 
@@ -57,22 +58,23 @@ void Request::parse()
 	
 	lines = util::split(_buffer, "\n");
 	// for (int i = 0; i < lines.size(); i++) {
-	// 	std::cout << lines[i] << std::endl;
+	// 	std::cerr << lines[i] << std::endl;
 	// }
 	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
+		// std::cout << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		// std::cout << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
+		// std::cerr << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
 		if (_headers["Transfer-Encoding"] == "chunked")
 			// ParseChunkBody(_buffer);
 		{
 			isChunkedBody = true;
 			std::string body = _buffer.substr(_buffer.find("\r\n\r\n"), _buffer.size());
-			std::cout << body << std::endl;
+			std::cerr << body << std::endl;
 			std::string out = util::ParseChunkBody(unchunked, body, isChunkedBodyEnd);
-			std::cout << out << std::endl;
+			std::cerr << out << std::endl;
 			_content_body.assign(out.begin(), out.end()); // optimize
 		}
 		else
@@ -203,7 +205,7 @@ void Request::ParseChunkBody(std::string &buffer)
 	while (size)
 	{
 		i = body.find("\r\n", i) + 2;
-		std::cout << "assigning " << body.substr(i, size) << std::endl;
+		std::cerr << "assigning " << body.substr(i, size) << std::endl;
 		_content_body.assign( body.substr(i, size).c_str(),  body.substr(i, size).c_str() + size);
 		// _content_body += body.substr(i, size);
 		i += size + 2;

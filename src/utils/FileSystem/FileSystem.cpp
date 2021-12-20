@@ -81,11 +81,11 @@ void    FileSystem::uploadChunkedFile(std::string uploadLocation, Request req)
     headers = req.getHeaders();
 	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
 	
-		std::cout << it->first << "|" << it->second << std::endl;
+		std::cerr << it->first << "|" << it->second << std::endl;
 	}
 
     int bufferSize = req.getBufferSize();
-    std::cout << "size " << bufferSize << std::endl;
+    std::cerr << "size " << bufferSize << std::endl;
 	int count = 0;
     std::fstream new_file;
     new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
@@ -98,7 +98,7 @@ void    FileSystem::uploadChunkedFile(std::string uploadLocation, Request req)
 			i += 4;
 			while (i != bufferSize && count < atoi(headers["Content-Length"].c_str()))
 			{
-                std::cout << req._buffer[i];
+                std::cerr << req._buffer[i];
                 new_file.write(&req._buffer[i], 1);
 				i++;
 				count++;
@@ -106,7 +106,7 @@ void    FileSystem::uploadChunkedFile(std::string uploadLocation, Request req)
 
 		}
 	}
-    std::cout << std::endl;
+    std::cerr << std::endl;
     new_file.close();
 }
 

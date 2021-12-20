@@ -1,5 +1,5 @@
-#include "CGI.hpp"
 
+#include "CGI.hpp"
 extern char** environ;
 
 char        **fill_args(std::string cgiPath, std::string path) {
@@ -7,7 +7,7 @@ char        **fill_args(std::string cgiPath, std::string path) {
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
 	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
-    // std::cout << "executing " <<  cgiPath.c_str() << std::endl;
+    // std::cerr << "executing " <<  cgiPath.c_str() << std::endl;
 	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
@@ -30,7 +30,7 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     while (ss.good())
     {
         getline(ss, line, '\n');
-        std::cout << line << std::endl;
+        std::cerr << line << std::endl;
         line = util::trim(line);
         // std::cerr << "line :" << line << "|" << std::endl;
         // if (line.find("<html>") == std::string::npos && line.length() > 0)
@@ -56,7 +56,7 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
                 
             }
             // else if (tab[0] != "X-Powered-By" && tab[0] != "")
-           // std::cout << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
+           // std::cerr << "Found this header "<< "|" << tab[0] << "|" << headers[tab[0]] << "|" << std::endl;
 
         }
         else
@@ -77,11 +77,15 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
     int         fd[2];
     int         nfd[2];
+    int         f_err[2];
+
     std::string cgiOutput = "";
 
     if (pipe(fd) == -1)
         throw std::runtime_error("pipe error");
     if (pipe(nfd) == -1)
+        throw std::runtime_error("pipe error");
+    if (pipe(f_err) == -1)
         throw std::runtime_error("pipe error");
 
     pid_t pid = fork();
@@ -89,28 +93,40 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     if (pid == -1)
         throw std::runtime_error("fork error");
     int status;
+    int wstatus;
 
     if (pid > 0) {
         wait(NULL);
+        // if (WIFEXITED(wstatus))
+        close(f_err[1]);
+        FILE *result;
+
+        result = fdopen(f_err[0], "r");
+        char c;
+        while((c = fgetc(result)) != EOF)
+            cgiOutput += c;
+        close(f_err[0]);
+        fclose(result);
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);
 
-        FILE *result;
 
         result = fdopen(nfd[0], "r");
-        char c;
+        // char c;
         while((c = fgetc(result)) != EOF)
             cgiOutput += c;
         fclose(result);
         close(nfd[0]);
-		remove(req._fileLocation.c_str());
+		// remove(req._fileLocation.c_str());
+        
     }
     else if (pid == 0)
     {
+        
         // if (req.isChunked)
         // {
-        //     std::cout << "file size" << util::getFileLength(req.fd) << std::endl;
+        //     std::cerr << "file size" << util::getFileLength(req.fd) << std::endl;
         //     dup2(req.fd, 0);
         // }
         // else
@@ -118,20 +134,23 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
                 throw std::runtime_error("write error");
             dup2(fd[0], 0);
-            // std::cout << "file size" << util::getFileLength(fd[1]) << std::endl;
+            // std::cerr << "file size" << util::getFileLength(fd[1]) << std::endl;
         // }
 
-        dup2(nfd[1], 1);
+        dup2(nfd[1], STDOUT_FILENO);
+        dup2(f_err[1], STDERR_FILENO);
         
         close(fd[1]);
         close(fd[0]);
         close(req.fd);
         close(nfd[1]);
         close(nfd[0]);
-
+        close(f_err[1]);
+        close(f_err[0]);
+  
         if ((status = execve(args[0], args, environ)) == -1)
             throw std::runtime_error("execve error");
-
+        exit(0);
     }
     int i = -1;
     while (args[++i] != NULL)
@@ -169,10 +188,10 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
         if (!req.getHeader("Content-Type").empty())
             setenv("CONTENT_TYPE", req.getHeader("Content-Type").c_str(), 1);
     }
-    // if (req.isChunked)
-    //     // setenv("Transfer-Encoding", "chunked", 1);
-    //     setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
-    // else 
+    if (req.isChunked)
+        // setenv("Transfer-Encoding", "chunked", 1);
+        setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
+    else 
     if (!req.getContentBody().empty())
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
     

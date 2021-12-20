@@ -118,9 +118,9 @@ void 	Config::check_locations()
 					loc._index = it->second._index;
 			}
 		}
-		std::cout << "before:" << it->second._isAutoIndexOn << std::endl;
+		std::cerr << "before:" << it->second._isAutoIndexOn << std::endl;
 		it->second = loc;
-		std::cout << "after:" << it->second._isAutoIndexOn << std::endl;
+		std::cerr << "after:" << it->second._isAutoIndexOn << std::endl;
 	}
 }
 void Config::root(std::vector<std::string>::iterator &it)

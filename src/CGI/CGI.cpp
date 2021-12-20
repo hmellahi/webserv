@@ -1,12 +1,11 @@
 #include "CGI.hpp"
 extern char** environ;
 
+# include "FileSystem/FileSystem.hpp"
 char        **fill_args(std::string cgiPath, std::string path) {
 
 	char **args = (char **)malloc(sizeof(char *) * 3);
 
-	// args[0] = strdup("/Users/hmellahi/.brew/bin/php-cgi");
-    // std::cerr << "executing " <<  cgiPath.c_str() << std::endl;
 	args[0] = strdup(cgiPath.c_str());
 	args[1] = strdup(path.c_str());
 	args[2] = (char *)0;
@@ -85,7 +84,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         throw std::runtime_error("pipe error");
     if (pipe(nfd) == -1)
         throw std::runtime_error("pipe error");
-    // if (pipe(f_err) == -1)
+    // if (pipe(f_err) != 0)
     //     throw std::runtime_error("pipe error");
 
     pid_t pid = fork();
@@ -96,7 +95,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     int wstatus;
 
     if (pid > 0) {
-        // wait(NULL);
+        wait(NULL);
         // if (WIFEXITED(wstatus))
         // close(f_err[1]);
         // close(f_err[1]);
@@ -113,7 +112,8 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         // fclose(result);
 
 
-
+        if (!FileSystem::isReadyFD(nfd[0], READ))
+            throw std::runtime_error("fd not ready read");
         result = fdopen(nfd[0], "r");
         char c;
         while((c = fgetc(result)) != EOF)
@@ -128,31 +128,34 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         if (req.isChunked)
         {
             std::cerr << "file size" << util::getFileLength(req.fd) << std::endl;
-            dup2(req.fd, 0);
+            if (dup2(req.fd, 0) == -1)
+                throw std::runtime_error("dup error");
         }
         else
         {
-        // dup2(1, 2);
+        // if (dup2(1, 2);
+            if (!FileSystem::isReadyFD(fd[1], WRITE))
+                throw std::runtime_error("fd not ready write");
             if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
                 throw std::runtime_error("write error");
-            dup2(fd[0], 0);
+            if (dup2(fd[0], 0) == -1)
+                throw std::runtime_error("dup error");
             // std::cerr << "file size" << util::getFileLength(fd[1]) << std::endl;
         }
 
-        // dup2(f_err[1], STDERR_FILENO);
-        dup2(nfd[1], STDOUT_FILENO);
+        // if (dup2(f_err[1], STDERR_FILENO);
+        if (dup2(nfd[1], STDOUT_FILENO) == -1)
+            throw std::runtime_error("dup error");
         
         close(fd[1]);
         close(fd[0]);
         close(req.fd);
         close(nfd[1]);
         close(nfd[0]);
-        // close(f_err[1]);
-        // close(f_err[0]);
+
   
-        if ((status = execve(args[0], args, environ)) == -1)
+        if ((status = execve(args[0], args, environ)) != 0)
             throw std::runtime_error("execve error");
-        // exit(0);
     }
     int i = -1;
     while (args[++i] != NULL)
@@ -163,24 +166,21 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     return parseOutput(cgiOutput);
 }
 
-bool exists(const std::string& name) {
+void exists(const std::string& name) {
     if (FILE *file = fopen(name.c_str(), "r")) {
         fclose(file);
-        return true;
-    } else {
-        return false;
-    }   
+        return ;
+    }
+    throw std::runtime_error("File Not Found");
 }
 
 
 
 std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
-    int fd[2];
-    if (!exists(path)) {
-       throw std::runtime_error("File Not Found");
-    }
+    int                                                           fd[2];
     std::pair<std::string, std::map<std::string , std::string> >  ret;
+    exists(path);
     
     char    **args = fill_args(cgiPath, path);
 
@@ -238,6 +238,5 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
 
 
     // std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;
-    std::cout << "exceutingdsfas  out\n";
     return exec_cgi( req, args, path);
 }

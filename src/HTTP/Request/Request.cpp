@@ -140,18 +140,17 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 	std::string key;
 	std::string value;
 	int pos;
-	for (int i = 1; i < lines.size() && !lines[i].empty(); i++)
+	for (int i = 1; i < lines.size(); i++)
 	{
+		std::cout << lines[i] << std::endl;
 		if (lines[i] == "\r")
             break;
 		if (util::trim(lines[i]).empty())
 			continue;
 		pos = lines[i].find(":");
-		// todo: check with nginx if its neccesary
 		if (pos == std::string::npos)
 		{
 			_status = HttpStatus::BadRequest;
-			// std::cout << "line: " << lines[i] << ", "<< lines[i].size() << std::endl;
 			return ;
 		}
 		key = lines[i].substr(0, pos);

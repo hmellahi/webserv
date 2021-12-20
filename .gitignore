@@ -4,6 +4,7 @@
 ## executable shit
 webserv
 webserv.dSYM
+tests
 
 #docker
 docker

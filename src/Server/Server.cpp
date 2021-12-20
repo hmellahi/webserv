@@ -94,7 +94,7 @@ std::string	Server::updateLocationConfig(std::string path)
 	{
 		std::string locationPath = location->first;
 		std::cout << "location " << locationPath << std::endl;
-		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()) && (locationPath.size() ==))
+		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
 			_locConfig = location->second;
 			return locationPath;
@@ -277,6 +277,7 @@ Socket Server::addPort(int port, std::string host)
 Response Server::handleRequest(Request req, int client_fd)
 {
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
+	if (locationPath=="/")locationPath ="";
 	std::cout << "match" << locationPath << std::endl;
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
@@ -293,11 +294,7 @@ Response Server::handleRequest(Request req, int client_fd)
 
 		req.isChunked = true;
 
-		// check for upload
-		// if (_locConfig.getUploadPath().empty())
-		// return res.send(HttpStatus::Forbidden);
-		// std::vector<std::string> tokens = util::split(req.getUrl(), "/");
-		// std::string filename = tokens[tokens.size() - 1];
+		// todo check for permission
 		static int i;
 		req._fileLocation = "/tmp/cgi" + util::ft_itos(i++);
 		if (req.getMethod() == "POST" && !_locConfig.getUploadPath().empty())
@@ -369,16 +366,25 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cout << "-------------------------------------\n";
 	// std::cout << "before |" << req.getUrl() << "|" << std::endl;
 	// int x = req.getUrl()[(req.getUrl()).length() - 1] == '/' ? 0 : 1;
-	std::cout << locationPath <<std::endl;
-	std::string newUrl = req.getUrl().erase(0, locationPath.size());
-	req.setUrl(newUrl);
-	std::string filename = _locConfig.getRoot() + req.getUrl();
+	// std::cout << locationPath <<std::endl;
+	// std::string newUrl = req.getUrl().erase(0, locationPath.size());
+	// req.setUrl(newUrl);
+	// std::string filename = _locConfig.getRoot() + req.getUrl();
 	// if (locationPath[locationPath.size() - 1] == '/')
 	// {
 		// loc
 	// }
 	// check the file requested is a directory
-	std::cout << "after |" << req.getUrl() << "|" << std::endl;
+	// std::cout << "after |" << req.getUrl() << "|" << std::endl;
+	std::string x = req.getUrl();
+	std::string newUrl = req.getUrl().erase(0, locationPath.size());
+	req.setUrl(newUrl);
+	std::string filename = _locConfig.getRoot() + req.getUrl();
+	if (FileSystem::getFileStatus(filename) == IS_DIRECTORY && x[x.size()-1] != '/')
+	{
+		std::string location = util::getFullUrl(x + "/", req.getHeader("Host"));
+		return res.sendRedirect(301, location);
+	}
 	std::cout << "-------------------------------------\n";
 	if (req.getStatus() != HttpStatus::OK) // CHECK
 		return res.send(req.getStatus());
@@ -533,11 +539,15 @@ Response Server::getHandler(Request req, Response res)
 
 Response Server::postHandler(Request req, Response res)
 {
-	// todo how to handle static files in post req
-	if (_locConfig.getUploadPath().empty())
-		return res.send(HttpStatus::Forbidden);
 	std::vector<std::string> tokens = util::split(req.getUrl(), "/");
 	std::string filename = tokens[tokens.size() - 1];
+
+	if (_locConfig.getUploadPath().empty())
+	{
+		if (FileSystem::getFileStatus(_locConfig.getRoot() + filename) == IS_DIRECTORY)
+			return res.send(HttpStatus::Forbidden);
+		return getHandler(req, res);
+	}
 	std::cout << filename << "|\n";
 
 	if (!filename.empty())
@@ -551,9 +561,10 @@ Response Server::postHandler(Request req, Response res)
 		}
 		catch (std::exception& e)
 		{
-			return res.send(HttpStatus::InternalServerError); //todo compare with nginx?	
+			return res.send(HttpStatus::InternalServerError);
 		}
 	}
+	std::cout << "couldnt" << std::endl;
 	return res.send(HttpStatus::Forbidden);
 }
 
@@ -562,10 +573,11 @@ Response Server::deleteHandler(Request req, Response res)
 	// check if the file is founded and is a file 
 	// if its a directory so its forbidden to remove 
 	std::string path = _locConfig.getRoot() + req.getUrl();
+	std::cout << "couldnt delete" << std::endl;
 	int status = FileSystem::getFileStatus(path);
 	if (status == HttpStatus::OK)
 	{
-		// todo does delete request can delete a folder
+		// todo delete a folder
 		if (remove(path.c_str()) == 0)
 			res.send(HttpStatus::NoContent);
 		else
@@ -595,12 +607,12 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		try
 		{
 			std::string filename = it->second;
-			// todo
-			// will be changed to the server root path
+			// todo  will be changed to the server root path
 			return (FileSystem::readFile("src/Conf/" + filename, status));
 		}
-		catch (const std::exception)
+		catch (const std::exception &e)
 		{
+			std::cout << "exeception" << e.what() << std::endl;
 		}	
 	}
 	// otherwise make one

@@ -108,7 +108,6 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     }
     else if (pid == 0)
     {
-        // todo check 
         // if (req.isChunked)
         // {
         //     std::cout << "file size" << util::getFileLength(req.fd) << std::endl;

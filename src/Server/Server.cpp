@@ -298,7 +298,7 @@ Response Server::handleRequest(Request req, int client_fd)
 
 		req.isChunked = true;
 
-		// todo check for permission
+		// do checks ( permission..)
 		static int i;
 		req._fileLocation = "/tmp/cgi" + util::ft_itos(i++);
 		if (req.getMethod() == "POST" && !_locConfig.getUploadPath().empty())
@@ -374,29 +374,20 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 	}
 	std::cerr << "-------------------------------------\n";
-	// std::cerr << "before |" << req.getUrl() << "|" << std::endl;
-	// int x = req.getUrl()[(req.getUrl()).length() - 1] == '/' ? 0 : 1;
-	// std::cerr << locationPath <<std::endl;
-	// std::string newUrl = req.getUrl().erase(0, locationPath.size());
-	// req.setUrl(newUrl);
-	// std::string filename = _locConfig.getRoot() + req.getUrl();
-	// if (locationPath[locationPath.size() - 1] == '/')
-	// {
-		// loc
-	// }
+
 	// check the file requested is a directory
-	// std::cerr << "after |" << req.getUrl() << "|" << std::endl;
-	std::string x = req.getUrl();
+	std::string oldUrl = req.getUrl();
 	std::string newUrl = req.getUrl().erase(0, locationPath.size());
 	req.setUrl(newUrl);
 	std::string filename = _locConfig.getRoot() + req.getUrl();
-	if (FileSystem::getFileStatus(filename) == IS_DIRECTORY && x[x.size()-1] != '/')
+	if (locationPath != "" && FileSystem::getFileStatus(filename) == IS_DIRECTORY && oldUrl[oldUrl.size()-1] != '/')
 	{
-		std::string location = util::getFullUrl(x + "/", req.getHeader("Host"));
+		std::string location = util::getFullUrl(oldUrl + "/", req.getHeader("Host"));
 		return res.sendRedirect(HttpStatus::MovedPermanently, location);
 	}
+
 	std::cerr << "-------------------------------------\n";
-	if (req.getStatus() != HttpStatus::OK) // CHECK
+	if (req.getStatus() != HttpStatus::OK)
 		return res.send(req.getStatus());
 	
 	// Check if the request body size doesnt exceed
@@ -424,10 +415,6 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (!isAllowed)
 		return res.send(HttpStatus::MethodNotAllowed); // CHECK	
 
-	// std::string filename = _locConfig.getRoot() + req.getUrl();
-	std::cerr << "-------------------------------------\n";
-	std::cerr << _locConfig.getIndex().size() << "|" << filename << "|" << std::endl;
-	std::cerr << "-------------------------------------\n";
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI
 	std::string fileExtension = util::GetFileExtension(filename.c_str());
@@ -435,10 +422,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
 	std::map<std::string, std::string> headers;
-	// if (!exists(filename) ) {
-	// 	return res.send(HttpStatus::NotFound);
-	// 	// return res;
-	// }
+
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
 		std::string cgiType = cgi->first;
@@ -446,9 +430,6 @@ Response Server::handleRequest(Request req, int client_fd)
 		// execute the file using approriate cgi
 		if (fileExtension != cgiType) continue;
 		try {
-
-
-			// std::cerr <<"filename : " << filename << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
 			std::cout <<"content" << cgiOutput << std::endl;
@@ -477,7 +458,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			std::cerr << "Exception " << e.what() << std::endl;
 			if (!strncmp(e.what(), "File Not Found", 14))
 				return res.send(HttpStatus::NotFound);
-			// some went wrong while executing the file
+			// smtg went wrong while executing the file
 			return res.send(HttpStatus::InternalServerError);
 		}
 	}
@@ -590,7 +571,6 @@ Response Server::deleteHandler(Request req, Response res)
 	int status = FileSystem::getFileStatus(path);
 	if (status == HttpStatus::OK)
 	{
-		// todo delete a folder
 		if (remove(path.c_str()) == 0)
 			res.send(HttpStatus::NoContent);
 		else
@@ -620,13 +600,11 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		try
 		{
 			std::string filename = it->second;
-			// todo  will be changed to the server root path
 			std::string configPath = std::string(configFilePath,  configFilePath + strlen(configFilePath));
 			size_t index = configPath.rfind('/');
 			std::string errorPagePath = filename;
 			if (std::string::npos != index)
 				errorPagePath = configPath.substr(0, index) + "/" + errorPagePath;
-			std::cout << "rrr"<<errorPagePath << std::endl;
 			return (FileSystem::readFile(errorPagePath, status));
 		}
 		catch (const std::exception &e)

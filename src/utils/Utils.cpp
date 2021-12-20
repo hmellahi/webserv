@@ -226,7 +226,7 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bo
 	chunked.assign("");
 	hex = buffer.substr(0, buffer.size());
 	size = HexToDecimal(hex);
-	i += 4;
+	// i += 4;
 	while (size)
 	{
 		i = buffer.find("\r\n", i) + 2;

@@ -80,7 +80,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 			}
 			catch(std::exception& e)
 			{
-				std::cout << "wtf bro" << std::endl;
+				// std::cout << "wtf bro" << std::endl;
 			}
 		}
 	}
@@ -112,7 +112,11 @@ std::string	Server::updateLocationConfig(std::string path)
 Response Server::handleConnection(std::string &requestBody, int &requestSize, int &client_fd, std::vector<Server> &servers)
 {
 	// parse request body and create new request object
-	Request req(requestBody, requestSize);	
+	Request req(requestBody, requestSize);
+	std::cout << "****************************************" << std::endl;
+	for (int i = 0;i < req.getContentBody().size();i++)
+		std::cout << req.getContentBody()[i];	
+	std::cout << std::endl<< "****************************************" << std::endl;
 	// Loop throught all serversname of all running servers
 	// then look for the servername who matches the request host header
 	std::vector<Server>::iterator server;
@@ -155,7 +159,6 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	{
 		sd = clients[i];
 		// check if sd is ready to read
-				std::cout << "wtf bro " << sd << std::endl;
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			valread = read(sd, requestBody, BUFSIZE);
@@ -201,8 +204,8 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					clients[i].type = WRITE_SOCKET;
 				}
 				// }
-				// else if (res.getHeader("Connection") == "close")
-				// 	closeConnection(clients, readfds, i, sd);
+				if (!res.nbytes_left && res.getHeader("Connection") == "close")
+					closeConnection(clients, readfds, i, sd);
 			}
 		}
 		else if (FD_ISSET(sd, &writefds))
@@ -295,7 +298,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
-	bool isNotCompletedYet = (req.getContentBody().size() < contentLength);// || (req.isChunkedBody && !req.isChunkedBodyEnd);
+	bool isNotCompletedYet = (req.getContentBody().size() < contentLength || (req.isChunkedBody && !req.isChunkedBodyEnd));
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		// Check if the request body size doesnt exceed
@@ -330,7 +333,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
 		}
-		// if (!req.isChunkedBody)
+		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
 		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
@@ -355,8 +358,13 @@ Response Server::handleRequest(Request req, int client_fd)
 		int nbytes_wrote;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
 			return res.send(HttpStatus::InternalServerError);
-		nbytes_wrote = write(req.fd, oldRequest._buffer.c_str(), oldRequest._buffSize);
-
+		if (req.isChunkedBody)
+			nbytes_wrote = write(req.fd, oldRequest._buffer.c_str(), oldRequest._buffSize);
+		else
+		{
+			std::string _buff = util::ParseChunkBody(oldRequest.unchunked, oldRequest._buffer, oldRequest.isChunkedBodyEnd);
+			nbytes_wrote = write(req.fd, _buff.c_str(), _buff.size());
+		}
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
@@ -364,13 +372,13 @@ Response Server::handleRequest(Request req, int client_fd)
 			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
 		}
-		// if (!req.isChunkedBody)
+		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
 		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		if (req.nbytes_left > 0)// || (req.isChunkedBody && !req.isChunkedBodyEnd))
+		if (req.nbytes_left > 0 || (req.isChunkedBody && !req.isChunkedBodyEnd))
 			return res;
 		unCompletedRequests.erase(it);
 		if (req.isUpload)

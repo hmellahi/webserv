@@ -72,10 +72,14 @@ void Request::parse()
 			// ParseChunkBody(_buffer);
 		{
 			isChunkedBody = true;
-			std::string body = _buffer.substr(_buffer.find("\r\n\r\n"), _buffer.size());
-			std::cerr << body << std::endl;
+			std::string body = _buffer.substr(_buffer.find("\r\n\r\n") +4, _buffer.size());
+			std::cout << "****************************************" << std::endl;
+			std::cout << "body|" << body << "|" << std::endl;
+			std::cout << "****************************************" << std::endl;
 			std::string out = util::ParseChunkBody(unchunked, body, isChunkedBodyEnd);
-			std::cout << "out" << out << std::endl;
+			std::cout << "****************************************" << std::endl;
+			std::cout << "out|" << out << "|"<< std::endl;
+			std::cout << "****************************************" << std::endl;
 			_content_body.assign(out.begin(), out.end()); // optimize
 		}
 		else

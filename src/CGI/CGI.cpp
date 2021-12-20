@@ -22,12 +22,18 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     std::string line;
     std::string outContent;
     std::vector<std::string> tab;
+    std::vector<std::string> cgiHeaders;
+    cgiHeaders.push_back("Set-Cookie");
+    cgiHeaders.push_back("Status");
+    cgiHeaders.push_back("Location");
 
     outContent = "";
     line = "";
     while (ss.good())
     {
         getline(ss, line, '\n');
+        if (find(cgiHeaders.begin(), cgiHeaders.end(), line.substr(0, line.find(":"))) == cgiHeaders.end())
+            break ;
         // std::cerr << line << std::endl;
         line = util::trim(line);
         // std::cerr << "line :" << line << "|" << std::endl;
@@ -62,7 +68,9 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     }
     while (ss.good())
     {
+        
         getline(ss, line, '\n');
+        std::cout <<  "adding this line " << line << "|\n"; 
         outContent += line;
     }
     ret.first = outContent;
@@ -76,7 +84,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
 
     int         fd[2];
     int         nfd[2];
-    // int         f_err[2];
+    int         f_err[2];
 
     std::string cgiOutput = "";
 
@@ -84,8 +92,8 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         throw std::runtime_error("pipe error");
     if (pipe(nfd) == -1)
         throw std::runtime_error("pipe error");
-    // if (pipe(f_err) != 0)
-    //     throw std::runtime_error("pipe error");
+    if (pipe(f_err) == -1)
+        throw std::runtime_error("pipe error");
 
     pid_t pid = fork();
 
@@ -98,24 +106,27 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         wait(NULL);
         // if (WIFEXITED(wstatus))
         // close(f_err[1]);
-        // close(f_err[1]);
+        close(f_err[1]);
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);
         FILE *result;
+        std::cout << "Reading 2 : \n"; 
+        result = fdopen(f_err[0], "r");
+        char c;
+        while((c = fgetc(result)) != EOF)
+            cgiOutput += c;
+        close(f_err[0]);
+        fclose(result);
+        std::cout << "start \n"; 
 
-        // result = fdopen(f_err[0], "r");
-        // char c;
-        // while((c = fgetc(result)) != EOF)
-        //     cgiOutput += c;
-        // close(f_err[0]);
-        // fclose(result);
-
+        std::cout << cgiOutput;
+        std::cout << "done \n"; 
 
         if (!FileSystem::isReadyFD(nfd[0], READ))
             throw std::runtime_error("fd not ready read");
         result = fdopen(nfd[0], "r");
-        char c;
+        // char c;
         while((c = fgetc(result)) != EOF)
             cgiOutput += c;
         fclose(result);
@@ -124,7 +135,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     }
     else if (pid == 0)
     {
-        // close(f_err[0]);
+        close(f_err[0]);
         if (req.isChunked)
         {
             std::cerr << "file size" << util::getFileLength(req.fd) << std::endl;
@@ -133,7 +144,6 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         } 
         else
         {
-        // if (dup2(1, 2);
             if (!FileSystem::isReadyFD(fd[1], WRITE))
                 throw std::runtime_error("fd not ready write");
             if (write(fd[1], req.getContentBody().data(), req.getContentBody().size()) < 0)
@@ -142,7 +152,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
                 throw std::runtime_error("dup error");
             // std::cerr << "file size" << util::getFileLength(fd[1]) << std::endl;
         }
-
+        dup2(f_err[1], 2);
         // if (dup2(f_err[1], STDERR_FILENO);
         if (dup2(nfd[1], STDOUT_FILENO) == -1)
             throw std::runtime_error("dup error");

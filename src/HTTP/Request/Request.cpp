@@ -63,7 +63,8 @@ void Request::parse()
 	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
-		// std::cout << lines[0] << std::endl;
+
+		// std::cerr << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
 		// std::cerr << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
@@ -74,7 +75,7 @@ void Request::parse()
 			std::string body = _buffer.substr(_buffer.find("\r\n\r\n"), _buffer.size());
 			std::cerr << body << std::endl;
 			std::string out = util::ParseChunkBody(unchunked, body, isChunkedBodyEnd);
-			std::cerr << out << std::endl;
+			std::cout << "out" << out << std::endl;
 			_content_body.assign(out.begin(), out.end()); // optimize
 		}
 		else
@@ -144,7 +145,7 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 	int pos;
 	for (int i = 1; i < lines.size(); i++)
 	{
-		std::cout << lines[i] << std::endl;
+		std::cerr << lines[i] << std::endl;
 		if (lines[i] == "\r")
             break;
 		if (util::trim(lines[i]).empty())

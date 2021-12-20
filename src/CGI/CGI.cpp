@@ -130,7 +130,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             std::cerr << "file size" << util::getFileLength(req.fd) << std::endl;
             if (dup2(req.fd, 0) == -1)
                 throw std::runtime_error("dup error");
-        }
+        } 
         else
         {
         // if (dup2(1, 2);
@@ -156,6 +156,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
   
         if ((status = execve(args[0], args, environ)) != 0)
             throw std::runtime_error("execve error");
+        // exit(-1); 
     }
     int i = -1;
     while (args[++i] != NULL)
@@ -185,16 +186,22 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     char    **args = fill_args(cgiPath, path);
 
     char    **envp;
+    // std::cout << " wnk " << std::string(req.getContentBody().data(),req.getContentBody().data()+req.getContentBody().size())<< std::endl;
     if (req.getMethod() == "POST")
     {
         if (!req.getHeader("Content-Type").empty())
             setenv("CONTENT_TYPE", req.getHeader("Content-Type").c_str(), 1);
     }
     if (req.isChunked)
+    {
+        std::cout << "a" << util::ft_itos(util::getFileLength(req.fd)).c_str()<< std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
-    else if (!req.getContentBody().empty())
+    }
+    else if (!req.getContentBody().empty() || req.getMethod() == "POST")
+    {
+        std::cout << "b" << req.getContentBody().size() << std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
-    
+    }
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);

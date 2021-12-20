@@ -446,6 +446,7 @@ Response Server::handleRequest(Request req, int client_fd)
 				else if (it->first == "Location")
 					res.setHeader(it->first, it->second);
 				it++;
+				
 			}
 			int statusCode;
 			std::istringstream(headers["Status"]) >> statusCode;

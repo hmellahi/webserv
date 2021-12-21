@@ -31,7 +31,7 @@ namespace util
     size_t          HexToDecimal(std::string &str);
     std::string     ft_itos(int nb);
     std::string     DecimalToHex(int decimal_value);
-    std::string     ParseChunkBody(std::string &unchunked, std::string &buffer, bool &flag);
+    std::string     ParseChunkBody(std::string &unchunked, std::string buffer, bool &flag);
     std::string     ft_chunked(std::vector<std::string> strings, bool flag);
     std::vector<std::string>    ChunkStrings(std::string &str, int chunkSize);
 

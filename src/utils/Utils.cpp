@@ -213,7 +213,7 @@ std::vector<std::string> util::ChunkStrings(std::string &str, int chunkSize)
 }
 
 
-std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bool &flag)
+std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, bool &flag)
 {
 	std::string chunked;
 	std::string hex;
@@ -226,9 +226,9 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bo
 	chunked.assign("");
 	hex = buffer.substr(0, buffer.size());
 	size = HexToDecimal(hex);
-	// i += 4;
 	while (size)
 	{
+		std::cout << "size: " << size << std::endl;
 		i = buffer.find("\r\n", i) + 2;
 		if (buffer.substr(i, size).size() >= size)
 			chunked.insert(chunked.size(), buffer.substr(i, size));
@@ -239,7 +239,7 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string &buffer, bo
 			break;
 		size = HexToDecimal(hex);
 	}
-	if (!size)	flag = 1;
+	flag = !size;
 	if (flag == 0)
 		unchunked.assign(hex);
 	return (chunked);

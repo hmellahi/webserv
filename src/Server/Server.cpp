@@ -195,17 +195,17 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					continue;
 				}
 				// std::cerr << "nbytes: " <<  res.nbytes_left << std::endl;
-				// if (res.nbytes_left > 0)
+				// if (res.nbytes_left > 0)	
 				// {
 				std::cerr << "new request hehe" << std::endl;
 				if (res._msg != "")
 				{
 					unCompletedResponses[res._client_fd] = res;
-					clients[i].type = WRITE_SOCKET;
+					clients[i].type = WRITE_SOCKET; // todo useless
 				}
 				// }
-				if (!res.nbytes_left && res.getHeader("Connection") == "close")
-					closeConnection(clients, readfds, i, sd);
+				// if (!res.nbytes_left && res.getHeader("Connection") == "close")
+				// 	closeConnection(clients, readfds, i, sd);
 			}
 		}
 		else if (FD_ISSET(sd, &writefds))
@@ -295,19 +295,29 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::cerr << "match" << locationPath << std::endl;
 	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
+	// Request unCompletedReq = it->second;
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
-	bool isNotCompletedYet = (req.getContentBody().size() < contentLength || (req.isChunkedBody && !req.isChunkedBodyEnd));
+	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
+	std::cout << "isNotCompletedYet: "<< isNotCompletedYet << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
+		/********************** CHEKS ************************/
+		std::cerr << "-------------------------------------\n";
+		if (req.getStatus() != HttpStatus::OK)
+			return res.send(req.getStatus());
 		// Check if the request body size doesnt exceed
 		// the max client body size
 		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // toddo check for chunked
 			return res.send(HttpStatus::PayloadTooLarge);
+		/// check if method is allowed
+		bool isAllowed = checkPermissions(req.getMethod());
+		if (!isAllowed)
+			return res.send(HttpStatus::MethodNotAllowed);
+		/******************************************************/
 
 		req.isChunked = true;
-
 		// do checks ( permission..)
 		static int i;
 		req._fileLocation = "/tmp/cgi" + util::ft_itos(i++);
@@ -326,7 +336,15 @@ Response Server::handleRequest(Request req, int client_fd)
 			close(req.fd);
 			return res.send(HttpStatus::InternalServerError);
 		}
-		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
+		std::string _buff;
+		int nbytes_wrote;
+		if (req.isChunkedBody)
+		{
+			_buff = util::ParseChunkBody(req.unchunked, std::string(req.getContentBody().data(), req.getContentBody().data() + req.getContentBody().size()), req.isChunkedBodyEnd);
+			nbytes_wrote = write(req.fd, _buff.c_str(), req._buffSize);
+		}
+		else
+			nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
@@ -335,25 +353,15 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
-		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
-		std::cerr << "-------------------------------------\n";
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return res;
 	}
 	else if (it != unCompletedRequests.end())
 	{
 		Request oldRequest = req;
-		// int _buffSize = req._buffSize;
-		// std::string buff;
-		// if (req.isChunkedBody)
-		// {
-		// 	buff = util::ParseChunkBody(req.unchunked, req._buffer, req.isChunkedBodyEnd);
-		// 	_buffSize = buff.size();
-		// }
-		// else
-		// std::string buff = std::string(req._buffer, req._buffSize);
-
 		req = it->second;
 		int nbytes_wrote;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
@@ -362,7 +370,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			nbytes_wrote = write(req.fd, oldRequest._buffer.c_str(), oldRequest._buffSize);
 		else
 		{
-			std::string _buff = util::ParseChunkBody(oldRequest.unchunked, oldRequest._buffer, oldRequest.isChunkedBodyEnd);
+			std::string _buff = util::ParseChunkBody(req.unchunked, oldRequest._buffer, req.isChunkedBodyEnd);
 			nbytes_wrote = write(req.fd, _buff.c_str(), _buff.size());
 		}
 		if (nbytes_wrote <= 0)
@@ -374,11 +382,11 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
-		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
-		std::cerr << "-------------------------------------\n";
+		std::cout << "-------------------------------------\n";
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
-		if (req.nbytes_left > 0 || (req.isChunkedBody && !req.isChunkedBodyEnd))
+		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))
 			return res;
 		unCompletedRequests.erase(it);
 		if (req.isUpload)
@@ -428,7 +436,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	bool isAllowed = checkPermissions(req.getMethod());
 	
 	if (!isAllowed)
-		return res.send(HttpStatus::MethodNotAllowed); // CHECK	
+		return res.send(HttpStatus::MethodNotAllowed);
 
 	// check if the requested file isnt a static file
 	// if so then pass it to CGI

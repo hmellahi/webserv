@@ -41,6 +41,7 @@ Request & Request::operator=(Request const &rhs)
 		_buffSize = rhs._buffSize;
 		fd = rhs.fd;
 		isChunkedBody = rhs.isChunkedBody;
+		isChunkedBodyEnd = rhs.isChunkedBodyEnd;
 		nbytes_left= rhs.nbytes_left;
 		_fileLocation = rhs._fileLocation;
 	}
@@ -78,7 +79,7 @@ void Request::parse()
 			std::cout << "****************************************" << std::endl;
 			std::string out = util::ParseChunkBody(unchunked, body, isChunkedBodyEnd);
 			std::cout << "****************************************" << std::endl;
-			std::cout << "out|" << out << "|"<< std::endl;
+			std::cout << "isChunkedBodyEnd|" << isChunkedBodyEnd << "|"<< std::endl;
 			std::cout << "****************************************" << std::endl;
 			_content_body.assign(out.begin(), out.end()); // optimize
 		}

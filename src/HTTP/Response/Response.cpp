@@ -45,6 +45,7 @@ std::string     Response::CraftRedirectionPage(int statusCode)
 
 Response    Response::sendRedirect(int statusCode, const std::string &location)
 {
+    // todo change
     std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
 
@@ -102,7 +103,6 @@ Response    Response::send( int statusCode, std::string filename)
     // craft a response 
     int fileLength = util::getFileLength(filename);
     file_to_send = open(filename.c_str(), O_RDONLY);
-    int nbytes;
     nbytes_left = fileLength;
     std::ostringstream msg;
     msg << _headers["http-version"] << " " << statusCode << " " 
@@ -112,9 +112,6 @@ Response    Response::send( int statusCode, std::string filename)
         << "Connection: " << _headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "\r\n";
-        // << readRaw(file_to_send, BUFSIZE, nbytes)
-        // << readRaw(file_to_send, fileLength);
-
     
     // send it to the client
     sendMessage(_client_fd, msg.str());

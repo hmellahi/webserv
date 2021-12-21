@@ -80,7 +80,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 			}
 			catch(std::exception& e)
 			{
-				// std::cout << "wtf bro" << std::endl;
+				// std::cerr << "wtf bro" << std::endl;
 			}
 		}
 	}
@@ -113,10 +113,10 @@ Response Server::handleConnection(std::string &requestBody, int &requestSize, in
 {
 	// parse request body and create new request object
 	Request req(requestBody, requestSize);
-	std::cout << "****************************************" << std::endl;
+	std::cerr << "****************************************" << std::endl;
 	for (int i = 0;i < req.getContentBody().size();i++)
-		std::cout << req.getContentBody()[i];	
-	std::cout << std::endl<< "****************************************" << std::endl;
+		std::cerr << req.getContentBody()[i];	
+	std::cerr << std::endl<< "****************************************" << std::endl;
 	// Loop throught all serversname of all running servers
 	// then look for the servername who matches the request host header
 	std::vector<Server>::iterator server;
@@ -337,14 +337,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			return res.send(HttpStatus::InternalServerError);
 		}
 		std::string _buff;
-		int nbytes_wrote;
-		if (req.isChunkedBody)
-		{
-			_buff = util::ParseChunkBody(req.unchunked, std::string(req.getContentBody().data(), req.getContentBody().data() + req.getContentBody().size()), req.isChunkedBodyEnd);
-			nbytes_wrote = write(req.fd, _buff.c_str(), req._buffSize);
-		}
-		else
-			nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
+		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
@@ -366,18 +359,20 @@ Response Server::handleRequest(Request req, int client_fd)
 		int nbytes_wrote;
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
 			return res.send(HttpStatus::InternalServerError);
-		if (req.isChunkedBody)
+		if (!req.isChunkedBody)
 			nbytes_wrote = write(req.fd, oldRequest._buffer.c_str(), oldRequest._buffSize);
 		else
 		{
 			std::string _buff = util::ParseChunkBody(req.unchunked, oldRequest._buffer, req.isChunkedBodyEnd);
+			// std::cout << _buff;
 			nbytes_wrote = write(req.fd, _buff.c_str(), _buff.size());
 		}
 		if (nbytes_wrote <= 0)
 		{
-			remove(req._fileLocation.c_str());
+			// remove(req._fileLocation.c_str());
 			unCompletedRequests.erase(it);
 			close(req.fd);
+			std::cout << "was here \n";
 			return res.send(HttpStatus::InternalServerError);
 		}
 		if (!req.isChunkedBody)

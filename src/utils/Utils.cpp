@@ -228,7 +228,7 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	size = HexToDecimal(hex);
 	while (size)
 	{
-		std::cout << "size: " << size << std::endl;
+		std::cerr << "size: " << size << std::endl;
 		i = buffer.find("\r\n", i) + 2;
 		if (buffer.substr(i, size).size() >= size)
 			chunked.insert(chunked.size(), buffer.substr(i, size));
@@ -242,5 +242,10 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	flag = !size;
 	if (flag == 0)
 		unchunked.assign(hex);
+	std::cout << "****************************************" << std::endl;
+	std::cout << "body|" << chunked << "|" << std::endl;
+	std::cout << "rem" << unchunked << std::endl;
+	std::cout << "****************************************" << std::endl;
+
 	return (chunked);
 }

@@ -245,6 +245,9 @@ void Config::listen(std::vector<std::string>::iterator &it)
 			ipPort = util::split(*it, ":");
 			if (ipPort.size() != 2)
 				throw std::runtime_error("Invalid Port: " + *it);
+				std::cout << "|" << ipPort[0] << "|\n";
+				std::cout << "|" << ipPort[1] << "|\n";
+				
 			ip = ipPort[0];
 			port = atoi(ipPort[1].c_str());
 			if (port < 0 || port > 65535)
@@ -260,6 +263,7 @@ void Config::listen(std::vector<std::string>::iterator &it)
 			throw std::runtime_error("Invalid Port: " + *it);
 		_listen.push_back(port);
 		_hostPort[port] = ip;
+		std::cout << "port"<< port << std::endl;
 		it++;
 		count++;
 	}

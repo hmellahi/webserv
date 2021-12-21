@@ -125,7 +125,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             cgiOutput += c;
         fclose(result);
         close(nfd[0]);
-		remove(req._fileLocation.c_str());
+		// remove(req._fileLocation.c_str());
     }
     else if (pid == 0)
     {

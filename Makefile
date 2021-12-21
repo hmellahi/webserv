@@ -49,6 +49,8 @@ $(NAME): $(SRC)
 san : $(SRC)
 	$(CC) ${FLAGS} ${DEBUG_FLAGS} $(INCLUDE) $(SRC)  -o $(NAME)
 
+run : re
+	./$(NAME)  2>/dev/null
 clean:
 	@rm -rf ${OBJ}
 

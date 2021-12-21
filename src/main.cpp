@@ -20,6 +20,7 @@ int main(int ac , char *av[])
 	if (ac <= 2)
 	{
 		configFilePath = av[1] ? av[1] : DEFAULT_CONFIG_PATH;
+		std::cout << configFilePath << std::endl;
 	}
 	else
 	{

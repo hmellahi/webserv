@@ -240,7 +240,8 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				else
 				{
 					try{
-						to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
+						to_send = res.readRaw(res.file_to_send, BUFSIZE, nbytes);
+						std::cout << "to_send" << to_send << std::endl;
 					}
 					catch(std::exception &e)
 					{
@@ -300,7 +301,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
-	std::cout << "isNotCompletedYet: "<< isNotCompletedYet << std::endl;
+	std::cout << "completed: "<< !isNotCompletedYet << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		/********************** CHEKS ************************/
@@ -492,14 +493,11 @@ bool	Server::checkPermissions(std::string method)
 	bool isAllowed = true;
 	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
 
-	if (allowedMethods.size() > 0)
-	{
-		std::vector<std::string>::iterator it;
-		it = find(allowedMethods.begin(), allowedMethods.end(), method);
-		if (it == allowedMethods.end())
-			isAllowed = false;
-	}
-	return isAllowed;
+	if (allowedMethods.size() == 0)
+		return true;
+	std::vector<std::string>::iterator it;
+	it = find(allowedMethods.begin(), allowedMethods.end(), method);
+	return (it == allowedMethods.end());
 }
 
 methodType Server::handleMethod(int methodIndex)
@@ -607,7 +605,7 @@ Response Server::methodNotFoundHandler(Request req, Response res)
 	return res.send(HttpStatus::NotImplemented);
 }
 
-std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
+std::pair<int, std::string> Server::getErrorPageContent(int status_code, Config _serverConfig)
 {
 	std::map<int, std::string> errorPages = _serverConfig.get_error_pages();
 	std::map<int, std::string>::iterator it;
@@ -624,7 +622,7 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 			std::string errorPagePath = filename;
 			if (std::string::npos != index)
 				errorPagePath = configPath.substr(0, index) + "/" + errorPagePath;
-			return (FileSystem::readFile(errorPagePath, status));
+			return std::make_pair(FileSystem::readFile(errorPagePath, status), "");
 		}
 		catch (const std::exception &e)
 		{
@@ -640,7 +638,7 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		<< " " << HttpStatus::reasonPhrase(status_code)
 		<< "</h1></center><hr><center>Web server"
 		<< "dyal lay7sn l3wan/1.18.0 (Ubuntu)</center></body></html>";
-	return (html.str());
+	return std::make_pair(-8, html.str());
 }
 
 int Server::getMethodIndex(std::string method_name)

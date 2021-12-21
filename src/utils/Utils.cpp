@@ -220,6 +220,8 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	int size;
 	int i = 0;
 
+	std::cout << "****************************************" << std::endl;
+	std::cout << "buffer|" << buffer << "|" << std::endl;
 	if (!unchunked.empty())
 		buffer.insert(0, unchunked);
 	unchunked.assign("");
@@ -242,9 +244,9 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	flag = !size;
 	if (flag == 0)
 		unchunked.assign(hex);
-	std::cout << "****************************************" << std::endl;
 	std::cout << "body|" << chunked << "|" << std::endl;
-	std::cout << "rem" << unchunked << std::endl;
+	std::cout << "rem|" << unchunked << "|"<< std::endl;
+	std::cout << "flag" << flag << "|"<< std::endl;
 	std::cout << "****************************************" << std::endl;
 
 	return (chunked);

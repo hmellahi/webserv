@@ -1,21 +1,33 @@
 #include "FileSystem.hpp"
 #include "Config.hpp"
 
-std::string     FileSystem::readFile(std::string filename, int &status)
+// std::string     FileSystem::readFile(std::string filename, int &status)
+// {
+//     if (getFileStatus(filename) != HttpStatus::OK)
+//         throw std::runtime_error("invalid file");
+//     std::ifstream  file(filename.c_str());
+//     int fd = open(filename.c_str(), O_RDONLY);
+//     if (!isReadyFD(fd, READ))
+//         throw std::runtime_error("couldnt read file");
+//     char buffer[20000] = {0};
+//     int ret = read(fd, buffer, 3000);
+//     close(fd);
+//     if (ret < 0) /// check for 0? || ifstream
+//         throw std::runtime_error("couldnt read file");
+//     status = HttpStatus::OK;
+//     return (buffer);
+// }
+
+int     FileSystem::readFile(std::string filename, int &status)
 {
     if (getFileStatus(filename) != HttpStatus::OK)
         throw std::runtime_error("invalid file");
     std::ifstream  file(filename.c_str());
     int fd = open(filename.c_str(), O_RDONLY);
-    if (!isReadyFD(fd, READ))
-        throw std::runtime_error("couldnt read file");
-    char buffer[20000] = {0};
-    int ret = read(fd, buffer, 3000);
-    close(fd);
-    if (ret < 0)
+    if (fd < 0)
         throw std::runtime_error("couldnt read file");
     status = HttpStatus::OK;
-    return (buffer);
+    return (fd);
 }
 
 std::string  FileSystem::getIndexFile(const std::string & path, const std::vector<std::string> &indexFiles)
@@ -123,6 +135,9 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 
 bool    FileSystem::isReadyFD(int fd, int mode)
 {
+    std::cout << fd << std::endl;
+    if (fd < 0)
+        return false;
     if (mode == READ)
     {
         fd_set readfds;

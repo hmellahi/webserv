@@ -1,0 +1,28 @@
+ curl -X POST -H "Content-Type: plain/text" --data "BODY IS HERE write something shorter or longer than body limit"
+
+
+
+  curl --resolve test:80:127.0.0.1 http://example.com/
+
+  siege ; dont block inc users if fd max; seg /static
+
+ multi serverss
+# server {
+#     server_name test
+#     allow_methods GET DELETE POST 
+#     listen 8002 # not working method not allowed
+#     # listen 800000
+#     index index.html
+#     root tests/static/
+#     auto_index on
+#     # location /BETA {
+#     #     root fwefwef
+#     #     redirection 301 $scheme://www.mysite.com 
+#     # }
+# }
+# curl --resolve test:80:127.0.0.1 http://localhost:8000
+
+#curl -X POST -H "Content-Type: plain/text" --data "BO
+
+multi not working
+dont use data()

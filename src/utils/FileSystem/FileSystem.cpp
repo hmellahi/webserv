@@ -129,7 +129,7 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
     new_file.open(uploadLocation.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!new_file.is_open())
         throw std::runtime_error("couldnt open the file for writing");
-    new_file.write(content.data(), content.size());
+    new_file.write(&(content[0]), content.size());
     new_file.close();
 }
 

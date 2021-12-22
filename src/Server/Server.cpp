@@ -347,7 +347,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			return res.send(HttpStatus::InternalServerError);
 		}
 		std::string _buff;
-		int nbytes_wrote = write(req.fd, req.getContentBody().data(), req.getContentBody().size());
+		int nbytes_wrote = write(req.fd, &(req.getContentBody()[0]), req.getContentBody().size());
 		if (nbytes_wrote <= 0)
 		{
 			remove(req._fileLocation.c_str());
@@ -388,7 +388,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))
@@ -396,7 +396,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		unCompletedRequests.erase(it);
 		if (req.isUpload)
 		{
-			std::cerr << "uploaded" << std::endl;
+			std::cout << "uploaded" << std::endl;
 			close(req.fd);
 			return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
 		}

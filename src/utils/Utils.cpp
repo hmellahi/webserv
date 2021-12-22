@@ -220,6 +220,8 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	int size;
 	int i = 0;
 
+	std::cerr << "****************************************" << std::endl;
+	std::cerr << "buffer|" << buffer << "|" << std::endl;
 	if (!unchunked.empty())
 		buffer.insert(0, unchunked);
 	// std::cerr << "+++++++++++++\n";

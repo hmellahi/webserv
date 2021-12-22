@@ -100,10 +100,9 @@ std::string	Server::updateLocationConfig(std::string path)
 	for (location = locations.rbegin(); location != locations.rend(); location++)
 	{
 		std::string locationPath = location->first;
-		std::cout << "location " << locationPath << std::endl;
+		std::cerr << "location " << locationPath << std::endl;
 		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
-			std::cout << "im enter: " << locationPath << "the path:"  << path <<  std::endl;
 			_locConfig = location->second;
 			return locationPath;
 		}
@@ -229,7 +228,15 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					continue;
 				}	
 				res._msg = "";
-				unCompletedResponses[sd] = res;
+				std::cout << "was here " << std::endl;
+				if (res.nbytes_left && res.getHeader("Connection") == "close")
+				{
+					closeConnection(clients, readfds, i, sd);
+					unCompletedResponses.erase(sd);
+				}
+				else
+					unCompletedResponses[sd] = res;
+
 			}
 			else if (res.nbytes_left > 0)
 			{
@@ -241,7 +248,8 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				else
 				{
 					try{
-						to_send = res.readRaw(res.file_to_send,  BUFSIZE, nbytes);
+						to_send = res.readRaw(res.file_to_send, BUFSIZE, nbytes);
+						std::cerr << "to_send" << to_send << std::endl;
 					}
 					catch(std::exception &e)
 					{
@@ -301,7 +309,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
-	std::cerr << "isNotCompletedYet: "<< isNotCompletedYet << std::endl;
+	std::cerr << "completed: "<< !isNotCompletedYet << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		/********************** CHEKS ************************/
@@ -310,7 +318,8 @@ Response Server::handleRequest(Request req, int client_fd)
 			return res.send(req.getStatus());
 		// Check if the request body size doesnt exceed
 		// the max client body size
-		if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // toddo check for chunked
+		std::cout << "max :" << _locConfig.get_client_max_body_size() << "got " << contentLength << std::endl;
+		if (_locConfig.get_client_max_body_size() < contentLength) // toddo check for chunked
 			return res.send(HttpStatus::PayloadTooLarge);
 		/// check if method is allowed
 		bool isAllowed = checkPermissions(req.getMethod());
@@ -411,7 +420,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
-	if (_locConfig.get_client_max_body_size() < (contentLength / 1e6)) // CHECK
+	if (_locConfig.get_client_max_body_size() < contentLength) // CHECK
 		return res.send(HttpStatus::PayloadTooLarge);
 
 	int methodIndex = getMethodIndex(req.getMethod());
@@ -423,10 +432,10 @@ Response Server::handleRequest(Request req, int client_fd)
 	{
 		int status_code = redirection.first;
 		std::string location = redirection.second;
-		std::cout << "before " << location << std::endl;
+		std::cerr << "before " << location << std::endl;
 		if (!location.empty() && location[0] == '/')
 			location = util::getFullUrl(location.erase(0, 1), req.getHeader("Host"));
-		std::cout << "my location " << location << std::endl;
+		std::cerr << "my location " << location << std::endl;
 		return res.sendRedirect(status_code, location);
 	}
 
@@ -495,14 +504,11 @@ bool	Server::checkPermissions(std::string method)
 	bool isAllowed = true;
 	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
 
-	if (allowedMethods.size() > 0)
-	{
-		std::vector<std::string>::iterator it;
-		it = find(allowedMethods.begin(), allowedMethods.end(), method);
-		if (it == allowedMethods.end())
-			isAllowed = false;
-	}
-	return isAllowed;
+	if (allowedMethods.size() == 0)
+		return true;
+	std::vector<std::string>::iterator it;
+	it = find(allowedMethods.begin(), allowedMethods.end(), method);
+	return (it != allowedMethods.end());
 }
 
 methodType Server::handleMethod(int methodIndex)
@@ -610,7 +616,7 @@ Response Server::methodNotFoundHandler(Request req, Response res)
 	return res.send(HttpStatus::NotImplemented);
 }
 
-std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
+std::pair<int, std::string> Server::getErrorPageContent(int status_code, Config _serverConfig)
 {
 	std::map<int, std::string> errorPages = _serverConfig.get_error_pages();
 	std::map<int, std::string>::iterator it;
@@ -627,7 +633,7 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 			std::string errorPagePath = filename;
 			if (std::string::npos != index)
 				errorPagePath = configPath.substr(0, index) + "/" + errorPagePath;
-			return (FileSystem::readFile(errorPagePath, status));
+			return std::make_pair(FileSystem::readFile(errorPagePath, status), "");
 		}
 		catch (const std::exception &e)
 		{
@@ -643,7 +649,7 @@ std::string Server::getErrorPageContent(int status_code, Config _serverConfig)
 		<< " " << HttpStatus::reasonPhrase(status_code)
 		<< "</h1></center><hr><center>Web server"
 		<< "dyal lay7sn l3wan/1.18.0 (Ubuntu)</center></body></html>";
-	return (html.str());
+	return std::make_pair(-8, html.str());
 }
 
 int Server::getMethodIndex(std::string method_name)

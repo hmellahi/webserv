@@ -58,7 +58,7 @@ public:
     int     getMethodIndex(std::string method_name);
     // ----------------------------------------------------- //
 
-    static std::string     getErrorPageContent(int status_code, Config _serverConfig);
+    static std::pair<int, std::string>     getErrorPageContent(int status_code, Config _serverConfig);
 
     // ----------------- Getters & Setters ------------------ //
     std::vector<Socket> getSockets();

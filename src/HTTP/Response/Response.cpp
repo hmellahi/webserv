@@ -46,7 +46,8 @@ std::string     Response::CraftRedirectionPage(int statusCode)
 Response    Response::sendRedirect(int statusCode, const std::string &location)
 {
     // todo change
-    std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
+    // std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
+    std::string redirectPageContent ="";
     std::ostringstream msg;
 
     msg << "HTTP/1.1" << " " << statusCode << " " 
@@ -64,24 +65,29 @@ Response    Response::sendRedirect(int statusCode, const std::string &location)
     return *this;
 }
 
-Response    Response::send( int statusCode)
+Response    Response::send(int statusCode)
 {
-    std::string errorPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
+    std::pair<int, std::string> errorPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
     if (HttpStatus::isError(statusCode))
         _headers["Connection"]="close";
     else
         _headers["Connection"]="keep-alive";
     // clean this shityy code
+    file_to_send = errorPageContent.first;
+    if (file_to_send == -8)
+        nbytes_left = 0;
+    else
+        nbytes_left = util::getFileLength(errorPageContent.first);
     msg << _headers["http-version"] << " " << statusCode << " " 
         << HttpStatus::reasonPhrase(statusCode) << "\r\n"
         << "Connection: " <<_headers["Connection"] << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "Content-Type: text/html\r\n"
         << "Server: server dyal lah y7sn l3wan" << "\r\n"
-        << "Content-Length: " << errorPageContent.size() << "\r\n"
-        << "\r\n"
-        << errorPageContent;
+        << "Content-Length: " << (nbytes_left ? nbytes_left: errorPageContent.second.size()) << "\r\n\r\n";
+        if (file_to_send == -8)
+            msg << errorPageContent.second;
     sendMessage(_client_fd, msg.str());
     return *this;
 }
@@ -103,6 +109,8 @@ Response    Response::send( int statusCode, std::string filename)
     // craft a response 
     int fileLength = util::getFileLength(filename);
     file_to_send = open(filename.c_str(), O_RDONLY);
+    if (file_to_send >= FD_SETSIZE || file_to_send < 0)
+        throw std::runtime_error("couldnt do shit abt it");
     nbytes_left = fileLength;
     std::ostringstream msg;
     msg << _headers["http-version"] << " " << statusCode << " " 

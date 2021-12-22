@@ -100,9 +100,10 @@ std::string	Server::updateLocationConfig(std::string path)
 	for (location = locations.rbegin(); location != locations.rend(); location++)
 	{
 		std::string locationPath = location->first;
-		std::cerr << "location " << locationPath << std::endl;
+		std::cout << "location " << locationPath << std::endl;
 		if (!strncmp(locationPath.c_str(), path.c_str(), locationPath.size()))
 		{
+			std::cout << "im enter: " << locationPath << "the path:"  << path <<  std::endl;
 			_locConfig = location->second;
 			return locationPath;
 		}
@@ -300,7 +301,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
-	std::cout << "isNotCompletedYet: "<< isNotCompletedYet << std::endl;
+	std::cerr << "isNotCompletedYet: "<< isNotCompletedYet << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		/********************** CHEKS ************************/
@@ -346,9 +347,9 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
-		std::cout << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
-		std::cout << "-------------------------------------\n";
+		std::cerr << "-------------------------------------\n";
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return res;
 	}
@@ -364,7 +365,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		else
 		{
 			std::string _buff = util::ParseChunkBody(req.unchunked, oldRequest._buffer, req.isChunkedBodyEnd);
-			// std::cout << _buff;
+			// std::cerr << _buff;
 			nbytes_wrote = write(req.fd, _buff.c_str(), _buff.size());
 		}
 		if (nbytes_wrote <= 0)
@@ -372,14 +373,14 @@ Response Server::handleRequest(Request req, int client_fd)
 			// remove(req._fileLocation.c_str());
 			unCompletedRequests.erase(it);
 			close(req.fd);
-			std::cout << "was here \n";
+			std::cerr << "was here \n";
 			return res.send(HttpStatus::InternalServerError);
 		}
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
-		std::cout << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
-		std::cout << "-------------------------------------\n";
+		std::cerr << "-------------------------------------\n";
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))
 			return res;
@@ -422,8 +423,10 @@ Response Server::handleRequest(Request req, int client_fd)
 	{
 		int status_code = redirection.first;
 		std::string location = redirection.second;
+		std::cout << "before " << location << std::endl;
 		if (!location.empty() && location[0] == '/')
-			location = util::getFullUrl(req.getUrl(), req.getHeader("Host"));
+			location = util::getFullUrl(location.erase(0, 1), req.getHeader("Host"));
+		std::cout << "my location " << location << std::endl;
 		return res.sendRedirect(status_code, location);
 	}
 

@@ -222,17 +222,22 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 
 	if (!unchunked.empty())
 		buffer.insert(0, unchunked);
+	// std::cerr << "+++++++++++++\n";
+	// std::cerr << unchunked << std::endl;
+	// std::cerr << buffer << std::endl;
 	unchunked.assign("");
 	chunked.assign("");
 	hex = buffer.substr(0, buffer.size());
 	size = HexToDecimal(hex);
 	while (size)
 	{
-		std::cerr << "size: " << size << std::endl;
-		i = buffer.find("\r\n", i) + 2;
+		// std::cerr << "size: " << size << std::endl;
+		i = buffer.find("\n", i);
+		if (i < 0) break;
+		i += 1;
 		if (buffer.substr(i, size).size() >= size)
 			chunked.insert(chunked.size(), buffer.substr(i, size));
-		i += size + 2;
+		i += size + 1;
 		if (i < buffer.size())
 			hex = buffer.substr(i, buffer.size());
 		else
@@ -242,10 +247,11 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	flag = !size;
 	if (flag == 0)
 		unchunked.assign(hex);
-	std::cout << "****************************************" << std::endl;
-	std::cout << "body|" << chunked << "|" << std::endl;
-	std::cout << "rem" << unchunked << std::endl;
-	std::cout << "****************************************" << std::endl;
+	// std::cerr << "****************************************" << std::endl;
+	// std::cerr << "buffer|" << buffer << "|" << std::endl;
+	// std::cerr << "body|" << chunked << "|" << std::endl;
+	// std::cerr << "rem" << unchunked << std::endl;
+	// std::cerr << "****************************************" << std::endl;
 
 	return (chunked);
 }

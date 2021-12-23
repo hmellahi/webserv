@@ -37,6 +37,7 @@ Request & Request::operator=(Request const &rhs)
 		_query = rhs._query;
 		_content_body = rhs._content_body;
 		_status = rhs._status;
+		_bodySize = rhs._bodySize;
 		_query_map = rhs._query_map;
 		_buffSize = rhs._buffSize;
 		fd = rhs.fd;
@@ -64,28 +65,22 @@ void Request::parse()
 	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
-
-		// std::cerr << lines[0] << std::endl;
+		std::cout << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		// std::cerr << atoi(_headers["Content-Length"].c_str()) << " " << _buffSize << std::endl;
 		if (_headers["Transfer-Encodingss"] == "chunked")
-			// ParseChunkBody(_buffer);
 		{
+			_bodySize = _buffSize - (_buffer.find("\r\n\r\n") + 4);
 			isChunkedBody = true;
 			std::string body = _buffer.substr(_buffer.find("\r\n\r\n") +4, _buffer.size());
 			std::string out = util::ParseChunkBody(unchunked, body, isChunkedBodyEnd);
-			// std::cerr << "****************************************" << std::endl;
-			// std::cerr << "body|" << out << "|" << std::endl;
-			// std::cerr << "****************************************" << std::endl;
-			// std::cerr << "****************************************" << std::endl;
-			// std::cerr << "isChunkedBodyEnd|" << isChunkedBodyEnd << "|"<< std::endl;
-			// std::cerr << "****************************************" << std::endl;
 			_content_body.assign(out.begin(), out.end()); // optimize
 		}
 		else
+		{
+			_bodySize = atoi(getHeader("Content-Length").c_str());
 			ParseBody(_buffer);
-
+		}
 		// std::cerr << "|" << _content_body << "|" << std::endl;
 	}
 	else
@@ -225,8 +220,6 @@ std::string Request::getHeader(std::string header_name)
 {
 	return _headers[header_name];
 }
-
-
 
 void Request::setHeader(std::string header_name, std::string value)
 {

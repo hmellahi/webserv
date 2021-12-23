@@ -29,9 +29,9 @@ void Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfd
 		// if valid socket descriptor then add to read list
 		if (fd > 0)
 		{
-			// if (clients[i].type == READ_SOCKET)
+			if (clients[i].type == READ_SOCKET)
 				FD_SET(fd, &readfds);
-			// else
+			else
 				FD_SET(fd, &writefds);
 		}
 		// highest file descriptor number, need it for the select function
@@ -142,7 +142,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 	close(sd);
 	clients.erase(clients.begin() + clientIndex);
 	FD_CLR(sd, &readfds);
-	std::cerr << "Connection closed" << std::endl;
+	std::cout << "Connection closed: " << sd << std::endl;
 }
 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
@@ -229,47 +229,59 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				}	
 				res._msg = "";
 				std::cout << "was here " << std::endl;
-				if (res.nbytes_left && res.getHeader("Connection") == "close")
+				if (!res.nbytes_left && res.getHeader("Connection") == "close")
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
+					std::cout << "done " << std::endl;
 				}
 				else
+				{
 					unCompletedResponses[sd] = res;
-
+					std::cout << res.nbytes_left << std::endl;
+				}
 			}
 			else if (res.nbytes_left > 0)
 			{
-				std::cerr << "writing to client: " << sd << std::endl;
+				std::cout << "writing to client: " << sd << std::endl;
 				std::string to_send;
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
-					res.send(HttpStatus::InternalServerError);
+				{
+					closeConnection(clients, readfds, i, sd);
+					unCompletedResponses.erase(sd);
+					continue;
+				}
 				else
 				{
 					try{
-						to_send = res.readRaw(res.file_to_send, BUFSIZE, nbytes);
-						std::cerr << "to_send" << to_send << std::endl;
+						to_send = res.readRaw(res.file_to_send, 100, nbytes);
+						std::cout << "to_send" << to_send << std::endl;
 					}
 					catch(std::exception &e)
 					{
-						res.send(HttpStatus::InternalServerError); // this will set response to Internal server
+						std::cout << "💣 Error: " << e.what() << "|" << nbytes << std::endl;
+						closeConnection(clients, readfds, i, sd);
+						unCompletedResponses.erase(sd);
+						continue;
 					}
 				}
 				try {
+					std::cout << "sending: "<< std::endl;
 					res.sendRaw(sd, to_send.c_str(), nbytes);
 				}
 				catch(std::exception &e)
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
-					std::cerr << "Error: " << e.what() << std::endl;
+					std::cout << "Error: " << e.what() << std::endl;
 					continue;
 				}
-				std::cerr << "left: " << res.nbytes_left << std::endl;
+				std::cout << "left: " << res.nbytes_left << std::endl;
 				unCompletedResponses[sd] = res;
 				if (res.nbytes_left == 0)
 				{
+					close(res.file_to_send); // check where else should be closed
 					unCompletedResponses.erase(sd);
 					if (res.getHeader("Connection") == "close")
 						closeConnection(clients, readfds, i, sd);
@@ -302,7 +314,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	if (locationPath=="/")locationPath ="";
 	std::cerr << "match" << locationPath << std::endl;
-	int contentLength =  atoi(req.getHeader("Content-Length").c_str());
+	int contentLength = atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Request unCompletedReq = it->second;
 	// Check if the request body is valid
@@ -319,7 +331,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// Check if the request body size doesnt exceed
 		// the max client body size
 		std::cout << "max :" << _locConfig.get_client_max_body_size() << "got " << contentLength << std::endl;
-		if (_locConfig.get_client_max_body_size() < contentLength) // toddo check for chunked
+		if (_locConfig.get_client_max_body_size() < req._bodySize) // toddo check for chunked
 			return res.send(HttpStatus::PayloadTooLarge);
 		/// check if method is allowed
 		bool isAllowed = checkPermissions(req.getMethod());
@@ -350,14 +362,14 @@ Response Server::handleRequest(Request req, int client_fd)
 		int nbytes_wrote = write(req.fd, &(req.getContentBody()[0]), req.getContentBody().size());
 		if (nbytes_wrote <= 0)
 		{
-			remove(req._fileLocation.c_str());
 			close(req.fd);
+			remove(req._fileLocation.c_str());
 			return res.send(HttpStatus::InternalServerError);
 		}
 		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return res;
@@ -374,12 +386,11 @@ Response Server::handleRequest(Request req, int client_fd)
 		else
 		{
 			std::string _buff = util::ParseChunkBody(req.unchunked, oldRequest._buffer, req.isChunkedBodyEnd);
-			// std::cerr << _buff;
 			nbytes_wrote = write(req.fd, _buff.c_str(), _buff.size());
 		}
 		if (nbytes_wrote <= 0)
 		{
-			// remove(req._fileLocation.c_str());
+			remove(req._fileLocation.c_str());
 			unCompletedRequests.erase(it);
 			close(req.fd);
 			std::cerr << "was here \n";
@@ -420,7 +431,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	
 	// Check if the request body size doesnt exceed
 	// the max client body size
-	if (_locConfig.get_client_max_body_size() < contentLength) // CHECK
+	if (_locConfig.get_client_max_body_size() < req._bodySize) // CHECK
 		return res.send(HttpStatus::PayloadTooLarge);
 
 	int methodIndex = getMethodIndex(req.getMethod());
@@ -733,7 +744,13 @@ void Server::setup(ParseConfig GlobalConfig)
 			// if (usedPorts.find(port) == usedPorts.end())
 			// {
 			std::cerr << "port" << port << std::endl;
-			serversSockets.push_back(newServer.addPort(port, host));
+			try {
+				serversSockets.push_back(newServer.addPort(port, host));
+			}
+			catch (std::exception &e)
+			{
+
+			}
 				// 	usedPorts.insert(port);
 			// }
 		}

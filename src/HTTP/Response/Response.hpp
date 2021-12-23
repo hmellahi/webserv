@@ -28,7 +28,6 @@ public:
     int     sendMessage(int fd, const std::string &s);
     int     sendRaw(int fd, const void *buf, int buflen);
     std::string readRaw(int fd, int fileLength, int &bytes_read);
-    std::string     CraftRedirectionPage(int statusCode);
 
     std::string getHeader(std::string header_name);
     std::map<std::string, std::string>  getHeaders() const;

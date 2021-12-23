@@ -6,6 +6,8 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     _headers["url"] = req.getUrl();
     _serverConfig = serverConfig;
     _headers["http-version"] = req.getHttpVersion();
+    if (_headers["http-version"].empty())
+        _headers["http-version"] =  "HTTP/1.1";
     _headers["Connection"] = req.getHeader("Connection");
     _headers["Date"] = util::getCurrentDate(); 
     file_to_send=-1;
@@ -27,20 +29,6 @@ Response::Response(const Response& src)
     file_to_send = src.file_to_send;
     nbytes_left = src.nbytes_left;
     _msg = src._msg;
-}
-
-std::string     Response::CraftRedirectionPage(int statusCode)
-{
-    std::ostringstream html;
-
-    // html << "<html><head><title>Moved</title></head>
-    //         <body>
-    //         =Moved=
-    //         <p>This page has moved to <a href="http://www.example.org/">http://www.example.org/</a>.</p>\"
-    //         </body>
-    //         </html>
-    //         ";
-    return html.str();
 }
 
 Response    Response::sendRedirect(int statusCode, const std::string &location)
@@ -157,10 +145,10 @@ Response    Response::sendContent( int statusCode, std::string content)
 
 std::string Response::readRaw(int fd, int fileLength, int &bytes_read)
 {
-    char buf[BUFSIZE];
-    bytes_read = read(fd, buf, std::min(BUFSIZE, fileLength));
+    char buf[1000];
+    bytes_read = read(fd, buf, 100);
     if (bytes_read <= 0)
-        throw std::runtime_error("couldnt read");        
+        throw std::runtime_error("couldnt read");
     nbytes_left -= bytes_read;
     return std::string(buf, bytes_read);
 }
@@ -180,12 +168,12 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
 
     signal(SIGPIPE, a);
     // std::cerr << "written: " << 0 << std::endl;
-    std::cerr << "-------------" << std::endl;
-    std::cerr << pbuf << std::endl;
-    std::cerr << "-------------" << std::endl;
+    std::cout << "-------------" << std::endl;
+    std::cout << pbuf << std::endl;
+    std::cout << "-------------" << std::endl;
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
-    std::cerr << "written: " << bytes_written << std::endl;
+    std::cout << "written: " << bytes_written << std::endl;
     if (bytes_written <= 0)
         throw std::runtime_error("Could not write to client");
     // _msg = pbuf;

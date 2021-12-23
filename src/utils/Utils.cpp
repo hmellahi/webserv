@@ -227,6 +227,7 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	// std::cerr << "+++++++++++++\n";
 	// std::cerr << unchunked << std::endl;
 	// std::cerr << buffer << std::endl;
+	// todo change 1=>2
 	unchunked.assign("");
 	chunked.assign("");
 	hex = buffer.substr(0, buffer.size());

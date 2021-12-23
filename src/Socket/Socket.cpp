@@ -54,11 +54,10 @@ void    Socket::create_socket()
     
     //bind the socket to the giving port
     int connection = bind(_socket_fd, (struct sockaddr *)&_address, addrlen);
-    // testConnection(connection, "the port is already in Use..." + itoa(_port));
-    testConnection(connection, "the port is already in Use...");
+    testConnection(connection, "", false);
 
-    //  specify maximum of 10 pending connections for this socket
-    connection = listen(_socket_fd, 1017);
+    //  specify maximum of pending connections for this socket
+    connection = listen(_socket_fd, 100017);
     testConnection(connection, "couldnt listen");
 }
 
@@ -67,6 +66,7 @@ bool    Socket::testConnection(int connection_ret, std::string customErrMsg, boo
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
+        std::cout << "gone" << std::endl;
         if (suspend)
             util::ft_exit(EXIT_FAILURE);
         return false;

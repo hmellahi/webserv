@@ -262,6 +262,8 @@ void Config::listen(std::vector<std::string>::iterator &it)
 		else
 			throw std::runtime_error("Invalid Port: " + *it);
 		_listen.push_back(port);
+		if (_hostPort[port] == ip)
+			throw std::runtime_error("duplicated Host and port");
 		_hostPort[port] = ip;
 		std::cerr << "port"<< port << std::endl;
 		it++;

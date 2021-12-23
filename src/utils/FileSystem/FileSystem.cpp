@@ -22,10 +22,10 @@ int     FileSystem::readFile(std::string filename, int &status)
 {
     if (getFileStatus(filename) != HttpStatus::OK)
         throw std::runtime_error("invalid file");
-    std::ifstream  file(filename.c_str());
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd < 0)
         throw std::runtime_error("couldnt read file");
+    std::cout << "file" << filename << ", "<<fd << std::endl;
     status = HttpStatus::OK;
     return (fd);
 }
@@ -136,7 +136,7 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 bool    FileSystem::isReadyFD(int fd, int mode)
 {
     std::cerr << fd << std::endl;
-    if (fd < 0)
+    if (fd < 0 || fd >= FD_SETSIZE)
         return false;
     if (mode == READ)
     {

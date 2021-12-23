@@ -112,7 +112,6 @@ Response    Response::send( int statusCode, std::string filename)
     // send it to the client
     sendMessage(_client_fd, msg.str());
     
-    // open file
     return *this;
 }
 
@@ -145,8 +144,12 @@ Response    Response::sendContent( int statusCode, std::string content)
 
 std::string Response::readRaw(int fd, int fileLength, int &bytes_read)
 {
-    char buf[1000];
-    bytes_read = read(fd, buf, 100);
+    int to_read =  std::min(fileLength, BUFSIZE);
+    char buf[to_read+1];
+    std::cerr << "to_read" << to_read << std::endl;
+    bytes_read = read(fd, buf, to_read);
+    std::cerr << "read" << bytes_read << std::endl;
+    buf[to_read] = 0;
     if (bytes_read <= 0)
         throw std::runtime_error("couldnt read");
     nbytes_left -= bytes_read;
@@ -168,12 +171,12 @@ int Response::sendRaw(int fd, const void *buf, int buflen)
 
     signal(SIGPIPE, a);
     // std::cerr << "written: " << 0 << std::endl;
-    std::cout << "-------------" << std::endl;
-    std::cout << pbuf << std::endl;
-    std::cout << "-------------" << std::endl;
+    std::cerr << "-------------" << std::endl;
+    std::cerr << pbuf << std::endl;
+    std::cerr << "-------------" << std::endl;
     int bytes_written = write(fd, pbuf, buflen);
     signal(SIGPIPE, SIG_DFL);
-    std::cout << "written: " << bytes_written << std::endl;
+    std::cerr << "written: " << bytes_written << std::endl;
     if (bytes_written <= 0)
         throw std::runtime_error("Could not write to client");
     // _msg = pbuf;

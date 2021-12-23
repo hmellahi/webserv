@@ -15,6 +15,7 @@ namespace util
     std::string rtrim(const std::string &s);
     std::string trim(const std::string &s);
     bool        is_number(std::string str);
+    unsigned long long        get_time();
     bool is_valid_method(std::string method);
     bool is_valid_version(std::string ver);
     std::vector<std::string> split(const std::string& str, const std::string& delimiter);

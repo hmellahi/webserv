@@ -76,7 +76,11 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 				new_socket = Socket::acceptConnection(socketDescriptor, address, addrlen);
 				// if a position is empty
 				if (new_socket < FD_SETSIZE)
+				{
+					new_socket._lastuse = util::get_time();
 					clients.push_back(new_socket);
+					std::cout << "new client:" << new_socket << std::endl;
+				}
 			}
 			catch(std::exception& e)
 			{
@@ -155,12 +159,25 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	std::string requestBodyStr;
 	int j;
 	int nbytes;
+	// bool isDone;
 	for (int i = 0; i < clients.size(); i++)
 	{
 		sd = clients[i];
+		// check if socket is expired
+		// std::cout << sd << "| now : " << util::get_time()<<"last time: "<< clients[i]._lastuse << ", pass: "<<  util::get_time() - clients[i]._lastuse<< std::endl;
+		if ((util::get_time() - clients[i]._lastuse) > 10)
+		{
+			closeConnection(clients, readfds, i, sd);
+			std::cerr << "new clients size " << clients.size() << std::endl;
+			continue;
+		}
+		// std::cerr << "wsup" << std::endl;
+		// isDone = true;
 		// check if sd is ready to read
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
+			
+			std::cerr << "ready for read" << std::endl;
 			valread = read(sd, requestBody, BUFSIZE);
 			// 	std::cerr << "-------------------------------------\n";
 			// std::cerr << "buffer: " << c << std::endl;
@@ -206,13 +223,19 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// }
 				// if (!res.nbytes_left && res.getHeader("Connection") == "close")
 				// 	closeConnection(clients, readfds, i, sd);
+				clients[i]._lastuse = util::get_time();
 			}
 		}
 		else if (FD_ISSET(sd, &writefds))
 		{
 			// check if doesnt have uncompleted response with this client
+			// std::cerr << "ready for writing" << std::endl;
 			if (unCompletedResponses.find(sd) == unCompletedResponses.end())
+			{
+				// isDone = false; // useless for now
 				continue;
+			}
+			std::cerr << " writing.." << std::endl;
 			res = unCompletedResponses[sd];
 			if (res._msg != "")
 			{
@@ -228,61 +251,73 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					continue;
 				}	
 				res._msg = "";
-				std::cout << "was here " << std::endl;
-				if (!res.nbytes_left && res.getHeader("Connection") == "close")
+				std::cerr << "was here " << res.nbytes_left<< std::endl;
+				if (!res.nbytes_left)
 				{
-					closeConnection(clients, readfds, i, sd);
+					std::cout << "Connection closed:" << res.file_to_send << std::endl;
+					close(res.file_to_send);
 					unCompletedResponses.erase(sd);
-					std::cout << "done " << std::endl;
+					std::cerr << "done " << std::endl;
 				}
 				else
 				{
 					unCompletedResponses[sd] = res;
-					std::cout << res.nbytes_left << std::endl;
+					std::cerr << res.nbytes_left << std::endl;
+				}
+				if (res.getHeader("Connection") == "close")
+				{
+					closeConnection(clients, readfds, i, sd);
+					// std::cout << "closed" << std::endl;
 				}
 			}
 			else if (res.nbytes_left > 0)
 			{
-				std::cout << "writing to client: " << sd << std::endl;
+				std::cerr << "writing to client: " << sd << std::endl;
 				std::string to_send;
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
+					close(res.file_to_send);
 					continue;
 				}
 				else
 				{
-					try{
-						to_send = res.readRaw(res.file_to_send, 100, nbytes);
-						std::cout << "to_send" << to_send << std::endl;
+					try {
+						to_send = res.readRaw(res.file_to_send, res.nbytes_left, nbytes);
+						std::cerr << "to_send" << to_send << std::endl;
 					}
 					catch(std::exception &e)
 					{
-						std::cout << "💣 Error: " << e.what() << "|" << nbytes << std::endl;
+						std::cerr << "💣 Error: " << e.what() << "|" << nbytes << std::endl;
 						closeConnection(clients, readfds, i, sd);
 						unCompletedResponses.erase(sd);
+						close(res.file_to_send);
 						continue;
 					}
 				}
 				try {
-					std::cout << "sending: "<< std::endl;
+					std::cerr << "sending: "<< std::endl;
 					res.sendRaw(sd, to_send.c_str(), nbytes);
+					clients[i]._lastuse = util::get_time();
 				}
 				catch(std::exception &e)
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
-					std::cout << "Error: " << e.what() << std::endl;
+					close(res.file_to_send);
+					std::cerr << "Error: " << e.what() << std::endl;
 					continue;
 				}
-				std::cout << "left: " << res.nbytes_left << std::endl;
+				std::cerr << "left: " << res.nbytes_left << std::endl;
 				unCompletedResponses[sd] = res;
 				if (res.nbytes_left == 0)
 				{
 					close(res.file_to_send); // check where else should be closed
-					unCompletedResponses.erase(sd);
+					if (unCompletedResponses.erase(sd))
+						std::cerr << "sdina: " << res.nbytes_left << std::endl;
+
 					if (res.getHeader("Connection") == "close")
 						closeConnection(clients, readfds, i, sd);
 					else
@@ -290,6 +325,12 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				}
 			}
 		}
+		// std::cerr << sd << "| now : " << util::get_time()<<"last time: "<< clients[i]._lastuse << ", pass: "<<  util::get_time() - clients[i]._lastuse<< std::endl;
+		// if ((util::get_time() - clients[i]._lastuse) > 10)
+		// {
+		// 	closeConnection(clients, readfds, i, sd);
+		// 	std::cerr << "new clients size " << clients.size() << std::endl;
+		// }
 	}
 }
 
@@ -305,7 +346,7 @@ Socket Server::addPort(int port, std::string host)
 	// save socker fd
 	_serverSockets.push_back(new_socket);
 	// debugging
-	std::cerr << "Server started, go to " << host << ":" << port << std::endl;
+	std::cerr << "Server started, go to " << host << ":" << port << ", started " << new_socket._lastuse << std::endl;
 	return new_socket;
 }
 
@@ -330,7 +371,7 @@ Response Server::handleRequest(Request req, int client_fd)
 			return res.send(req.getStatus());
 		// Check if the request body size doesnt exceed
 		// the max client body size
-		std::cout << "max :" << _locConfig.get_client_max_body_size() << "got " << contentLength << std::endl;
+		std::cerr << "max :" << _locConfig.get_client_max_body_size() << "got " << contentLength << std::endl;
 		if (_locConfig.get_client_max_body_size() < req._bodySize) // toddo check for chunked
 			return res.send(HttpStatus::PayloadTooLarge);
 		/// check if method is allowed
@@ -356,6 +397,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!FileSystem::isReadyFD(req.fd, WRITE))
 		{
 			close(req.fd);
+			remove(req._fileLocation.c_str());
 			return res.send(HttpStatus::InternalServerError);
 		}
 		std::string _buff;
@@ -369,7 +411,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!req.isChunkedBody)
 			req.nbytes_left = contentLength - nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		return res;
@@ -399,7 +441,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))
@@ -407,7 +449,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		unCompletedRequests.erase(it);
 		if (req.isUpload)
 		{
-			std::cout << "uploaded" << std::endl;
+			std::cerr << "uploaded" << std::endl;
 			close(req.fd);
 			return Response(req, client_fd, _locConfig).send(HttpStatus::Created);
 		}

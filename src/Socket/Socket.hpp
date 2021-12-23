@@ -18,6 +18,7 @@ private:
     void    create_socket();
 
 public:
+    int _lastuse;
     int type;
     // constructors
     // Socket(int socket_fd);

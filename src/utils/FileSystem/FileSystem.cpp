@@ -25,7 +25,7 @@ int     FileSystem::readFile(std::string filename, int &status)
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd < 0)
         throw std::runtime_error("couldnt read file");
-    std::cout << "file" << filename << ", "<<fd << std::endl;
+    std::cerr << "file" << filename << ", "<<fd << std::endl;
     status = HttpStatus::OK;
     return (fd);
 }

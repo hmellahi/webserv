@@ -109,10 +109,10 @@ int util::getFileLength(const std::string& filename)
 
 int util::getFileLength(int fd)
 {
-	off_t fsize;
-
-	fsize = lseek(fd, 0, SEEK_END);
-	return fsize;
+   struct stat s;
+   if (fstat(fd, &s) == -1)
+      return(-1);
+   return(s.st_size);
 }
 
 void	util::closeAllListeners()
@@ -141,6 +141,15 @@ std::string	util::getFullUrl(std::string location, std::string host)
 	std::string fullUrl;
 	fullUrl = "http://" + host + "/" + location;
 	return fullUrl;
+}
+
+#include <sys/time.h>
+unsigned long long	util::get_time(void)
+{
+	struct timeval	current_time;
+
+	gettimeofday(&current_time, NULL);
+	return ((current_time.tv_sec + (current_time.tv_usec / 1e6)));
 }
 
 size_t  util::to_hex(std::string &str)

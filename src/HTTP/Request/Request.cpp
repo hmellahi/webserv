@@ -10,6 +10,7 @@ Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpS
 	nbytes_left= 0;
 	isChunked = false;
 	parse();
+	// std::cout << buffer << std::endl;
 }
 
 int	Request::getBufferSize( void )  const {
@@ -65,7 +66,7 @@ void Request::parse()
 	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
-		std::cout << lines[0] << std::endl;
+		std::cerr << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
 		if (_headers["Transfer-Encodingss"] == "chunked")

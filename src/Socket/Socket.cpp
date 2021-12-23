@@ -8,17 +8,9 @@ Socket::Socket()
 Socket::Socket(int socket_fd)
 {
     type=0;
+    // std::cerr << "heey" << std::endl;
     _socket_fd = socket_fd;
 }
-// Socket::Socket(const Socket &src)
-// {
-//     _socket_fd = ;
-//     _port = src._port;
-//     _domain = src._domain;
-//     _type = src._type;
-//     _host = src._host;
-//     _protocol = src._protocol;
-// }
 
 Socket::Socket(int port, std::string &host, int domain, int type, int protocol)
 {
@@ -28,6 +20,7 @@ Socket::Socket(int port, std::string &host, int domain, int type, int protocol)
     _type = type;
     _host = host;
     _protocol = protocol;
+    // std::cerr << "started " << _lastuse  << std::;
     // initialize adress
     init_address();
     // create socket
@@ -66,7 +59,7 @@ bool    Socket::testConnection(int connection_ret, std::string customErrMsg, boo
     if (connection_ret < 0)
     {
         perror(customErrMsg.c_str());
-        std::cout << "gone" << std::endl;
+        std::cerr << "gone" << std::endl;
         if (suspend)
             util::ft_exit(EXIT_FAILURE);
         return false;

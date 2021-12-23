@@ -146,7 +146,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 	close(sd);
 	clients.erase(clients.begin() + clientIndex);
 	FD_CLR(sd, &readfds);
-	std::cout << "Connection closed: " << sd << std::endl;
+	std::cerr << "Connection closed: " << sd << std::endl;
 }
 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
@@ -164,7 +164,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	{
 		sd = clients[i];
 		// check if socket is expired
-		// std::cout << sd << "| now : " << util::get_time()<<"last time: "<< clients[i]._lastuse << ", pass: "<<  util::get_time() - clients[i]._lastuse<< std::endl;
+		// std::cerr << sd << "| now : " << util::get_time()<<"last time: "<< clients[i]._lastuse << ", pass: "<<  util::get_time() - clients[i]._lastuse<< std::endl;
 		if ((util::get_time() - clients[i]._lastuse) > 10)
 		{
 			closeConnection(clients, readfds, i, sd);
@@ -246,15 +246,15 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				catch(std::exception &e)
 				{
 					closeConnection(clients, readfds, i, sd);
-					unCompletedResponses.erase(sd);
+					unCompletedResponses.erase(sd); 
 					std::cerr << "Error: " << e.what() << std::endl;
 					continue;
 				}	
 				res._msg = "";
 				std::cerr << "was here " << res.nbytes_left<< std::endl;
-				if (!res.nbytes_left)
+				if (!res.nbytes_left)  
 				{
-					std::cout << "Connection closed:" << res.file_to_send << std::endl;
+					std::cerr << "Connection closed:" << res.file_to_send << std::endl;
 					close(res.file_to_send);
 					unCompletedResponses.erase(sd);
 					std::cerr << "done " << std::endl;
@@ -264,11 +264,8 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					unCompletedResponses[sd] = res;
 					std::cerr << res.nbytes_left << std::endl;
 				}
-				if (res.getHeader("Connection") == "close")
-				{
+				if (!res.nbytes_left && res.getHeader("Connection") == "close")
 					closeConnection(clients, readfds, i, sd);
-					// std::cout << "closed" << std::endl;
-				}
 			}
 			else if (res.nbytes_left > 0)
 			{
@@ -277,6 +274,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
 				{
+					std::cerr << "couldnt read: "<< std::endl;
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd);
 					close(res.file_to_send);
@@ -770,7 +768,7 @@ void Server::setup(ParseConfig GlobalConfig)
 	std::vector<Config>::iterator serverConfig;
 	std::map<u_int32_t, std::string>::iterator address;
 	std::vector<Server> servers;
-	// std::set<u_int32_t> usedPorts;
+	std::map<u_int32_t, std::string> IP_HOSTS;
 
 	for (serverConfig = serversConfigs.begin(); serverConfig != serversConfigs.end(); serverConfig++)
 	{
@@ -786,16 +784,19 @@ void Server::setup(ParseConfig GlobalConfig)
 			// if (usedPorts.find(port) == usedPorts.end())
 			// {
 			std::cerr << "port" << port << std::endl;
-			try {
+			// try {
+			if (IP_HOSTS[port] != host)
 				serversSockets.push_back(newServer.addPort(port, host));
-			}
-			catch (std::exception &e)
-			{
+			IP_HOSTS[port] = host;
+			// }
+			// catch (std::exception &e)
+			// {
 
-			}
+			// }
 				// 	usedPorts.insert(port);
 			// }
 		}
+		// IP_HOSTS.insert(addresses.begin(), addresses.end());
 		servers.push_back(newServer);
 	}
 	// this is where magic happens :wink:

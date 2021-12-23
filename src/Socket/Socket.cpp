@@ -47,10 +47,10 @@ void    Socket::create_socket()
     
     //bind the socket to the giving port
     int connection = bind(_socket_fd, (struct sockaddr *)&_address, addrlen);
-    testConnection(connection, "", false);
+    testConnection(connection, "");
 
     //  specify maximum of pending connections for this socket
-    connection = listen(_socket_fd, 100017);
+    connection = listen(_socket_fd, 1017);
     testConnection(connection, "couldnt listen");
 }
 

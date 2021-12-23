@@ -10,7 +10,7 @@ Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpS
 	nbytes_left= 0;
 	isChunked = false;
 	parse();
-	// std::cout << buffer << std::endl;
+	// std::cerr << buffer << std::endl;
 }
 
 int	Request::getBufferSize( void )  const {

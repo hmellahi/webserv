@@ -118,15 +118,16 @@ int util::getFileLength(int fd)
 void	util::closeAllListeners()
 {
 	std::cerr << clients.size() << std::endl;
-	for (int i = 0; i < clients.size();i++)
+	for (size_t i = 0; i < clients.size();i++)
 		close(clients[i]);
 	std::cerr << serversSockets.size() << std::endl;
-	for (int i = 0; i < serversSockets.size();i++)
+	for (size_t i = 0; i < serversSockets.size();i++)
 		close(serversSockets[i]);
 }
 
 void	util::signal_handler(int signal)
 {
+	(void) signal;
 	closeAllListeners();
 }
 
@@ -226,8 +227,8 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 {
 	std::string chunked;
 	std::string hex;
-	int size;
-	int i = 0;
+	size_t size;
+	size_t i = 0;
 
 	std::cerr << "****************************************" << std::endl;
 	std::cerr << "buffer|" << buffer << "|" << std::endl;

@@ -18,11 +18,7 @@ typedef Response (Server::*methodType)(Request, Response);
 class Server
 {
 private:
-    int _serverFd;
     std::vector<Socket> _serverSockets;
-    struct sockaddr_in _address;
-    int addrlen;
-    int _port;
     Config _locConfig;
 public:
     Config _config;

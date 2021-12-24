@@ -5,10 +5,9 @@
 
 void	handle(int a){
 	std::cerr << "quited with signal : " << a << std::endl;
-	// util::signal_handler(a);
-	// system("leaks webserv");
 	util::ft_exit(0);
 }
+
 const char* configFilePath;
 int main(int ac , char *av[])
 {
@@ -16,7 +15,6 @@ int main(int ac , char *av[])
 	std::signal(SIGKILL, handle);
 	std::signal(SIGBUS, handle);
 
-	const char *file;
 	if (ac <= 2)
 	{
 		configFilePath = av[1] ? av[1] : DEFAULT_CONFIG_PATH;

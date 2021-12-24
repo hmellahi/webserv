@@ -160,6 +160,7 @@ std::string Response::readRaw(int fd, int fileLength, int &bytes_read)
 
 int Response::sendMessage(int fd, const std::string &s)
 {
+    (void)fd;
     // return sendRaw(fd, s.c_str(), s.length());
     _msg = s;
     std::cerr << "****************************************************************" << std::endl;
@@ -168,7 +169,7 @@ int Response::sendMessage(int fd, const std::string &s)
     return 1;
 }
 
-void a(int a){}
+void a(int a){(void)a;}
 int Response::sendRaw(int fd, const void *buf, int buflen)
 {
     const char *pbuf = static_cast<const char*>(buf);

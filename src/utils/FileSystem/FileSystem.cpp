@@ -36,7 +36,7 @@ std::string  FileSystem::getIndexFile(const std::string & path, const std::vecto
     std::string filename;
     int status = !HttpStatus::OK;
 
-    for (int i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
+    for (size_t i = 0; i < indexFiles.size() && status != HttpStatus::OK; i++)
     {
         // std::cerr << "[" << path << "]" << std::endl;
         // std::cerr << "path" << path + indexFiles[i] << std::endl;

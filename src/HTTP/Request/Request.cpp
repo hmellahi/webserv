@@ -115,10 +115,10 @@ void Request::parse_query(std::string &query)
 	std::vector<std::string> tokens;
 	std::string key;
 	std::string value;
-	int pos;
+	size_t pos;
 
 	tokens = util::split(query, "&");
-	for (int i = 0; i != tokens.size(); i++)
+	for (size_t i = 0; i != tokens.size(); i++)
 	{
 		pos = tokens[i].find("=");
 		if (pos != std::string::npos)
@@ -141,8 +141,8 @@ void Request::ParseHeaders(std::vector<std::string> lines)
 {
 	std::string key;
 	std::string value;
-	int pos;
-	for (int i = 1; i < lines.size(); i++)
+	size_t pos;
+	for (size_t i = 1; i < lines.size(); i++)
 	{
 		std::cerr << lines[i] << std::endl;
 		if (lines[i] == "\r")

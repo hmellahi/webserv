@@ -1,6 +1,6 @@
 #include "Indexing.hpp"
 
-Indexing::Indexing(std::string root, std::string url): _root(root), _url(url)
+Indexing::Indexing(std::string root, std::string url):  _url(url),_root(root)
 {
 	_body = "<html>\n<head>\n<title>Index of " + _url + "</title></head>\n<body>\n<h1>Index of " + url + "</h1>\n<hr>\n";
 	_body += "<table style=\"width: 40%;\">\n";

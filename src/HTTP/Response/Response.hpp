@@ -6,7 +6,6 @@
 class Response
 {
 private:
-    int _method;
     Config _serverConfig;
     std::map<std::string, std::string> _headers;
     

@@ -22,7 +22,7 @@ void Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfd
 {
 	int fd;
 	// add child sockets to set
-	for (int i = 0; i < clients.size(); i++)
+	for (size_t i = 0; i < clients.size(); i++)
 	{
 		// socket descriptor
 		fd = clients[i];
@@ -119,7 +119,7 @@ Response Server::handleConnection(std::string &requestBody, int &requestSize, in
 	// parse request body and create new request object
 	Request req(requestBody, requestSize);
 	std::cerr << "****************************************" << std::endl;
-	for (int i = 0;i < req.getContentBody().size();i++)
+	for (size_t i = 0;i < req.getContentBody().size();i++)
 		std::cerr << req.getContentBody()[i];	
 	std::cerr << std::endl<< "****************************************" << std::endl;
 	// Loop throught all serversname of all running servers
@@ -144,6 +144,7 @@ Response Server::handleConnection(std::string &requestBody, int &requestSize, in
 
 void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int clientIndex, int sd)
 {
+	(void)readfds;
 	// if (clients[clientIndex].type == READ)
 		// FD_CLR(sd, &readfds);
 	// else
@@ -158,13 +159,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 	int sd;
 	char requestBody[1025];
 	int valread;
-	int requestSize;
 	Response res;
 	std::string requestBodyStr;
-	int j;
 	int nbytes;
 	// bool isDone;
-	for (int i = 0; i < clients.size(); i++)
+	for (size_t i = 0; i < clients.size(); i++)
 	{
 		sd = clients[i];
 		// check if socket is expired
@@ -360,7 +359,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	if (locationPath=="/")locationPath ="";
 	else if (locationPath[locationPath.size() - 1] == '/')locationPath.erase(locationPath[locationPath.size	() - 1], 1);
 	std::cerr << "match" << locationPath << std::endl;
-	int contentLength = atoi(req.getHeader("Content-Length").c_str());
+	size_t contentLength = atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
 	// Request unCompletedReq = it->second;
 	// Check if the request body is valid
@@ -509,6 +508,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string> cgis = _locConfig.getCGI();
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
+	int status;
 	std::map<std::string, std::string> headers;
 
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
@@ -517,6 +517,9 @@ Response Server::handleRequest(Request req, int client_fd)
 		std::string cgiPath = cgi->second;
 		// execute the file using approriate cgi
 		if (fileExtension != cgiType) continue;
+		status = FileSystem::getFileStatus(filename);
+		if (status != HttpStatus::OK)
+			return res.send(status);
 		try {
 			std::cout << "a o" << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
@@ -538,6 +541,7 @@ Response Server::handleRequest(Request req, int client_fd)
 
 			}
 			int statusCode;
+			// convert statusCode to int
 			std::istringstream(headers["Status"]) >> statusCode;
 			
 			res.nbytes_left = 0;
@@ -562,9 +566,7 @@ Response Server::handleRequest(Request req, int client_fd)
 */
 bool	Server::checkPermissions(std::string method)
 {
-	bool isAllowed = true;
 	std::vector<std::string> allowedMethods = _locConfig.get_allowedMethods();
-
 	if (allowedMethods.size() == 0)
 		return true;
 	std::vector<std::string>::iterator it;
@@ -674,6 +676,7 @@ Response Server::deleteHandler(Request req, Response res)
 
 Response Server::methodNotFoundHandler(Request req, Response res)
 {
+	(void)req;
 	return res.send(HttpStatus::NotImplemented);
 }
 
@@ -739,7 +742,6 @@ void Server::loop(std::vector<Socket> &serversSockets, std::vector<Server> &serv
 
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
-	int a=0;
 	while (TRUE)
 	{
 		// clear the sockets set

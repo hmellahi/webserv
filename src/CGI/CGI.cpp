@@ -74,7 +74,8 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
 }
 
 
-std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request req, char **args , std::string path ) {
+std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request req, char **args)
+{
 
     int         fd[2];
     int         nfd[2];
@@ -94,12 +95,10 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     if (pid == -1)
         throw std::runtime_error("fork error");
     int status;
-    int wstatus;
 
     if (pid > 0) {
+        std::cout << "wsup" << std::endl;
         wait(NULL);
-        // if (WIFEXITED(wstatus))
-        // close(f_err[1]);
         close(f_err[1]);
         close(fd[1]);
         close(fd[0]);
@@ -112,10 +111,10 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             cgiOutput += c;
         close(f_err[0]);
         fclose(result);
-        std::cerr << "start \n"; 
+        std::cout << "start \n"; 
 
-        std::cerr << cgiOutput;
-        std::cerr << "done \n"; 
+        std::cout << cgiOutput;
+        std::cout << "done \n"; 
 
         if (!FileSystem::isReadyFD(nfd[0], READ))
             throw std::runtime_error("fd not ready read");
@@ -140,14 +139,12 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         {
             if (!FileSystem::isReadyFD(fd[1], WRITE))
                 throw std::runtime_error("fd not ready write");
-            if (write(fd[1], &(req.getContentBody()[0]), req.getContentBody().size()) < 0) // todo0?
+            if (req.getContentBody().size() > 0 && write(fd[1], &(req.getContentBody()[0]), req.getContentBody().size()) <= 0)
                 throw std::runtime_error("write error");
             if (dup2(fd[0], 0) == -1)
                 throw std::runtime_error("dup error");
-            // std::cerr << "file size" << util::getFileLength(fd[1]) << std::endl;
         }
         dup2(f_err[1], 2);
-        // if (dup2(f_err[1], STDERR_FILENO);
         if (dup2(nfd[1], STDOUT_FILENO) == -1)
             throw std::runtime_error("dup error");
         
@@ -156,11 +153,9 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         close(req.fd);
         close(nfd[1]);
         close(nfd[0]);
-
-  
         if ((status = execve(args[0], args, environ)) != 0)
             throw std::runtime_error("execve error");
-        // exit(-1); 
+        exit(-1);
     }
     int i = -1;
     while (args[++i] != NULL)
@@ -171,25 +166,14 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     return parseOutput(cgiOutput);
 }
 
-void exists(const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return ;
-    }
-    throw std::runtime_error("File Not Found");
-}
-
 
 
 std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std::string path, Request &req, std::string cgiPath) {
 
-    int                                                           fd[2];
     std::pair<std::string, std::map<std::string , std::string> >  ret;
-    exists(path);
     
     char    **args = fill_args(cgiPath, path);
 
-    char    **envp;
     // std::cerr << " wnk " << std::string(req.getContentBody().data(),req.getContentBody().data()+req.getContentBody().size())<< std::endl;
     if (req.getMethod() == "POST")
     {
@@ -212,43 +196,15 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     setenv("REDIRECT_STATUS", "true", 1);
     setenv("SCRIPT_FILENAME", path.c_str(), 1);
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-    
     setenv("QUERY_STRING", req.getQuery().c_str(), 1);
-
     setenv("HTTP_ACCEPT_LANGUAGE", "en-US,en;q=0.9", 0);
     setenv("HTTP_ACCEPT_ENCODING", "", 0);
     setenv("HTTP_ACCEPT", "" , 0);
     if (!req.getHeader("cookie").empty())
         setenv("cookie", req.getHeader("cookie").c_str(), 1);
-    // setenv("HTTP_USER_AGENT", "", 0);
-    // setenv("HTTP_UPGRADE_INSECURE_REQUESTS", "", 0);
-    // setenv("HTTP_CACHE_CONTROL", "", 0);
-    // setenv("HTTP_CONNECTION", "", 0);
-    // setenv("HTTP_HOST", "", 0);
-    // setenv("SERVER_NAME", "", 0);
-    // setenv("SERVER_PORT", "",1);
-    // setenv("SERVER_ADDR", "", 0);
-    // setenv("REMOTE_PORT", "", 0);
-    // setenv("REMOTE_ADDR", "", 0);
-    setenv("PATH_INFO", "./cgi-bin", 0);
+    // setenv("PATH_INFO", "./cgi-bin", 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);
-    // setenv("DOCUMENT_ROOT", "", 0);
-    // setenv("DOCUMENT_URI", path.c_str(), 0);
-    // setenv("REQUEST_URI", path.c_str(), 0);
-    // setenv("SCRIPT_NAME", path.c_str(), 0);
-    // setenv("PHP_SELF", path.c_str(), 0);
-    // setenv("REQUEST_TIME_FLOAT", "", 0);
-    // setenv("REQUEST_TIME", "", 0);
-    // setenv("FCGI_ROLE", "RESPONDER", 0);
-
-
-    // std::cerr << "------------------------------------" << std::endl;
-    // //std::cerr << "Query :: "<< req.getContentBody().data() << std::endl;
-    // std::cerr << "------------------------------------" << std::endl;
-
-
-    // std::cerr << std::to_string(req.getContentBody().size()).c_str() << std::endl;
-    return exec_cgi( req, args, path);
+    return exec_cgi( req, args);
 }

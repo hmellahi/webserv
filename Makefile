@@ -10,8 +10,8 @@
 #                                                                              #
 # **************************************************************************** #
 
-FLAGS	= --std=c++98 # -Wall -Wextra -Werror
-CC		= c++
+FLAGS	= --std=c++98  -Wall -Wextra -Werror
+CC		= clang++
 NAME	= webserv
 
 

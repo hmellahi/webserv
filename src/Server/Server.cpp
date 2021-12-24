@@ -156,7 +156,7 @@ void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int 
 void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vector<Server> &servers)
 {
 	int sd;
-	char requestBody[BUFSIZE+1];
+	char requestBody[1025];
 	int valread;
 	int requestSize;
 	Response res;
@@ -181,9 +181,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			
-			std::cout << "started reading" << std::endl;
-			valread = read(sd, requestBody, BUFSIZE);
-			std::cout << "end read" << std::endl;
+			std::cerr << "started reading" << std::endl;
+			valread = read(sd, requestBody, 1024);
+			std::cerr << "end read" << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
 			// std::cerr << "buffer: " << c << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
@@ -240,11 +240,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// isDone = false; // useless for now
 				continue;
 			}
-			std::cout << " writing.." << sd << std::endl;
+			std::cerr << " writing.." << sd << std::endl;
 			res = unCompletedResponses[sd];
 			if (res._msg != "")
 			{
-				std::cout << "a writing to client: " << sd << std::endl;
+				std::cerr << "a writing to client: " << sd << std::endl;
 				try {
 					res.sendRaw(sd, res._msg.c_str(), res._msg.size());
 				}
@@ -252,14 +252,14 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd); 
-					std::cout << "Error: " << e.what() << std::endl;
+					std::cerr << "Error: " << e.what() << std::endl;
 					continue;
 				}	
 				res._msg = "";
-				std::cout << "was here " << res.nbytes_left<< std::endl;
+				std::cerr << "was here " << res.nbytes_left<< std::endl;
 				if (!res.nbytes_left)  
 				{
-					std::cout << "file closed:" << res.file_to_send << std::endl;
+					std::cerr << "file closed:" << res.file_to_send << std::endl;
 					close(res.file_to_send);
 					unCompletedResponses.erase(sd);
 					std::cerr << "done " << std::endl;
@@ -274,7 +274,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 			}
 			else if (res.nbytes_left > 0)
 			{
-				std::cout << "writing to client: " << sd << std::endl;
+				std::cerr << "writing to client: " << sd << std::endl;
 				std::string to_send;
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
@@ -289,7 +289,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					try {
 						to_send = res.readRaw(res.file_to_send, res.nbytes_left, nbytes);
-						std::cout << "done" << std::endl;
+						std::cerr << "done" << std::endl;
 					}
 					catch(std::exception &e)
 					{
@@ -358,6 +358,7 @@ Response Server::handleRequest(Request req, int client_fd)
 {
 	std::string locationPath = updateLocationConfig("/" + req.getUrl());
 	if (locationPath=="/")locationPath ="";
+	else if (locationPath[locationPath.size() - 1] == '/')locationPath.erase(locationPath[locationPath.size	() - 1], 1);
 	std::cerr << "match" << locationPath << std::endl;
 	int contentLength = atoi(req.getHeader("Content-Length").c_str());
 	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
@@ -509,7 +510,6 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
 	std::map<std::string, std::string> headers;
-	std::cerr << "am..." << std::endl;
 
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
@@ -518,10 +518,10 @@ Response Server::handleRequest(Request req, int client_fd)
 		// execute the file using approriate cgi
 		if (fileExtension != cgiType) continue;
 		try {
-			std::cerr << "Was here" << std::endl;
+			std::cout << "a o" << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
-			std::cerr <<"content" << cgiOutput << std::endl;
+			std::cout <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
@@ -548,10 +548,11 @@ Response Server::handleRequest(Request req, int client_fd)
 			std::cout << "Exception " << e.what() << std::endl;
 			if (!strncmp(e.what(), "File Not Found", 14))
 				return res.send(HttpStatus::NotFound);
-			std::cout << "yoo " << std::endl;
+			std::cerr << "yoo " << std::endl;
 			// smtg went wrong while executing the file
 			return res.send(HttpStatus::InternalServerError);
 		}
+		std::cout << "out " << std::endl;
 	}
 	return (this->*handleMethod(methodIndex))(req, res);
 }

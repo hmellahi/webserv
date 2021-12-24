@@ -67,7 +67,7 @@ void Request::parse()
 		std::cerr << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
-		if (_headers["Transfer-Encodingss"] == "chunked")
+		if (_headers["Transfer-Encoding"] == "chunked")
 		{
 			_bodySize = _buffSize - (_buffer.find("\r\n\r\n") + 4);
 			isChunkedBody = true;

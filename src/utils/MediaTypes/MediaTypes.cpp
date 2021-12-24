@@ -404,5 +404,4 @@ MediaTypes::entry MediaTypes::types[350] =  {
   {"yin", "application/yin+xml"},
   {"yml", "text/yaml"},
   {"zip", "application/zip"},
-  {"php", "text/html; charset=UTF-8"},
 };

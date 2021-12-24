@@ -202,7 +202,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     setenv("HTTP_ACCEPT", "" , 0);
     if (!req.getHeader("cookie").empty())
         setenv("cookie", req.getHeader("cookie").c_str(), 1);
-    // setenv("PATH_INFO", "./cgi-bin", 0);
+    setenv("PATH_INFO", "./cgi-bin", 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);

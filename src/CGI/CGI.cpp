@@ -139,7 +139,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         else
         {
             if (!FileSystem::isReadyFD(fd[1], WRITE))
-                throw std::runtime_error("fd not ready write");// todo dont use data
+                throw std::runtime_error("fd not ready write");
             if (write(fd[1], &(req.getContentBody()[0]), req.getContentBody().size()) < 0) // todo0?
                 throw std::runtime_error("write error");
             if (dup2(fd[0], 0) == -1)

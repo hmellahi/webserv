@@ -29,15 +29,16 @@ void Server::addClients(std::vector<Socket> clients, int &max_fd, fd_set &readfd
 		// if valid socket descriptor then add to read list
 		if (fd > 0)
 		{
-			if (clients[i].type == READ_SOCKET)
+			// if (clients[i].type == READ_SOCKET)
 				FD_SET(fd, &readfds);
-			else
+			// else
 				FD_SET(fd, &writefds);
 		}
 		// highest file descriptor number, need it for the select function
 		if (fd > max_fd)
 			max_fd = fd;
 	}
+	// std::cerr << "maxfd: " << max_fd << std::endl;
 }
 
 void Server::waitingForConnections(int &activity, fd_set &readfds)//, fd_set &writefds)
@@ -79,7 +80,7 @@ void Server::acceptNewConnection(std::vector<Socket> &clients, std::vector<Socke
 				{
 					new_socket._lastuse = util::get_time();
 					clients.push_back(new_socket);
-					std::cout << "new client:" << new_socket << std::endl;
+					// std::cerr << "new client:" << new_socket << std::endl;
 				}
 			}
 			catch(std::exception& e)
@@ -143,9 +144,12 @@ Response Server::handleConnection(std::string &requestBody, int &requestSize, in
 
 void Server::closeConnection(std::vector<Socket> &clients, fd_set &readfds, int clientIndex, int sd)
 {
-	close(sd);
+	// if (clients[clientIndex].type == READ)
+		// FD_CLR(sd, &readfds);
+	// else
+		// FD_CLR(sd, &writefds);
 	clients.erase(clients.begin() + clientIndex);
-	FD_CLR(sd, &readfds);
+	close(sd);
 	std::cerr << "Connection closed: " << sd << std::endl;
 }
 
@@ -165,7 +169,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		sd = clients[i];
 		// check if socket is expired
 		// std::cerr << sd << "| now : " << util::get_time()<<"last time: "<< clients[i]._lastuse << ", pass: "<<  util::get_time() - clients[i]._lastuse<< std::endl;
-		if ((util::get_time() - clients[i]._lastuse) > 10)
+		if ((util::get_time() - clients[i]._lastuse) > 70)
 		{
 			closeConnection(clients, readfds, i, sd);
 			std::cerr << "new clients size " << clients.size() << std::endl;
@@ -177,8 +181,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			
-			std::cerr << "ready for read" << std::endl;
+			std::cout << "started reading" << std::endl;
 			valread = read(sd, requestBody, BUFSIZE);
+			std::cout << "end read" << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
 			// std::cerr << "buffer: " << c << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
@@ -235,11 +240,11 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				// isDone = false; // useless for now
 				continue;
 			}
-			std::cerr << " writing.." << std::endl;
+			std::cout << " writing.." << sd << std::endl;
 			res = unCompletedResponses[sd];
 			if (res._msg != "")
 			{
-				std::cerr << "a writing to client: " << sd << std::endl;
+				std::cout << "a writing to client: " << sd << std::endl;
 				try {
 					res.sendRaw(sd, res._msg.c_str(), res._msg.size());
 				}
@@ -247,14 +252,14 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					closeConnection(clients, readfds, i, sd);
 					unCompletedResponses.erase(sd); 
-					std::cerr << "Error: " << e.what() << std::endl;
+					std::cout << "Error: " << e.what() << std::endl;
 					continue;
 				}	
 				res._msg = "";
-				std::cerr << "was here " << res.nbytes_left<< std::endl;
+				std::cout << "was here " << res.nbytes_left<< std::endl;
 				if (!res.nbytes_left)  
 				{
-					std::cerr << "Connection closed:" << res.file_to_send << std::endl;
+					std::cout << "file closed:" << res.file_to_send << std::endl;
 					close(res.file_to_send);
 					unCompletedResponses.erase(sd);
 					std::cerr << "done " << std::endl;
@@ -264,12 +269,12 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 					unCompletedResponses[sd] = res;
 					std::cerr << res.nbytes_left << std::endl;
 				}
-				if (!res.nbytes_left && res.getHeader("Connection") == "close")
+				if (!res.nbytes_left && res.getHeader("Connection") != "keep-alive")
 					closeConnection(clients, readfds, i, sd);
 			}
 			else if (res.nbytes_left > 0)
 			{
-				std::cerr << "writing to client: " << sd << std::endl;
+				std::cout << "writing to client: " << sd << std::endl;
 				std::string to_send;
 				// this will set response to Internal server
 				if (!FileSystem::isReadyFD(res.file_to_send, READ)) 
@@ -284,7 +289,7 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				{
 					try {
 						to_send = res.readRaw(res.file_to_send, res.nbytes_left, nbytes);
-						std::cerr << "to_send" << to_send << std::endl;
+						std::cout << "done" << std::endl;
 					}
 					catch(std::exception &e)
 					{
@@ -312,11 +317,12 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 				unCompletedResponses[sd] = res;
 				if (res.nbytes_left == 0)
 				{
+					std::cerr << "file closed:" << res.file_to_send << std::endl;
 					close(res.file_to_send); // check where else should be closed
 					if (unCompletedResponses.erase(sd))
 						std::cerr << "sdina: " << res.nbytes_left << std::endl;
 
-					if (res.getHeader("Connection") == "close")
+					if (res.getHeader("Connection") != "keey-alive")
 						closeConnection(clients, readfds, i, sd);
 					else
 						clients[i].type = READ_SOCKET;
@@ -503,6 +509,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	std::map<std::string, std::string>::iterator cgi;
 	std::string cgiOutput;
 	std::map<std::string, std::string> headers;
+	std::cerr << "am..." << std::endl;
 
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
@@ -511,6 +518,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		// execute the file using approriate cgi
 		if (fileExtension != cgiType) continue;
 		try {
+			std::cerr << "Was here" << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
 			std::cerr <<"content" << cgiOutput << std::endl;
@@ -537,9 +545,10 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << "Exception " << e.what() << std::endl;
+			std::cout << "Exception " << e.what() << std::endl;
 			if (!strncmp(e.what(), "File Not Found", 14))
 				return res.send(HttpStatus::NotFound);
+			std::cout << "yoo " << std::endl;
 			// smtg went wrong while executing the file
 			return res.send(HttpStatus::InternalServerError);
 		}

@@ -23,6 +23,7 @@ int     FileSystem::readFile(std::string filename, int &status)
     if (getFileStatus(filename) != HttpStatus::OK)
         throw std::runtime_error("invalid file");
     int fd = open(filename.c_str(), O_RDONLY);
+    std::cerr << "filesystem Opening " << fd << std::endl;
     if (fd < 0)
         throw std::runtime_error("couldnt read file");
     std::cerr << "file" << filename << ", "<<fd << std::endl;
@@ -82,6 +83,7 @@ int     FileSystem::getFileStatus(std::string filename)
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd < 1)
         return (HttpStatus::Forbidden);
+    close(fd);
     return HttpStatus::OK;
 }
 

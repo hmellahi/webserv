@@ -14,8 +14,6 @@ Request::Request(std::string buffer, int buffSize):_buffer(buffer),_status(HttpS
 }
 
 int	Request::getBufferSize( void )  const {
-
-
 	return _buffSize;
 }
 Request::Request(Request const &src)
@@ -105,7 +103,7 @@ void Request::ParseFirstLine(std::string line)
 		_http_version = util::trim(tokens[2]);
 		if (util::is_valid_method(_method) == false)
 			_status = HttpStatus::NotImplemented; // server not support this method
-		else if (util::is_valid_version(_http_version) == false)
+		else if (util::is_valid_version(_http_version) == false) // todo support only http1.1?
 			_status = HttpStatus::HTTPVersionNotSupported; // HTTP VERSION NOT SUPPORTED
 	}
 	else

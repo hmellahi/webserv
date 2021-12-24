@@ -233,10 +233,6 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	std::cerr << "buffer|" << buffer << "|" << std::endl;
 	if (!unchunked.empty())
 		buffer.insert(0, unchunked);
-	// std::cerr << "+++++++++++++\n";
-	// std::cerr << unchunked << std::endl;
-	// std::cerr << buffer << std::endl;
-	// todo change 1=>2
 	unchunked.assign("");
 	chunked.assign("");
 	hex = buffer.substr(0, buffer.size());
@@ -244,12 +240,12 @@ std::string util::ParseChunkBody(std::string &unchunked, std::string buffer, boo
 	while (size)
 	{
 		// std::cerr << "size: " << size << std::endl;
-		i = buffer.find("\n", i);
+		i = buffer.find("\r\n", i);
 		if (i < 0) break;
-		i += 1;
+		i += 2;
 		if (buffer.substr(i, size).size() >= size)
 			chunked.insert(chunked.size(), buffer.substr(i, size));
-		i += size + 1;
+		i += size + 2;
 		if (i < buffer.size())
 			hex = buffer.substr(i, buffer.size());
 		else

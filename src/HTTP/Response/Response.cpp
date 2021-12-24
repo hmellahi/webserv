@@ -9,6 +9,8 @@ Response::Response(Request req, int client_fd, Config serverConfig)
     if (_headers["http-version"].empty())
         _headers["http-version"] =  "HTTP/1.1";
     _headers["Connection"] = req.getHeader("Connection");
+    if (_headers["Connection"].empty())
+        _headers["Connection"] =  "close";
     _headers["Date"] = util::getCurrentDate(); 
     file_to_send=-1;
     nbytes_left = 0;
@@ -33,9 +35,7 @@ Response::Response(const Response& src)
 
 Response    Response::sendRedirect(int statusCode, const std::string &location)
 {
-    // todo change
-    // std::string redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
-    std::string redirectPageContent ="";
+    std::pair<int, std::string> redirectPageContent = Server::getErrorPageContent(statusCode, _serverConfig);
     std::ostringstream msg;
 
     msg << "HTTP/1.1" << " " << statusCode << " " 
@@ -45,9 +45,9 @@ Response    Response::sendRedirect(int statusCode, const std::string &location)
         << "Location: " << location << "\r\n"
         << "Date: " << _headers["Date"] << "\r\n"
         << "Content-Type: text/html\r\n"
-        << "Content-Length: " << redirectPageContent.size() << "\r\n"
+        << "Content-Length: " << redirectPageContent.second.size() << "\r\n"
         << "\r\n"
-        << redirectPageContent;
+        << redirectPageContent.second;
     
     sendMessage(_client_fd, msg.str());
     return *this;
@@ -99,6 +99,7 @@ Response    Response::send( int statusCode, std::string filename)
     file_to_send = open(filename.c_str(), O_RDONLY);
     if (file_to_send >= FD_SETSIZE || file_to_send < 0)
         throw std::runtime_error("couldnt do shit abt it");
+    std::cerr << "Opening " << file_to_send << std::endl;
     nbytes_left = fileLength;
     std::ostringstream msg;
     msg << _headers["http-version"] << " " << statusCode << " " 
@@ -161,6 +162,9 @@ int Response::sendMessage(int fd, const std::string &s)
 {
     // return sendRaw(fd, s.c_str(), s.length());
     _msg = s;
+    std::cerr << "****************************************************************" << std::endl;
+    std::cerr << _msg << std::endl;
+    std::cerr << "****************************************************************" << std::endl;
     return 1;
 }
 

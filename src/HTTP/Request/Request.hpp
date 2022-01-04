@@ -44,6 +44,7 @@ class Request
 		int getBufferSize(void) const;
 		bool isUpload;
 		std::string _fileLocation;
+		std::string filename;
 		int _bodySize;
 		bool isChunked;
 	private:

@@ -208,6 +208,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);
+
     setenv("SCRIPT_FILENAME", path.c_str(), 1);
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("QUERY_STRING", req.getQuery().c_str(), 1);
@@ -216,7 +217,9 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     setenv("HTTP_ACCEPT", "" , 0);
     if (!req.getHeader("cookie").empty())
         setenv("cookie", req.getHeader("cookie").c_str(), 1);
-    setenv("PATH_INFO", "./cgi-bin", 0);
+    //  tab = util::split(line, ": ");
+    std::cout << req.getUrl()<<std::endl;   
+    setenv("PATH_INFO", req.getUrl().c_str(), 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);

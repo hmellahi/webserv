@@ -137,14 +137,16 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 
 bool    FileSystem::isReadyFD(int fd, int mode)
 {
-    std::cerr << fd << std::endl;
+    std::cout << "fd" << fd << std::endl;
     if (fd < 0 || fd >= FD_SETSIZE)
         return false;
     if (mode == READ)
     {
         fd_set readfds;
         FD_SET(fd, &readfds);
+        std::cout << "sasdd \n"; 
         select(fd+1, &readfds, NULL,NULL,0);
+        std::cout << "sasdd \n"; 
         if (!Socket::testConnection(fd))
             return false;
         return (FD_ISSET(fd, &readfds));

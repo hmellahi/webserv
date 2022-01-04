@@ -521,10 +521,10 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (status != HttpStatus::OK)
 			return res.send(status);
 		try {
-			std::cout << "a o" << std::endl;
+			std::cerr << "a o" << std::endl;
 			std::pair<std::string, std::map<std::string, std::string> > cgiRes = CGI::exec_file(filename.c_str(), req, cgiPath);
 			cgiOutput = cgiRes.first;
-			std::cout <<"content" << cgiOutput << std::endl;
+			std::cerr <<"content" << cgiOutput << std::endl;
 			headers = cgiRes.second;
 			std::map<std::string, std::string>::iterator it;
 
@@ -549,14 +549,14 @@ Response Server::handleRequest(Request req, int client_fd)
 		}
 		catch (const std::exception& e)
 		{
-			std::cout << "Exception " << e.what() << std::endl;
+			std::cerr << "Exception " << e.what() << std::endl;
 			if (!strncmp(e.what(), "File Not Found", 14))
 				return res.send(HttpStatus::NotFound);
 			std::cerr << "yoo " << std::endl;
 			// smtg went wrong while executing the file
 			return res.send(HttpStatus::InternalServerError);
 		}
-		std::cout << "out " << std::endl;
+		std::cerr << "out " << std::endl;
 	}
 	return (this->*handleMethod(methodIndex))(req, res);
 }

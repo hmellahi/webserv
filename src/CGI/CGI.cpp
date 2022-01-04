@@ -25,7 +25,10 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
     std::vector<std::string> cgiHeaders;
     cgiHeaders.push_back("Set-Cookie");
     cgiHeaders.push_back("Status");
+    cgiHeaders.push_back("Content-type");
+    cgiHeaders.push_back("charset");
     cgiHeaders.push_back("Location");
+    cgiHeaders.push_back("X-Powered-By");
 
     outContent = "";
     line = "";
@@ -52,7 +55,7 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
             headers[tab[0]] = util::trim(tab[1]);
             // setenv("HTTP_COOKIE", headers[tab[0]].c_str(), 1);
         }
-        else if (tab[0] == "Location") {
+        else  {
             // std::cerr << "testing location " << std::endl;
             headers[tab[0]] = util::trim(tab[1]);
             
@@ -97,24 +100,31 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     int status;
 
     if (pid > 0) {
-        std::cout << "wsup" << std::endl;
-        wait(NULL);
+
         close(f_err[1]);
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);
+        std::cout << "wsup status : "  << std::endl;
+        std::cout << "no more waiting" << std::endl;
+       
         FILE *result;
-        std::cerr << "Reading 2 : \n"; 
-        result = fdopen(f_err[0], "r");
+        std::cout << "Reading 2 : \n"; 
         char c;
-        while((c = fgetc(result)) != EOF)
-            cgiOutput += c;
-        close(f_err[0]);
-        fclose(result);
-        std::cout << "start \n"; 
-
-        std::cout << cgiOutput;
-        std::cout << "done \n"; 
+        
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+        {
+            if (!FileSystem::isReadyFD(f_err[0], READ))
+                throw std::runtime_error("fd not ready read");
+            std::cout << "sd \n"; 
+            result = fdopen(f_err[0], "r");
+            while((c = fgetc(result)) != EOF)
+                cgiOutput += c;
+            close(f_err[0]);
+            fclose(result);
+            std::cerr << cgiOutput;
+            std::cout << "done \n"; 
+        }
 
         if (!FileSystem::isReadyFD(nfd[0], READ))
             throw std::runtime_error("fd not ready read");
@@ -124,11 +134,12 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             cgiOutput += c;
         fclose(result);
         close(nfd[0]);
+        std::cout << "dd \n"; 
 		// remove(req._fileLocation.c_str());
     }
     else if (pid == 0)
     {
-        close(f_err[0]);
+       
         if (req.isChunked)
         {
             std::cerr << "file size" << util::getFileLength(req.fd) << std::endl;
@@ -137,31 +148,35 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         } 
         else
         {
-            if (!FileSystem::isReadyFD(fd[1], WRITE))
-                throw std::runtime_error("fd not ready write");
-            if (req.getContentBody().size() > 0 && write(fd[1], &(req.getContentBody()[0]), req.getContentBody().size()) <= 0)
+            // if (!FileSystem::isReadyFD(fd[1], WRITE))
+            //     throw std::runtime_error("fd not ready write");
+            if (req.getContentBody().size() > 0 && write(fd[1], req.getContentBody().data(), req.getContentBody().size()) <= 0)
                 throw std::runtime_error("write error");
             if (dup2(fd[0], 0) == -1)
                 throw std::runtime_error("dup error");
         }
-        dup2(f_err[1], 2);
+        if (dup2(f_err[1], 2) == -1)
+            throw std::runtime_error("dup error");
         if (dup2(nfd[1], STDOUT_FILENO) == -1)
             throw std::runtime_error("dup error");
-        
-        close(fd[1]);
+        close(fd[1]); 
         close(fd[0]);
-        close(req.fd);
+        // close(req.fd);
+        // std::cout << "req" << req.fd << std::endl;
         close(nfd[1]);
         close(nfd[0]);
+        close(f_err[1]);
+        close(f_err[0]);
         if ((status = execve(args[0], args, environ)) != 0)
             throw std::runtime_error("execve error");
-        exit(-1);
     }
+    wait(NULL);
+
     int i = -1;
     while (args[++i] != NULL)
         free(args[i]);
     free(args);
-    
+    std::cout << "done" << std::endl;
     // remove cgi useless headers
     return parseOutput(cgiOutput);
 }
@@ -185,12 +200,11 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
         std::cerr << "a" << util::ft_itos(util::getFileLength(req.fd)).c_str()<< std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(util::getFileLength(req.fd)).c_str(), 1);
     }
-    else if (!req.getContentBody().empty() || req.getMethod() == "POST")
-    {
-        std::cerr << "b" << req.getContentBody().size() << std::endl;
+    else {
+
+        std::cout << "b" << req.getContentBody().size() << std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
-    }
-    
+    } 
     if (!req.getMethod().empty())
         setenv("REQUEST_METHOD", req.getMethod().c_str(), 1);
     setenv("REDIRECT_STATUS", "true", 1);

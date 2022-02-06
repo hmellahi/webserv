@@ -148,8 +148,8 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         } 
         else
         {
-            // if (!FileSystem::isReadyFD(fd[1], WRITE))
-            //     throw std::runtime_error("fd not ready write");
+            if (!FileSystem::isReadyFD(fd[1], WRITE))
+                throw std::runtime_error("fd not ready write");
             if (req.getContentBody().size() > 0 && write(fd[1], req.getContentBody().data(), req.getContentBody().size()) <= 0)
                 throw std::runtime_error("write error");
             if (dup2(fd[0], 0) == -1)

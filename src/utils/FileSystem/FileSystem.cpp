@@ -143,9 +143,9 @@ bool    FileSystem::isReadyFD(int fd, int mode)
     {
         fd_set readfds;
         FD_SET(fd, &readfds);
-        std::cout << "sasdd \n"; 
+        std::cerr << "sasdd \n"; 
         select(fd+1, &readfds, NULL,NULL,0);
-        std::cout << "sasdd \n"; 
+        std::cerr << "sasdd \n"; 
         if (!Socket::testConnection(fd))
             return false;
         return (FD_ISSET(fd, &readfds));

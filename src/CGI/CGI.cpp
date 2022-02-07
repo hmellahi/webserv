@@ -42,7 +42,8 @@ std::pair<std::string, std::map<std::string , std::string> >parseOutput( std::st
         // std::cerr << "line :" << line << "|" << std::endl;
         // if (line.find("<html>") == std::string::npos && line.length() > 0)
             // headers.push_back(line);
-        tab = util::split(line, ": ");
+        tab = util::split(line, ":");
+        util::trim(tab[1]);
         if (tab[0] == "Set-Cookie") {
 
             headers[tab[0]] = util::trim(tab[1]);
@@ -105,25 +106,25 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         close(fd[1]);
         close(fd[0]);
         close(nfd[1]);
-        std::cout << "wsup status : "  << std::endl;
-        std::cout << "no more waiting" << std::endl;
+        std::cerr << "wsup status : "  << std::endl;
+        std::cerr << "no more waiting" << std::endl;
        
         FILE *result;
-        std::cout << "Reading 2 : \n"; 
+        std::cerr << "Reading 2 : \n"; 
         char c;
         
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
         {
             if (!FileSystem::isReadyFD(f_err[0], READ))
                 throw std::runtime_error("fd not ready read");
-            std::cout << "sd \n"; 
+            std::cerr << "sd \n"; 
             result = fdopen(f_err[0], "r");
             while((c = fgetc(result)) != EOF)
                 cgiOutput += c;
             close(f_err[0]);
             fclose(result);
             std::cerr << cgiOutput;
-            std::cout << "done \n"; 
+            std::cerr << "done \n"; 
         }
 
         if (!FileSystem::isReadyFD(nfd[0], READ))
@@ -134,7 +135,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
             cgiOutput += c;
         fclose(result);
         close(nfd[0]);
-        std::cout << "dd \n"; 
+        std::cerr << "dd \n"; 
 		// remove(req._fileLocation.c_str());
     }
     else if (pid == 0)
@@ -162,7 +163,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
         close(fd[1]); 
         close(fd[0]);
         // close(req.fd);
-        // std::cout << "req" << req.fd << std::endl;
+        // std::cerr << "req" << req.fd << std::endl;
         close(nfd[1]);
         close(nfd[0]);
         close(f_err[1]);
@@ -176,7 +177,7 @@ std::pair<std::string, std::map<std::string , std::string> > exec_cgi( Request r
     while (args[++i] != NULL)
         free(args[i]);
     free(args);
-    std::cout << "done" << std::endl;
+    std::cerr << "done" << std::endl;
     // remove cgi useless headers
     return parseOutput(cgiOutput);
 }
@@ -202,7 +203,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     }
     else {
 
-        std::cout << "b" << req.getContentBody().size() << std::endl;
+        std::cerr << "b" << req.getContentBody().size() << std::endl;
         setenv("CONTENT_LENGTH", util::ft_itos(req.getContentBody().size()).c_str(), 1);
     } 
     if (!req.getMethod().empty())
@@ -218,7 +219,7 @@ std::pair<std::string, std::map<std::string , std::string> >  CGI::exec_file(std
     if (!req.getHeader("cookie").empty())
         setenv("cookie", req.getHeader("cookie").c_str(), 1);
     //  tab = util::split(line, ": ");
-    std::cout << req.getUrl()<<std::endl;   
+    std::cerr << req.getUrl()<<std::endl;   
     setenv("PATH_INFO", req.getUrl().c_str(), 0);
     setenv("SERVER_SOFTWARE", "server", 0);
     setenv("REQUEST_SCHEME", "http", 0);

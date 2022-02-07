@@ -180,9 +180,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			
-			std::cout << "started reading" << std::endl;
+			std::cerr << "started reading" << std::endl;
 			valread = read(sd, requestBody, 1024);
-			std::cout << "end read" << std::endl;
+			std::cerr << "end read" << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
 			// std::cerr << "buffer: " << c << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
@@ -366,7 +366,7 @@ Response Server::handleRequest(Request req, int client_fd)
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
-	std::cout << "completed: "<< contentLength << std::endl;
+	std::cerr << "completed: "<< contentLength << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		/********************** CHEKS ************************/
@@ -445,7 +445,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))

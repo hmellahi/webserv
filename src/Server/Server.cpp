@@ -180,9 +180,9 @@ void Server::RecvAndSend(std::vector<Socket> &clients, fd_set &readfds, std::vec
 		if (sd > 0 && FD_ISSET(sd, &readfds))
 		{
 			
-			std::cerr << "started reading" << std::endl;
+			std::cout << "started reading" << std::endl;
 			valread = read(sd, requestBody, 1024);
-			std::cerr << "end read" << std::endl;
+			std::cout << "end read" << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
 			// std::cerr << "buffer: " << c << std::endl;
 			// 	std::cerr << "-------------------------------------\n";
@@ -360,13 +360,13 @@ Response Server::handleRequest(Request req, int client_fd)
 	else if (locationPath[locationPath.size() - 1] == '/')locationPath.erase(locationPath[locationPath.size	() - 1], 1);
 	std::cerr << "match" << locationPath << std::endl;
 	size_t contentLength = atoi(req.getHeader("Content-Length").c_str());
-	std::map<int, Request>::iterator it = unCompletedRequests.find(client_fd);
+	std::map<int, Request>::iterator it 	= unCompletedRequests.find(client_fd);
 	// Request unCompletedReq = it->second;
 	// Check if the request body is valid
 	Response res(req, client_fd, _locConfig);
 	// std::cerr << "size"<< unCompletedRequests.size() << std::endl;
 	bool isNotCompletedYet = ((req.getContentBody().size() < contentLength && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd));
-	std::cerr << "completed: "<< !isNotCompletedYet << std::endl;
+	std::cout << "completed: "<< contentLength << std::endl;
 	if (it == unCompletedRequests.end() && isNotCompletedYet)
 	{
 		/********************** CHEKS ************************/
@@ -445,7 +445,7 @@ Response Server::handleRequest(Request req, int client_fd)
 		if (!req.isChunkedBody)
 			req.nbytes_left -= nbytes_wrote;
 		std::cerr << "-------------------------------------\n";
-		std::cerr << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
+		std::cout << "recieved:" <<  req.nbytes_left << "| max: " << req.getHeader("Content-Length") << std::endl;
 		std::cerr << "-------------------------------------\n";
 		unCompletedRequests[client_fd] = req;
 		if ((req.nbytes_left > 0 && !req.isChunkedBody) || (req.isChunkedBody && !req.isChunkedBodyEnd))
@@ -511,6 +511,8 @@ Response Server::handleRequest(Request req, int client_fd)
 	int status;
 	std::map<std::string, std::string> headers;
 
+	if (req.getMethod() == "POST" && !_locConfig.getUploadPath().empty())
+		return (this->*handleMethod(methodIndex))(req, res);
 	for (cgi = cgis.begin(); cgi != cgis.end(); cgi++)
 	{
 		std::string cgiType = cgi->first;

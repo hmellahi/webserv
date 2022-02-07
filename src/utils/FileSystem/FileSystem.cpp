@@ -137,7 +137,6 @@ void    FileSystem::uploadFile(std::string uploadLocation, std::vector<char> con
 
 bool    FileSystem::isReadyFD(int fd, int mode)
 {
-    std::cout << "fd" << fd << std::endl;
     if (fd < 0 || fd >= FD_SETSIZE)
         return false;
     if (mode == READ)

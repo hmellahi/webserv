@@ -64,7 +64,7 @@ void Request::parse()
 	isChunkedBody = false;
 	if (lines.size() > 1)
 	{
-		std::cerr << lines[0] << std::endl;
+		// std::cout << lines[0] << std::endl;
 		ParseFirstLine(lines[0]);
 		ParseHeaders(lines);
 		if (_headers["Transfer-Encoding"] == "chunked")
